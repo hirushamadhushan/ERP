@@ -11,9 +11,9 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $totalUsers  = User::count();
+        $totalUsers = User::count();
         $activeUsers = User::where('status', 'active')->count();
-        $adminUsers  = User::where('role', 'administrator')->count();
+        $adminUsers = User::where('role', 'administrator')->count();
         $recentUsers = User::latest()->take(5)->get();
 
         return view('home.index', compact(

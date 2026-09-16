@@ -98,6 +98,20 @@
             padding: 4px 8px;
             outline: none;
         }
+        .sticky-table-region { position: relative; width: 100%; overflow: visible; }
+        .sticky-table-viewport { width: 100%; overflow-x: auto; scrollbar-color: #8b8b8b #eef2f7; scrollbar-width: auto; }
+        .sticky-table-viewport::-webkit-scrollbar { height: 13px; }
+        .sticky-table-viewport::-webkit-scrollbar-track { background: #eef2f7; border-radius: 999px; }
+        .sticky-table-viewport::-webkit-scrollbar-thumb { background: #8b8b8b; border: 3px solid #eef2f7; border-radius: 999px; }
+        .sticky-data-table-header { position: sticky; z-index: 25; display: block; overflow: hidden; background: #fff; border-bottom: 1px solid #d8ddea; box-shadow: 0 5px 10px rgb(15 23 42 / .12); }
+        .sticky-data-table-track { will-change: transform; }
+        .sticky-data-table-header table.dataTable { width: auto !important; margin: 0 !important; }
+        .sticky-data-table-header table.dataTable thead th { box-sizing: border-box; background: #f8fafc; }
+        .sticky-data-table-source thead { visibility: hidden; }
+        .sticky-data-table-source thead tr,
+        .sticky-data-table-source thead th { height: 0 !important; min-height: 0 !important; line-height: 0 !important; }
+        .sticky-data-table-source thead th { padding-top: 0 !important; padding-bottom: 0 !important; border-top: 0 !important; border-bottom: 0 !important; }
+        .sticky-data-table-source thead th > * { height: 0 !important; overflow: hidden !important; }
     </style>
 </head>
 <body class="h-full bg-slate-50 font-sans text-slate-800 antialiased selection:bg-purple-500 selection:text-white">
@@ -142,6 +156,11 @@
                    class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('contacts.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-person-lines-fill text-base" aria-hidden="true"></i>
                     Contacts
+                </a>
+
+                <a href="{{ route('products.catalog.index') }}"
+                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('products.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-boxes text-base" aria-hidden="true"></i>Products
                 </a>
 
                 <p class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-4 mb-2">System</p>
@@ -205,6 +224,21 @@
                             <i class="bi bi-shield-check" aria-hidden="true"></i>
                             Roles
                         </a>
+                    </nav>
+                    @elseif(request()->routeIs('products.*'))
+                    <nav aria-label="Products" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                        @foreach([
+                            ['products.catalog.index', 'List Products', 'bi-boxes', request()->routeIs('products.catalog.index')],
+                            ['products.catalog.create', 'Add Product', 'bi-plus-circle', request()->routeIs(['products.catalog.create', 'products.catalog.edit'])],
+                            ['products.serials.index', 'Serial Numbers', 'bi-upc-scan', request()->routeIs('products.serials.*')],
+                            ['products.units.index', 'Units', 'bi-rulers', request()->routeIs('products.units.*')],
+                            ['products.categories.index', 'Categories', 'bi-grid', request()->routeIs('products.categories.*')],
+                            ['products.brands.index', 'Brands', 'bi-tag', request()->routeIs('products.brands.*')],
+                            ['products.variations.index', 'Variations', 'bi-layers', request()->routeIs('products.variations.*')],
+                            ['products.warranties.index', 'Warranties', 'bi-shield-check', request()->routeIs('products.warranties.*')],
+                        ] as [$productRoute, $productLabel, $productIcon, $isActive])
+                            <a href="{{ route($productRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $productIcon }}" aria-hidden="true"></i>{{ $productLabel }}</a>
+                        @endforeach
                     </nav>
                     @elseif(request()->routeIs('contacts.*'))
                     <nav aria-label="Contacts" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
@@ -285,6 +319,9 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 
+    <script src="{{ asset('js/error-handling.js') }}"></script>
+    <script src="{{ asset('js/auto-filter.js') }}"></script>
+    <script src="{{ asset('js/sticky-data-table.js') }}?v={{ filemtime(public_path('js/sticky-data-table.js')) }}"></script>
     @stack('scripts')
 </body>
 </html>

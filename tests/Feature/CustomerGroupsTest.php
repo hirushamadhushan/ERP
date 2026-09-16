@@ -47,7 +47,7 @@ class CustomerGroupsTest extends TestCase
         $group = CustomerGroup::where('name', 'Wholesale')->firstOrFail();
         $this->assertSame('selling_price_group', $group->calculation_type);
         $this->assertSame('0.00', $group->calculation_percentage);
-        $this->get('/customer-groups')->assertOk()->assertSee('Trade prices')->assertSee('percentage-tooltip');
+        $this->get('/customer-groups')->assertOk()->assertSee('Trade prices')->assertSee('percentage-tooltip')->assertSee('StickyDataTables.install', false)->assertSee('sticky-table-host', false);
         $this->put(route('contacts.groups.update', $group), $this->payload(['calculation_percentage' => -10]))->assertSessionHasNoErrors();
         $this->assertNull($group->fresh()->selling_price_group);
         $this->assertSame('-10.00', $group->fresh()->calculation_percentage);

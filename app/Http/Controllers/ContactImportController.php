@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ImportContactsRequest;
 use App\Services\ContactCsvImport;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class ContactImportController extends Controller
@@ -24,9 +25,8 @@ class ContactImportController extends Controller
         }, 'contacts-template.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function store(Request $request, ContactCsvImport $importer)
+    public function store(ImportContactsRequest $request, ContactCsvImport $importer)
     {
-        $request->validate(['file' => ['required', 'file', 'max:2048', 'mimes:csv,txt', 'extensions:csv']]);
         try {
             $count = $importer->import($request->file('file')->getRealPath());
         } catch (UniqueConstraintViolationException $exception) {

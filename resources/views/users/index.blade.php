@@ -21,7 +21,7 @@
         </div>
 
         <!-- Yajra DataTable -->
-        <div class="table-responsive">
+        <div class="sticky-table-host">
             <table id="usersTable" class="table w-full text-left border-collapse">
                 <thead>
                     <tr>
@@ -68,7 +68,7 @@
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
-                <input type="email" name="email" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" placeholder="e.g. info.sithum@gmail.com" required>
+                <input type="email" name="email" autocapitalize="none" pattern="[a-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}" title="Use a valid email address with lowercase letters only." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" placeholder="e.g. info.sithum@gmail.com" required>
                 <span class="text-xs text-rose-500 error-text email_error"></span>
             </div>
 
@@ -146,7 +146,7 @@
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
-                <input type="email" id="edit_email" name="email" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" required>
+                <input type="email" id="edit_email" name="email" autocapitalize="none" pattern="[a-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}" title="Use a valid email address with lowercase letters only." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" required>
                 <span class="text-xs text-rose-500 error-text email_error"></span>
             </div>
 
@@ -282,6 +282,7 @@ $(document).ready(function() {
             lengthMenu: "Show _MENU_ entries"
         }
     });
+    StickyDataTables.install(table);
 
     // Toast helper
     function showToast(msg, type) {
@@ -336,7 +337,7 @@ $(document).ready(function() {
                         $('.' + key + '_error').text(val[0]);
                     });
                 } else {
-                    showToast('An error occurred. Please try again.', 'danger');
+                    showToast(AppErrors.message(xhr.status, xhr.responseJSON), 'danger');
                 }
             }
         });
@@ -375,7 +376,7 @@ $(document).ready(function() {
                 if(xhr.status === 403) {
                     showToast(xhr.responseJSON.message, 'warning');
                 } else {
-                    showToast('Failed to load user data.', 'danger');
+                    showToast(AppErrors.message(xhr.status, xhr.responseJSON), 'danger');
                 }
             }
         });
@@ -408,7 +409,7 @@ $(document).ready(function() {
                     $('#editUserModal').addClass('hidden');
                     showToast(xhr.responseJSON.message, 'warning');
                 } else {
-                    showToast('An error occurred while updating user.', 'danger');
+                    showToast(AppErrors.message(xhr.status, xhr.responseJSON), 'danger');
                 }
             }
         });
@@ -431,7 +432,7 @@ $(document).ready(function() {
                 if(xhr.status === 403) {
                     showToast(xhr.responseJSON.message, 'warning');
                 } else {
-                    showToast('Failed to delete user.', 'danger');
+                    showToast(AppErrors.message(xhr.status, xhr.responseJSON), 'danger');
                 }
             }
         });

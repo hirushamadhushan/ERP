@@ -64,7 +64,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-6 border-t border-slate-200">
                             @for($i = 0; $i < 10; $i++)<div><label for="contact-custom-{{ $i }}" class="{{ $labelClass }}">Custom Field {{ $i + 1 }}</label><input id="contact-custom-{{ $i }}" name="custom_fields[{{ $i }}]" value="{{ old('custom_fields.'.$i) }}" maxlength="255" placeholder="Custom Field {{ $i + 1 }}" class="{{ $inputClass }}"></div>@endfor
                         </div>
-                        <div class="pt-6 border-t border-slate-200"><div class="{{ in_array($type, ['customer', 'supplier']) ? 'max-w-2xl mx-auto' : '' }}"><label for="contact-shipping_address" class="{{ $labelClass }}">Shipping Address</label><textarea id="contact-shipping_address" name="shipping_address" rows="2" maxlength="2000" class="{{ $inputClass }}" placeholder="Shipping address">{{ old('shipping_address') }}</textarea></div></div>
+                        <div data-contact-types="commission" class="pt-6 border-t border-slate-200 {{ $type !== 'commission' ? 'hidden' : '' }}"><div><label for="contact-shipping_address" class="{{ $labelClass }}">Shipping Address</label><textarea id="contact-shipping_address" name="shipping_address" rows="2" maxlength="2000" class="{{ $inputClass }}" placeholder="Shipping address">{{ old('shipping_address') }}</textarea></div></div>
                     </div>
                 </details>
             </fieldset>

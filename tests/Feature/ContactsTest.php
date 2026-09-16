@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Contact;
+use App\Models\CustomerGroup;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -37,7 +38,7 @@ class ContactsTest extends TestCase
     private function signIn(): User
     {
         $user = User::factory()->create();
-        \App\Models\CustomerGroup::firstOrCreate(['name' => 'Retail']);
+        CustomerGroup::firstOrCreate(['name' => 'Retail']);
         $this->actingAs($user);
 
         return $user;
@@ -73,13 +74,19 @@ class ContactsTest extends TestCase
         ]);
         $page = $this->get('/contacts/supplier')->assertOk();
         foreach (array_keys($data) as $field) {
-            if ($field !== 'custom_fields') $page->assertSee('name="'.$field.'"', false);
+            if ($field !== 'custom_fields') {
+                $page->assertSee('name="'.$field.'"', false);
+            }
         }
-        for ($i = 0; $i < 10; $i++) $page->assertSee('name="custom_fields['.$i.']"', false);
+        for ($i = 0; $i < 10; $i++) {
+            $page->assertSee('name="custom_fields['.$i.']"', false);
+        }
         $page->assertSee('More information')->assertSee('Months')->assertSee('Days');
         $this->post('/contacts', $data)->assertSessionHasNoErrors()->assertRedirect('/contacts/supplier');
         $contact = Contact::firstOrFail();
-        foreach ($data as $field => $value) $this->assertEquals($value, $contact->$field, $field);
+        foreach ($data as $field => $value) {
+            $this->assertEquals($value, $contact->$field, $field);
+        }
         $this->getJson(route('contacts.show', $contact))->assertOk()->assertJsonPath('custom_fields.9', 'Value 10');
     }
 
@@ -90,7 +97,7 @@ class ContactsTest extends TestCase
             Contact::create($this->payload(['type' => $type, 'name' => 'Only-'.$type, 'contact_id' => 'TEST-'.$type]));
         }
         foreach (Contact::TYPES as $type => $title) {
-            $response = $this->get('/contacts/'.$type)->assertOk()->assertSee('Nexus ERP')->assertSee('Only-'.$type)->assertSee('contacts-table');
+            $response = $this->get('/contacts/'.$type)->assertOk()->assertSee('Nexus ERP')->assertSee('Only-'.$type)->assertSee('contacts-table')->assertSee('StickyDataTables.install', false)->assertSee('sticky-table-host', false);
             foreach (array_diff(array_keys(Contact::TYPES), [$type]) as $other) {
                 $response->assertDontSee('Only-'.$other);
             }
@@ -161,7 +168,8 @@ class ContactsTest extends TestCase
         $matching->forceFill(['due_balance' => 50, 'last_sale_at' => now()->subDays(100)])->save();
         Contact::create($this->payload(['contact_id' => 'C2', 'name' => 'Other customer', 'status' => 'inactive']));
         $this->get('/contacts/customer?'.http_build_query(['status' => 'active', 'opening' => 1, 'due' => 1, 'customer_group' => 'Retail', 'assigned_to' => $user->id, 'no_sales' => 30]))
-            ->assertOk()->assertSee('Matching customer')->assertDontSee('Other customer');
+            ->assertOk()->assertSee('data-auto-filter', false)->assertDontSee('Apply filters')
+            ->assertSee('Matching customer')->assertDontSee('Other customer');
     }
 
     public function test_contact_text_is_escaped_in_the_table(): void

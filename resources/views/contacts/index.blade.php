@@ -47,7 +47,7 @@
 
     <details open class="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
         <summary class="px-6 py-4 bg-purple-50/50 border-b border-purple-100 text-sm font-bold text-purple-700 cursor-pointer"><i class="bi bi-funnel-fill mr-2" aria-hidden="true"></i>Filters</summary>
-        <form method="GET" action="{{ route('contacts.index', $type) }}" class="p-6 space-y-5">
+        <form method="GET" action="{{ route('contacts.index', $type) }}" class="p-6 space-y-5" data-auto-filter>
             @if($type !== 'commission')
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     @foreach(['due' => $type === 'customer' ? 'Sell Due' : 'Purchase Due', 'returns' => $type === 'customer' ? 'Sell Return' : 'Purchase Return', 'advance' => 'Advance Balance', 'opening' => 'Opening Balance'] as $key => $label)
@@ -63,7 +63,7 @@
                 <div><label for="filter-assigned" class="{{ $labelClass }}">Assigned to</label><select id="filter-assigned" name="assigned_to" class="{{ $inputClass }}"><option value="">All users</option>@foreach($assignees as $assignee)<option value="{{ $assignee->id }}" @selected(request('assigned_to') == $assignee->id)>{{ $assignee->name }}</option>@endforeach</select></div>
                 <div><label for="filter-status" class="{{ $labelClass }}">Status</label><select id="filter-status" name="status" class="{{ $inputClass }}"><option value="">All statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="inactive" @selected(request('status') === 'inactive')>Inactive</option></select></div>
             </div>
-            <div class="flex items-center gap-2"><button type="submit" class="{{ $primaryClass }}"><i class="bi bi-funnel" aria-hidden="true"></i>Apply filters</button><a href="{{ route('contacts.index', $type) }}" class="{{ $secondaryClass }}">Reset</a></div>
+            @if(request()->query())<div><a href="{{ route('contacts.index', $type) }}" class="{{ $secondaryClass }}">Reset filters</a></div>@endif
         </form>
     </details>
 
@@ -72,7 +72,7 @@
             <div><h2 class="text-lg font-bold text-slate-900">{{ $type === 'commission' ? 'All commission agents' : 'All your '.$title }}</h2><p class="text-xs text-slate-400 mt-1">{{ $type === 'commission' ? 'Manage agent details and commission rates' : 'View, add and manage your '.strtolower($title) }}</p></div>
             <button id="add-contact" type="button" class="{{ $primaryClass }} shrink-0"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
         </div>
-        <div class="overflow-x-auto">
+        <div class="sticky-table-host">
             <table id="contacts-table" class="w-full text-left" style="width:100%">
                 <thead><tr><th>Action</th>@foreach($columns as $key => $label)<th>{{ $label }}</th>@endforeach</tr></thead>
                 <tbody>

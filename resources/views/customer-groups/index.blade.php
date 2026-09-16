@@ -13,7 +13,7 @@
         <h1 class="text-lg font-bold text-slate-900">All Customer Groups</h1>
         <button id="add-group" type="button" class="{{ $buttonClass }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
     </div>
-    <div class="overflow-x-auto">
+    <div class="sticky-table-host">
         <table id="groups-table" class="w-full text-left" style="width:100%">
             <thead><tr><th>Customer Group Name</th><th>Calculation Percentage (%)</th><th>Selling Price Group</th><th>Action</th></tr></thead>
             <tbody>
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const value = $('<div>').html(data).text().trim();
             return /^[=+\-@\t\r]/.test(value) ? "'" + value : value;
         } } };
-        $('#groups-table').DataTable({
-            pageLength: 25, order: [[0, 'asc']], scrollX: true, autoWidth: false,
+        const groupsTable = $('#groups-table').DataTable({
+            pageLength: 25, order: [[0, 'asc']], scrollX: false, autoWidth: false,
             columnDefs: [{ targets: 3, searchable: false, orderable: false }],
             dom: '<"flex flex-wrap items-center justify-between gap-4 mb-5"lBf>rt<"flex flex-wrap items-center justify-between gap-4 mt-4"ip>',
             buttons: [
@@ -164,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
             language: { emptyTable: 'No customer groups yet. Add a group to get started.', searchPlaceholder: 'Search groups…' }
         });
+        StickyDataTables.install(groupsTable);
     }
 });
 </script>

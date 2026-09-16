@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Serial Numbers Report</title>
+<style>body{font:14px Arial,sans-serif;padding:24px;color:#1e293b}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#f1f5f9}tr{break-inside:avoid}button{padding:10px 20px;margin-bottom:20px;cursor:pointer}@media print{button{display:none}body{padding:0}@page{size:A4 landscape;margin:12mm}}</style></head><body>
+<h1>Product Serial Numbers</h1><p>All records matching the selected filters · {{ now()->format('Y-m-d H:i') }}</p><button onclick="window.print()">Print Report</button>
+<table><thead><tr><th>#</th><th>Product</th><th>Location</th><th>Serial Number</th><th>Status</th><th>Sold Transaction ID</th></tr></thead><tbody>
+@forelse($records as $record)<tr><td>{{ $record->id }}</td><td>{{ $record->product->name }}</td><td>{{ $record->location->name }}</td><td>{{ $record->serial_number }}</td><td>{{ ucfirst($record->status) }}</td><td>{{ $record->sold_transaction_id ?? '—' }}</td></tr>@empty<tr><td colspan="6">No serial numbers found.</td></tr>@endforelse
+</tbody></table></body></html>

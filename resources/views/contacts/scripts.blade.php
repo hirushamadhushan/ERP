@@ -71,9 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const error = document.getElementById('contact-load-error');
         error.hidden = true;
         try {
-            const response = await fetch(button.dataset.contactUrl, { headers: { 'Accept': 'application/json' } });
-            if (!response.ok) throw new Error('Unable to load this contact. Refresh the page and try again.');
-            const contact = await response.json();
+            const contact = await AppErrors.request(button.dataset.contactUrl);
             resetForm();
             Object.entries(contact).forEach(([key, value]) => {
                 if (key === 'custom_fields') {
@@ -118,11 +116,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         };
-        $('#contacts-table').DataTable({
+        const contactsTable = $('#contacts-table').DataTable({
             pageLength: 25,
             order: [],
             autoWidth: false,
-            scrollX: true,
+            scrollX: false,
             dom: '<"flex flex-wrap items-center justify-between gap-4 mb-5"lBf>rt<"flex flex-wrap items-center justify-between gap-4 mt-4"ip>',
             columnDefs: [{ targets: 0, orderable: false, searchable: false }],
             buttons: [
@@ -142,6 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         });
+        StickyDataTables.install(contactsTable);
     }
 });
 </script>

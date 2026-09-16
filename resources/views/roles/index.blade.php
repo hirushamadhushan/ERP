@@ -23,7 +23,7 @@
         </div>
 
         <!-- Yajra DataTable -->
-        <div class="table-responsive">
+        <div class="sticky-table-host">
             <table id="rolesTable" class="table w-full text-left border-collapse">
                 <thead>
                     <tr>
@@ -230,6 +230,7 @@ $(document).ready(function () {
         pageLength: 25,
         language: { search: 'Search:', lengthMenu: 'Show _MENU_ entries' }
     });
+    StickyDataTables.install(table);
 
     // ─── Modal helpers ────────────────────────────────────────────────────────
     function openModal(id)  { $(id).css('display','flex'); }
@@ -268,6 +269,7 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 if (xhr.status === 422) $.each(xhr.responseJSON.errors, function (k, v) { $('.add_' + k + '_error').text(v[0]); });
+                else AppErrors.show(AppErrors.message(xhr.status,xhr.responseJSON));
             }
         });
     });
@@ -305,6 +307,7 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 if (xhr.status === 422) $.each(xhr.responseJSON.errors, function (k, v) { $('.edit_' + k + '_error').text(v[0]); });
+                else AppErrors.show(AppErrors.message(xhr.status,xhr.responseJSON));
             }
         });
     });
