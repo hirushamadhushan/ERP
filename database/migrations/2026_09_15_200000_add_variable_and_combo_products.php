@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->decimal('purchase_price_inc', 18, 4);
             $table->decimal('margin', 12, 4);
             $table->decimal('selling_price', 18, 4);
-            $table->string('image_path')->nullable();
+            $table->longText('image_path')->nullable();
             $table->timestamps();
             $table->unique(['product_id', 'variation_template_id', 'value']);
         });

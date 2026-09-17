@@ -45,7 +45,7 @@ class ErrorHandlingTest extends TestCase
     public function test_errors_have_safe_html_and_json_with_correct_statuses(): void
     {
         foreach ([403, 404, 405, 413, 419, 429, 503] as $status) {
-            $this->get('/_test/errors/'.$status)->assertStatus($status)->assertSee('Nexus ERP')->assertDontSee('secret technical details');
+            $this->get('/_test/errors/'.$status)->assertStatus($status)->assertSee('Codeza ERP')->assertDontSee('secret technical details');
             $this->getJson('/_test/errors/'.$status)->assertStatus($status)->assertJsonStructure(['message', 'status'])->assertDontSee('secret technical details');
         }
     }

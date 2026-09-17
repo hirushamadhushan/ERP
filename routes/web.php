@@ -32,4 +32,8 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/contact-imports.php';
     require __DIR__.'/customer-groups.php';
     require __DIR__.'/contacts.php';
+
+    // Settings routes
+    require __DIR__.'/business-settings.php';
+    require __DIR__.'/business-locations.php';
 });

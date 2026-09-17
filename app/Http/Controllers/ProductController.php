@@ -8,6 +8,7 @@ use App\Http\Requests\QuickReferenceRequest;
 use App\Http\Requests\SaveOpeningStockRequest;
 use App\Http\Requests\SaveProductRequest;
 use App\Models\Brand;
+use App\Models\BusinessSetting;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Product;
@@ -85,7 +86,7 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        return view('products.form', $this->references() + [
+        return view('products.form', $this->references($product) + [
             'product' => $product->load(['locations', 'variants.template', 'comboItems']),
         ]);
     }
@@ -117,12 +118,32 @@ class ProductController extends Controller
     public function attachment(Product $product, string $kind)
     {
         abort_unless(in_array($kind, ['image', 'variant_image', 'brochure'], true), 404);
-        $path = $product->{$kind.'_path'};
-        abort_unless($path && Storage::disk('local')->exists($path), 404);
+        $value = $product->{$kind.'_path'};
+        abort_unless((bool) $value, 404);
 
-        return $kind === 'brochure'
-            ? Storage::disk('local')->download($path, basename($product->brochure_name ?? 'brochure'))
-            : response()->file(Storage::disk('local')->path($path), ['X-Content-Type-Options' => 'nosniff']);
+        if ($kind === 'brochure') {
+            abort_unless(Storage::disk('local')->exists($value), 404);
+
+            return Storage::disk('local')->download($value, basename($product->brochure_name ?? 'brochure'));
+        }
+
+        if (str_starts_with($value, 'data:image/')) {
+            $parts = explode(',', $value, 2);
+            if (count($parts) === 2) {
+                preg_match('/data:(image\/[a-zA-Z0-9.-]+);base64/', $parts[0], $matches);
+                $mime = $matches[1] ?? 'image/png';
+                $decoded = base64_decode($parts[1]);
+
+                return response($decoded, 200, [
+                    'Content-Type' => $mime,
+                    'X-Content-Type-Options' => 'nosniff',
+                ]);
+            }
+        }
+
+        abort_unless(Storage::disk('local')->exists($value), 404);
+
+        return response()->file(Storage::disk('local')->path($value), ['X-Content-Type-Options' => 'nosniff']);
     }
 
     public function quickReference(QuickReferenceRequest $request)
@@ -140,15 +161,26 @@ class ProductController extends Controller
         return response()->json($record, 201);
     }
 
-    private function references(): array
+    private function references(?Product $product = null): array
     {
+        $businessSettings = BusinessSetting::current();
+        $defaultMargin = $businessSettings->default_profit_percent ?? 25;
+        $productSettings = $businessSettings->other_settings['product'] ?? [];
+
         return [
             'units' => Unit::orderBy('name')->get(),
             'brands' => Brand::orderBy('name')->get(),
             'categories' => Category::orderBy('name')->get(),
-            'locations' => Location::orderBy('name')->get(),
+            'locations' => Location::query()
+                ->when(\Illuminate\Support\Facades\Schema::hasColumn('locations', 'is_active'), function ($query) use ($product) {
+                    $assignedIds = $product?->locations()->pluck('locations.id')->all() ?? [];
+                    $query->where(fn ($locations) => $locations->where('is_active', true)->orWhereIn('id', $assignedIds));
+                })
+                ->orderBy('name')->get(),
             'variationTemplates' => VariationTemplate::orderBy('name')->get(),
-            'comboProducts' => Product::where('product_type', '!=', 'combo')->orderBy('name')->get(['id', 'name', 'code', 'selling_price']),
+            'comboProducts' => Product::where('product_type', '!=', 'combo')->orderBy('name')->get(['id', 'name', 'code', 'purchase_price', 'selling_price']),
+            'defaultMargin' => $defaultMargin,
+            'productSettings' => $productSettings,
         ];
     }
 

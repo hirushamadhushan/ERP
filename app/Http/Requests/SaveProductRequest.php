@@ -19,7 +19,12 @@ class SaveProductRequest extends BaseFormRequest
             'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->whereNull('parent_id')],
             'subcategory_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('parent_id', $this->input('category_id'))],
             'location_ids' => ['required', 'array', 'min:1'],
-            'location_ids.*' => ['required', 'integer', 'distinct', 'exists:locations,id'],
+            'location_ids.*' => ['required', 'integer', 'distinct', Rule::exists('locations', 'id')->where(function ($query) use ($product) {
+                if (\Illuminate\Support\Facades\Schema::hasColumn('locations', 'is_active')) {
+                    $assignedIds = $product?->locations()->pluck('locations.id')->all() ?? [];
+                    $query->where(fn ($locations) => $locations->where('is_active', true)->orWhereIn('id', $assignedIds));
+                }
+            })],
             'barcode_type' => ['required', Rule::in(['CODE128', 'CODE39'])],
             'manage_stock' => ['required', 'boolean'],
             'enable_serial' => ['required', 'boolean'],
@@ -43,7 +48,7 @@ class SaveProductRequest extends BaseFormRequest
             'variation_template_id' => ['nullable', 'required_if:product_type,variable', 'integer', 'exists:variation_templates,id'],
             'variants' => ['nullable', 'required_if:product_type,variable', 'array', 'min:1'],
             'variants.*.value' => ['required_if:product_type,variable', 'string', 'max:100', 'distinct'],
-            'variants.*.sku' => ['required_if:product_type,variable', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/D', 'distinct', Rule::unique('product_variants', 'sku')->whereNot('product_id', $product?->id)],
+            'variants.*.sku' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/D', 'distinct', Rule::unique('product_variants', 'sku')->whereNot('product_id', $product?->id)],
             'variants.*.purchase_price' => ['required_if:product_type,variable', 'numeric', 'min:0', 'max:999999999'],
             'variants.*.selling_price' => ['required_if:product_type,variable', 'numeric', 'min:0', 'max:999999999'],
             'variant_images' => ['nullable', 'array'],

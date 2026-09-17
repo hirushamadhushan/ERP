@@ -28,13 +28,16 @@ class ProductCatalogTest extends TestCase
             'variation_template_id' => $template->id,
             'variants' => [
                 ['value' => 'S', 'sku' => 'SHIRT-S', 'purchase_price' => 100, 'selling_price' => 150],
-                ['value' => 'M', 'sku' => 'SHIRT-M', 'purchase_price' => 110, 'selling_price' => 165],
+                ['value' => 'M', 'sku' => '', 'purchase_price' => 110, 'selling_price' => 165],
                 ['value' => 'L', 'sku' => 'SHIRT-L', 'purchase_price' => 120, 'selling_price' => 180],
             ],
         ]);
         $this->post('/products', $variable)->assertSessionHasNoErrors();
         $this->assertDatabaseCount('product_variants', 3);
-        $this->assertDatabaseHas('product_variants', ['sku' => 'SHIRT-M', 'value' => 'M']);
+        $this->assertDatabaseHas('product_variants', ['sku' => 'SHIRT-001-M', 'value' => 'M']);
+        $variableProduct = Product::where('code', 'SHIRT-001')->firstOrFail();
+        $this->put('/products/'.$variableProduct->id, $variable)->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('product_variants', ['product_id' => $variableProduct->id, 'sku' => 'SHIRT-001-M', 'value' => 'M']);
 
         $combo = array_replace($base, [
             'name' => 'Starter Bundle', 'sku' => 'BUNDLE-001', 'product_type' => 'combo', 'enable_serial' => 0,
@@ -43,7 +46,9 @@ class ProductCatalogTest extends TestCase
         $this->post('/products', $combo)->assertSessionHasNoErrors();
         $comboProduct = Product::where('code', 'BUNDLE-001')->firstOrFail();
         $this->assertDatabaseHas('combo_product_items', ['combo_product_id' => $comboProduct->id, 'item_product_id' => $baseProduct->id, 'quantity' => 2]);
-        $this->get('/products/create')->assertOk()->assertSee('Variable')->assertSee('Combo')->assertSee('Sizes');
+        $this->assertEquals(200, $comboProduct->purchase_price);
+        $this->assertEquals(250, $comboProduct->selling_price);
+        $this->get('/products/create')->assertOk()->assertSee('Variable')->assertSee('Combo')->assertSee('Sizes')->assertSee('Enter product name / SKU / Scan bar code')->assertSee('Net Total Amount');
     }
 
     public function test_product_list_filters_stock_report_and_safe_delete(): void
@@ -126,7 +131,7 @@ class ProductCatalogTest extends TestCase
         $data['image'] = UploadedFile::fake()->createWithContent('image.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aJ1kAAAAASUVORK5CYII='));
         $this->post('/products', $data)->assertSessionHasNoErrors();
         $product = Product::firstOrFail();
-        Storage::disk('local')->assertExists($product->image_path);
+        $this->assertStringStartsWith('data:image/png;base64,', $product->image_path);
         $this->get('/products/1/files/image')->assertOk();
         $this->delete('/units/1')->assertSessionHas('unit_error');
         $this->put('/units/1', ['name' => 'Pieces', 'short_name' => 'Pc', 'allow_decimal' => 1])->assertSessionHasErrors('allow_decimal');
@@ -148,7 +153,7 @@ class ProductCatalogTest extends TestCase
         if (DB::connection()->getDriverName() !== 'sqlite' || DB::connection()->getDatabaseName() !== ':memory:') {
             throw new \RuntimeException('Memory tests only.');
         }
-        $this->artisan('migrate', ['--path' => ['database/migrations/0001_01_01_000000_create_users_table.php', 'database/migrations/2026_09_14_100000_create_units_table.php', 'database/migrations/2026_09_14_110000_create_categories_and_brands_tables.php', 'database/migrations/2026_09_14_120000_create_variation_templates_table.php', 'database/migrations/2026_09_14_140000_create_product_serial_numbers_tables.php', 'database/migrations/2026_09_14_150000_expand_product_catalog.php', 'database/migrations/2026_09_15_200000_add_variable_and_combo_products.php'], '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate', ['--path' => ['database/migrations/0001_01_01_000000_create_users_table.php', 'database/migrations/2026_09_14_100000_create_units_table.php', 'database/migrations/2026_09_14_110000_create_categories_and_brands_tables.php', 'database/migrations/2026_09_14_120000_create_variation_templates_table.php', 'database/migrations/2026_09_14_140000_create_product_serial_numbers_tables.php', 'database/migrations/2026_09_14_150000_expand_product_catalog.php', 'database/migrations/2026_09_15_200000_add_variable_and_combo_products.php', 'database/migrations/2026_09_17_130000_change_image_columns_to_longtext.php'], '--force' => true])->assertExitCode(0);
         Storage::fake('local');
     }
 

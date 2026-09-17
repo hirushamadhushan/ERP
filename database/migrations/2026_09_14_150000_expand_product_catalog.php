@@ -24,10 +24,10 @@ return new class extends Migration
             $table->boolean('not_for_selling')->default(false);
             $table->decimal('alert_quantity', 18, 4)->nullable();
             $table->text('description')->nullable();
-            $table->string('image_path')->nullable();
+            $table->longText('image_path')->nullable();
             $table->string('brochure_path')->nullable();
             $table->string('brochure_name')->nullable();
-            $table->string('variant_image_path')->nullable();
+            $table->longText('variant_image_path')->nullable();
             $table->string('weight', 100)->nullable();
             $table->json('custom_fields')->nullable();
             $table->string('product_type', 20)->default('single');

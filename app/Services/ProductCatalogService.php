@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Http\Requests\SaveProductRequest;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\BusinessSetting;
 use App\Models\Unit;
 use App\Models\VariationTemplate;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -131,7 +133,8 @@ class ProductCatalogService
     private function resolveSku(array $data, Product $product): string
     {
         $enteredSku = trim($data['sku'] ?? '');
-        $code = $enteredSku !== '' ? $enteredSku : ($product->code ?? 'PRD-'.Str::ulid());
+        $prefix = strtoupper(trim((string) (BusinessSetting::current()->other_settings['product']['sku_prefix'] ?? '')));
+        $code = $enteredSku !== '' ? $enteredSku : ($product->code ?? ($prefix !== '' ? $prefix : 'PRD').'-'.Str::ulid());
         if (Product::where('sku_key', strtolower($code))->when($product->exists, fn ($query) => $query->where('id', '!=', $product->id))->exists()) {
             throw ValidationException::withMessages(['sku' => 'This SKU is already in use.']);
         }
@@ -161,7 +164,11 @@ class ProductCatalogService
             }
             $pricedItems = Product::whereIn('id', $itemIds)->get()->keyBy('id');
             $data['purchase_price'] = collect($comboItems)->sum(fn ($item) => (float) $pricedItems[$item['product_id']]->purchase_price * (float) $item['quantity']);
-            $data['selling_price'] = collect($comboItems)->sum(fn ($item) => (float) $pricedItems[$item['product_id']]->selling_price * (float) $item['quantity']);
+            $data['selling_price'] = bcmul(
+                (string) $data['purchase_price'],
+                bcadd('1', bcdiv((string) $data['margin'], '100', 8), 8),
+                4
+            );
         }
     }
 
@@ -193,17 +200,25 @@ class ProductCatalogService
             if (! $request->hasFile($field)) {
                 continue;
             }
-            $path = $request->file($field)->store('products', 'local');
-            if (! $path) {
-                throw new \RuntimeException('Unable to store product attachment.');
-            }
-            $newFiles[] = $path;
-            if ($product->$column) {
-                $oldFiles[] = $product->$column;
-            }
-            $data[$column] = $path;
             if ($field === 'brochure') {
+                $path = $request->file($field)->store('products', 'local');
+                if (! $path) {
+                    throw new \RuntimeException('Unable to store product attachment.');
+                }
+                $newFiles[] = $path;
+                if ($product->$column && ! str_starts_with($product->$column, 'data:')) {
+                    $oldFiles[] = $product->$column;
+                }
+                $data[$column] = $path;
                 $data['brochure_name'] = $request->file($field)->getClientOriginalName();
+            } else {
+                $file = $request->file($field);
+                $mime = $file->getMimeType() ?: 'image/jpeg';
+                $base64 = 'data:'.$mime.';base64,'.base64_encode(file_get_contents($file->getRealPath()));
+                if ($product->$column && ! str_starts_with($product->$column, 'data:')) {
+                    $oldFiles[] = $product->$column;
+                }
+                $data[$column] = $base64;
             }
         }
     }
@@ -219,12 +234,10 @@ class ProductCatalogService
                 $margin = bccomp($purchase, '0', 4) > 0 ? bcmul(bcdiv(bcsub($selling, $purchase, 4), $purchase, 8), '100', 4) : '0';
                 $imagePath = $existingVariants->get($variant['value'])?->image_path;
                 if ($request->hasFile("variant_images.$index")) {
-                    $newPath = $request->file("variant_images.$index")->store('products/variants', 'local');
-                    if (! $newPath) {
-                        throw new \RuntimeException('Unable to store variation image.');
-                    }
-                    $newFiles[] = $newPath;
-                    if ($imagePath) {
+                    $file = $request->file("variant_images.$index");
+                    $mime = $file->getMimeType() ?: 'image/jpeg';
+                    $newPath = 'data:'.$mime.';base64,'.base64_encode(file_get_contents($file->getRealPath()));
+                    if ($imagePath && ! str_starts_with($imagePath, 'data:')) {
                         $oldFiles[] = $imagePath;
                     }
                     $imagePath = $newPath;
@@ -232,7 +245,7 @@ class ProductCatalogService
                 $product->variants()->create([
                     'variation_template_id' => $templateId,
                     'value' => $variant['value'],
-                    'sku' => $variant['sku'],
+                    'sku' => $this->variantSku($variant, $product, $existingVariants->get($variant['value'])?->sku),
                     'purchase_price' => $purchase,
                     'purchase_price_inc' => bcmul($purchase, $factor, 4),
                     'margin' => $margin,
@@ -242,20 +255,39 @@ class ProductCatalogService
             }
         }
         foreach ($existingVariants as $oldVariant) {
-            if ($oldVariant->image_path && ($product->product_type !== 'variable' || ! collect($variants)->contains('value', $oldVariant->value))) {
+            if ($oldVariant->image_path && ! str_starts_with($oldVariant->image_path, 'data:') && ($product->product_type !== 'variable' || ! collect($variants)->contains('value', $oldVariant->value))) {
                 $oldFiles[] = $oldVariant->image_path;
             }
         }
     }
 
+    private function variantSku(array $variant, Product $product, ?string $existingSku): string
+    {
+        $enteredSku = trim($variant['sku'] ?? '');
+        if ($enteredSku !== '') {
+            return $enteredSku;
+        }
+        if ($existingSku) {
+            return $existingSku;
+        }
+
+        $suffix = strtoupper(Str::slug($variant['value'], '-')) ?: 'VAR';
+        $candidate = substr($product->code, 0, 60).'-'.substr($suffix, 0, 30);
+
+        return ProductVariant::where('sku', $candidate)->exists()
+            ? 'VAR-'.Str::ulid()
+            : $candidate;
+    }
+
     private function cleanupAttachments(array $paths): void
     {
-        if ($paths === []) {
+        $diskPaths = array_filter($paths, fn ($path) => $path && ! str_starts_with($path, 'data:'));
+        if ($diskPaths === []) {
             return;
         }
         try {
-            if (! Storage::disk('local')->delete($paths)) {
-                Log::warning('Product attachment cleanup needs retry.', ['paths' => $paths]);
+            if (! Storage::disk('local')->delete(array_values($diskPaths))) {
+                Log::warning('Product attachment cleanup needs retry.', ['paths' => $diskPaths]);
             }
         } catch (\Throwable $exception) {
             report($exception);

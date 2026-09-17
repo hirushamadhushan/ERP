@@ -97,7 +97,7 @@ class ContactsTest extends TestCase
             Contact::create($this->payload(['type' => $type, 'name' => 'Only-'.$type, 'contact_id' => 'TEST-'.$type]));
         }
         foreach (Contact::TYPES as $type => $title) {
-            $response = $this->get('/contacts/'.$type)->assertOk()->assertSee('Nexus ERP')->assertSee('Only-'.$type)->assertSee('contacts-table')->assertSee('StickyDataTables.install', false)->assertSee('sticky-table-host', false);
+            $response = $this->get('/contacts/'.$type)->assertOk()->assertSee('Codeza ERP')->assertSee('Only-'.$type)->assertSee('contacts-table')->assertSee('StickyDataTables.install', false)->assertSee('sticky-table-host', false);
             foreach (array_diff(array_keys(Contact::TYPES), [$type]) as $other) {
                 $response->assertDontSee('Only-'.$other);
             }

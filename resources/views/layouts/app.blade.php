@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Nexus ERP') – Nexus ERP</title>
+    <title>@yield('title', 'Codeza ERP') – Codeza ERP</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -127,7 +127,7 @@
                     <i class="bi bi-box-seam-fill text-lg"></i>
                 </div>
                 <div>
-                    <span class="font-bold text-lg text-slate-900 leading-tight">Nexus ERP</span>
+                    <span class="font-bold text-lg text-slate-900 leading-tight">Codeza ERP</span>
                     <span class="block text-[10px] font-semibold text-purple-500 uppercase tracking-wider">Enterprise v4.2</span>
                 </div>
             </div>
@@ -166,8 +166,8 @@
                 <p class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-4 mb-2">System</p>
 
                 <!-- Settings -->
-                <a href="#"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-purple-50 hover:text-purple-700 transition-all duration-150">
+                <a href="{{ route('business.settings.index') }}"
+                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs(['business.*', 'settings.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-gear-fill text-base"></i>
                     Settings
                 </a>
@@ -262,10 +262,19 @@
                             <i class="bi bi-upload" aria-hidden="true"></i>Import Contacts
                         </a>
                     </nav>
+                    @elseif(request()->routeIs('business.*'))
+                    <nav aria-label="Settings" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                        @foreach([
+                            ['business.settings.index', 'Business Settings', 'bi-sliders', request()->routeIs('business.settings.*')],
+                            ['business.locations.index', 'Business Locations', 'bi-geo-alt', request()->routeIs('business.locations.*')],
+                        ] as [$settingsRoute, $settingsLabel, $settingsIcon, $isActive])
+                            <a href="{{ route($settingsRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $settingsIcon }}" aria-hidden="true"></i>{{ $settingsLabel }}</a>
+                        @endforeach
+                    </nav>
                     @else
                     <div>
                         <h1 class="text-base font-bold text-slate-900">@yield('title', 'Dashboard')</h1>
-                        <p class="text-[11px] text-slate-400">@yield('subtitle', 'Nexus ERP System')</p>
+                        <p class="text-[11px] text-slate-400">@yield('subtitle', 'Codeza ERP System')</p>
                     </div>
                     @endif
                     </div>
@@ -281,6 +290,8 @@
 
                 @yield('content')
             </main>
+
+            @include('partials.app-footer')
 
         </div>
     </div>
