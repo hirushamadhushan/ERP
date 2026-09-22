@@ -22,7 +22,7 @@
             </tr></thead>
             <tbody>
             @foreach($locations as $location)
-                @php($locationData = $location->only(['id','name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme','invoice_layout_pos','invoice_layout_sale']))
+                @php($locationData = $location->only(['id','name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme_id','invoice_layout_pos_id','invoice_layout_sale_id']))
                 <tr>
                     <td class="font-semibold text-slate-800">{{ $location->name }}@unless($location->is_active)<span class="mt-1 block text-xs font-medium text-slate-500">Inactive</span>@endunless</td>
                     <td>{{ $location->code }}</td>
@@ -32,9 +32,9 @@
                     <td>{{ $location->state ?: '—' }}</td>
                     <td>{{ $location->country ?: '—' }}</td>
                     <td>{{ $location->price_group ?: '—' }}</td>
-                    <td>{{ $location->invoice_scheme }}</td>
-                    <td>{{ $location->invoice_layout_pos }}</td>
-                    <td>{{ $location->invoice_layout_sale }}</td>
+                    <td>{{ $location->invoiceScheme?->name }}</td>
+                    <td>{{ $location->invoiceLayoutPos?->name }}</td>
+                    <td>{{ $location->invoiceLayoutSale?->name }}</td>
                     <td><div class="flex min-w-max flex-wrap gap-1.5">
                         <button type="button" class="edit-location rounded-lg bg-purple-50 px-2.5 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100" data-location='@json($locationData)' data-url="{{ route('business.locations.update', $location) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Edit</button>
                         <button type="button" class="settings-location rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200" data-location='@json($locationData)' data-url="{{ route('business.locations.update', $location) }}"><i class="bi bi-sliders" aria-hidden="true"></i> Settings</button>
@@ -57,9 +57,8 @@
                 <div><label for="location-{{ $field }}" class="mb-1.5 block text-xs font-bold text-slate-700">{{ $label }}@if(in_array($field, ['name','code'])) <span class="text-rose-500">*</span>@endif</label><input id="location-{{ $field }}" name="{{ $field }}" value="{{ old($field) }}" maxlength="{{ $field === 'code' ? 100 : 255 }}" @if(in_array($field, ['name','code'])) required @endif class="{{ $fieldClass }}"></div>
             @endforeach
             <div class="sm:col-span-2 border-t border-slate-100 pt-3 text-sm font-bold text-purple-700" id="invoice-settings-heading">Invoice Settings</div>
-            @foreach(['invoice_scheme' => 'Invoice scheme', 'invoice_layout_pos' => 'Invoice layout for POS', 'invoice_layout_sale' => 'Invoice layout for sale'] as $field => $label)
-                <div><label for="location-{{ $field }}" class="mb-1.5 block text-xs font-bold text-slate-700">{{ $label }}</label><input id="location-{{ $field }}" name="{{ $field }}" value="{{ old($field, 'Default') }}" maxlength="255" required class="{{ $fieldClass }}"></div>
-            @endforeach
+            <div><label for="location-invoice_scheme_id" class="mb-1.5 block text-xs font-bold text-slate-700">Invoice scheme</label><select id="location-invoice_scheme_id" name="invoice_scheme_id" required class="{{ $fieldClass }}">@foreach($invoiceSchemes as $option)<option value="{{ $option->id }}">{{ $option->name }}</option>@endforeach</select></div>
+            @foreach(['invoice_layout_pos_id'=>'Invoice layout for POS','invoice_layout_sale_id'=>'Invoice layout for sale'] as $field=>$label)<div><label for="location-{{ $field }}" class="mb-1.5 block text-xs font-bold text-slate-700">{{ $label }}</label><select id="location-{{ $field }}" name="{{ $field }}" required class="{{ $fieldClass }}">@foreach($invoiceLayouts as $option)<option value="{{ $option->id }}">{{ $option->name }}</option>@endforeach</select></div>@endforeach
         </div>
         <div class="flex justify-end gap-2 border-t border-purple-100 px-6 py-4"><button type="button" data-close-location class="rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-600">Close</button><button type="submit" class="rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-purple-700">Save</button></div>
     </form>
@@ -76,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dialog = document.getElementById('location-dialog');
     const form = document.getElementById('location-form');
     const title = document.getElementById('location-dialog-title');
-    const fields = ['name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme','invoice_layout_pos','invoice_layout_sale'];
+    const fields = ['name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme_id','invoice_layout_pos_id','invoice_layout_sale_id'];
     let previousFocus;
     function openDialog(button, settingsOnly = false) {
         previousFocus = document.activeElement;
@@ -85,10 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
         form.action = button ? button.dataset.url : @json(route('business.locations.store'));
         form.elements._method.value = button ? 'PUT' : 'POST';
         form.elements._location_id.value = location?.id ?? '';
-        fields.forEach(field => { form.elements[field].value = location?.[field] ?? (field.startsWith('invoice_') ? 'Default' : ''); });
+        fields.forEach(field => { form.elements[field].value = location?.[field] ?? (field.startsWith('invoice_') ? form.elements[field].options[0]?.value : ''); });
         title.textContent = location ? (settingsOnly ? 'Location Settings: ' : 'Edit Business Location: ') + location.name : 'Add Business Location';
         dialog.showModal();
-        if (settingsOnly) document.getElementById('location-invoice_scheme').focus();
+        if (settingsOnly) document.getElementById('location-invoice_scheme_id').focus();
         else form.elements.name.focus();
     }
     document.getElementById('add-location').addEventListener('click', () => openDialog(null));

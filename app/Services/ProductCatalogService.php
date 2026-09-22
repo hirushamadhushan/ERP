@@ -8,6 +8,7 @@ use App\Models\ProductVariant;
 use App\Models\BusinessSetting;
 use App\Models\Unit;
 use App\Models\VariationTemplate;
+use App\Models\VariationTemplateValue;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -75,6 +76,7 @@ class ProductCatalogService
             throw ValidationException::withMessages(['selling_price' => 'The selling price produces a margin above 999999%.']);
         }
 
+        unset($data['purchase_price_inc'], $data['margin']);
         $action = $data['save_action'];
         $locations = $data['location_ids'];
         unset($data['sku'], $data['location_ids'], $data['save_action'], $data['image'], $data['variant_image'], $data['variant_images'], $data['brochure'], $data['variants'], $data['variation_template_id'], $data['combo_items']);
@@ -133,7 +135,7 @@ class ProductCatalogService
     private function resolveSku(array $data, Product $product): string
     {
         $enteredSku = trim($data['sku'] ?? '');
-        $prefix = strtoupper(trim((string) (BusinessSetting::current()->other_settings['product']['sku_prefix'] ?? '')));
+        $prefix = strtoupper(trim((string) (BusinessSetting::current()->productSettings?->sku_prefix ?? '')));
         $code = $enteredSku !== '' ? $enteredSku : ($product->code ?? ($prefix !== '' ? $prefix : 'PRD').'-'.Str::ulid());
         if (Product::where('sku_key', strtolower($code))->when($product->exists, fn ($query) => $query->where('id', '!=', $product->id))->exists()) {
             throw ValidationException::withMessages(['sku' => 'This SKU is already in use.']);
@@ -226,7 +228,7 @@ class ProductCatalogService
     private function syncVariants(SaveProductRequest $request, Product $product, array $data, array $variants, ?int $templateId, string $factor, array &$newFiles, array &$oldFiles): void
     {
         $existingVariants = $product->variants()->get()->keyBy('value');
-        $product->variants()->delete();
+        $keptIds=[];
         if ($product->product_type === 'variable') {
             foreach ($variants as $index => $variant) {
                 $purchase = (string) $variant['purchase_price'];
@@ -242,18 +244,21 @@ class ProductCatalogService
                     }
                     $imagePath = $newPath;
                 }
-                $product->variants()->create([
-                    'variation_template_id' => $templateId,
-                    'value' => $variant['value'],
+                $savedVariant=$product->variants()->updateOrCreate([
+                    'variation_template_value_id' => VariationTemplateValue::where('variation_template_id', $templateId)->where('value', $variant['value'])->value('id'),
+                ],[
                     'sku' => $this->variantSku($variant, $product, $existingVariants->get($variant['value'])?->sku),
                     'purchase_price' => $purchase,
-                    'purchase_price_inc' => bcmul($purchase, $factor, 4),
-                    'margin' => $margin,
                     'selling_price' => $selling,
                     'image_path' => $imagePath,
                 ]);
+                $keptIds[]=$savedVariant->id;
             }
         }
+        if (\App\Models\ProductSerialNumber::whereIn('product_variant_id',$product->variants()->whereNotIn('id',$keptIds)->pluck('id'))->exists()) {
+            throw ValidationException::withMessages(['variants'=>'A variant with serial-number history cannot be removed.']);
+        }
+        $product->variants()->whereNotIn('id',$keptIds)->delete();
         foreach ($existingVariants as $oldVariant) {
             if ($oldVariant->image_path && ! str_starts_with($oldVariant->image_path, 'data:') && ($product->product_type !== 'variable' || ! collect($variants)->contains('value', $oldVariant->value))) {
                 $oldFiles[] = $oldVariant->image_path;

@@ -98,11 +98,6 @@ class UserRoleTest extends TestCase
         if (DB::connection()->getDriverName() !== 'sqlite' || DB::connection()->getDatabaseName() !== ':memory:') {
             throw new \RuntimeException('Memory tests only.');
         }
-        $this->artisan('migrate', ['--path' => [
-            'database/migrations/0001_01_01_000000_create_users_table.php',
-            'database/migrations/2026_09_10_090000_add_role_status_to_users_table.php',
-            'database/migrations/2026_09_10_100000_create_roles_table.php',
-            'database/migrations/2026_09_10_102405_add_permissions_to_roles_table.php',
-        ], '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate', ['--force' => true])->assertExitCode(0);
     }
 }

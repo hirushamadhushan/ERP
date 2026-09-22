@@ -120,13 +120,8 @@ class BusinessSettingController extends Controller
 
         $productSettings = $data['product_settings'] ?? null;
         unset($data['product_settings']);
-        if ($productSettings !== null) {
-            $data['other_settings'] = array_replace($settings->other_settings ?? [], [
-                'product' => $productSettings,
-            ]);
-        }
-
         $settings->update($data);
+        if ($productSettings !== null) $settings->productSettings()->updateOrCreate([], $productSettings);
 
         return redirect()->route('business.settings.index')->with('status', 'Business settings updated successfully.');
     }

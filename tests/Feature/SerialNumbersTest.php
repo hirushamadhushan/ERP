@@ -58,7 +58,7 @@ class SerialNumbersTest extends TestCase
         if (DB::connection()->getDriverName() !== 'sqlite' || DB::connection()->getDatabaseName() !== ':memory:') {
             throw new \RuntimeException('Only in-memory tests allowed.');
         }
-        $this->artisan('migrate', ['--path' => ['database/migrations/0001_01_01_000000_create_users_table.php', 'database/migrations/2026_09_14_100000_create_units_table.php', 'database/migrations/2026_09_14_110000_create_categories_and_brands_tables.php', 'database/migrations/2026_09_14_140000_create_product_serial_numbers_tables.php', 'database/migrations/2026_09_14_150000_expand_product_catalog.php'], '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate', ['--force' => true])->assertExitCode(0);
     }
 
     private function setupReferences(): array

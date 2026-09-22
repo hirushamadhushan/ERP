@@ -36,4 +36,6 @@ Route::middleware('auth')->group(function () {
     // Settings routes
     require __DIR__.'/business-settings.php';
     require __DIR__.'/business-locations.php';
+    require __DIR__.'/invoice-settings.php';
+    require __DIR__.'/payment-accounts.php';
 });

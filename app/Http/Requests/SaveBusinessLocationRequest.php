@@ -23,9 +23,9 @@ class SaveBusinessLocationRequest extends FormRequest
             'state' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'price_group' => ['nullable', 'string', 'max:255'],
-            'invoice_scheme' => ['required', 'string', 'max:255'],
-            'invoice_layout_pos' => ['required', 'string', 'max:255'],
-            'invoice_layout_sale' => ['required', 'string', 'max:255'],
+            'invoice_scheme_id' => ['required', 'integer', 'exists:invoice_schemes,id'],
+            'invoice_layout_pos_id' => ['required', 'integer', 'exists:invoice_layouts,id'],
+            'invoice_layout_sale_id' => ['required', 'integer', 'exists:invoice_layouts,id'],
         ];
     }
 }

@@ -91,9 +91,11 @@ class RoleController extends Controller
         $role = Role::findOrFail($id);
 
         $validated = $request->roleData();
+        $permissions = $validated['permissions'];
+        unset($validated['permissions']);
 
         $this->databaseTransaction(
-            fn () => $role->update($validated),
+            function () use ($role, $validated, $permissions) { $role->update($validated); $role->syncPermissions($permissions); },
             'A role with this name already exists.',
             'name'
         );

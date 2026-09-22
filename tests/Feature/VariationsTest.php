@@ -25,13 +25,7 @@ class VariationsTest extends TestCase
             throw new \RuntimeException('Only in-memory tests allowed.');
         }
 
-        $this->artisan('migrate', [
-            '--path' => [
-                'database/migrations/0001_01_01_000000_create_users_table.php',
-                'database/migrations/2026_09_14_120000_create_variation_templates_table.php',
-            ],
-            '--force' => true,
-        ])->assertExitCode(0);
+        $this->artisan('migrate', ['--force' => true])->assertExitCode(0);
     }
 
     public function test_guests_cannot_manage_variations(): void

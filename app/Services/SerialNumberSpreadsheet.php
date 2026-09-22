@@ -151,7 +151,7 @@ class SerialNumberSpreadsheet
             'product_id' => $values[0],
             'location_id' => $values[1],
             'serial_number' => trim($values[2]),
-            'variation' => 'Default',
+            'product_variant_id' => null,
         ];
     }
 }

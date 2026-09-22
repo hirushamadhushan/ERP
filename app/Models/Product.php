@@ -6,16 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    protected $fillable = ['name', 'code', 'unit_id', 'brand_id', 'category_id',
+    use \App\Models\Concerns\HasCustomFieldValues;
+    use \App\Models\Concerns\HasCalculatedPrices;
+    protected $with=['selectedCategory'];
+    protected $appends=['category_id','subcategory_id','custom_fields','purchase_price_inc','margin'];
+    public function selectedCategory() { return $this->belongsTo(Category::class,'selected_category_id'); }
+    public function getCategoryIdAttribute() { return $this->selectedCategory?->parent_id ?? $this->attributes['selected_category_id'] ?? null; }
+    public function getSubcategoryIdAttribute() { return $this->selectedCategory?->parent_id ? $this->selected_category_id : null; }
+    public function setCategoryIdAttribute($value): void { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); }
+    public function setSubcategoryIdAttribute($value): void { if ($value) { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); } }
+
+    protected $fillable = ['selected_category_id', 'name', 'code', 'unit_id', 'brand_id', 'category_id',
         'subcategory_id', 'barcode_type', 'manage_stock', 'enable_serial',
         'not_for_selling', 'alert_quantity', 'description', 'image_path',
         'brochure_path', 'brochure_name', 'variant_image_path', 'weight',
         'custom_fields', 'product_type', 'tax_rate', 'selling_price_tax_type',
-        'purchase_price', 'purchase_price_inc', 'margin', 'selling_price', 'our_price'];
+        'purchase_price', 'selling_price', 'our_price'];
 
     protected function casts(): array
     {
-        return ['manage_stock' => 'boolean', 'enable_serial' => 'boolean', 'not_for_selling' => 'boolean', 'custom_fields' => 'array'];
+        return ['manage_stock' => 'boolean', 'enable_serial' => 'boolean', 'not_for_selling' => 'boolean'];
     }
 
     protected static function booted(): void
@@ -47,7 +57,7 @@ class Product extends Model
 
     public function serialNumbers()
     {
-        return $this->hasMany(ProductSerialNumber::class);
+        return ProductSerialNumber::forProduct($this->id);
     }
 
     public function variants()

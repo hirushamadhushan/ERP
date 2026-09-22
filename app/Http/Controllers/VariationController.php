@@ -20,7 +20,7 @@ class VariationController extends Controller
         $validated = $request->variationData();
 
         $this->databaseTransaction(
-            fn () => VariationTemplate::create($validated),
+            function () use ($validated) { $values = $validated['values']; unset($validated['values']); $variation = VariationTemplate::create($validated); $variation->syncValues($values); },
             'A variation with this name already exists.',
             'name'
         );
@@ -33,7 +33,7 @@ class VariationController extends Controller
         $validated = $request->variationData();
 
         $this->databaseTransaction(
-            fn () => $variation->update($validated),
+            function () use ($variation, $validated) { $values = $validated['values']; unset($validated['values']); $variation->update($validated); $variation->syncValues($values); },
             'A variation with this name already exists.',
             'name'
         );

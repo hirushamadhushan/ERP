@@ -9,6 +9,7 @@ use App\Models\Contact;
 use App\Models\CustomerGroup;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class ContactController extends Controller
 {
@@ -16,12 +17,13 @@ class ContactController extends Controller
     {
         abort_unless(array_key_exists($type, Contact::TYPES), 404);
         $filters = $request->validated();
-        $query = Contact::with('assignedUser')->whereIn('type', in_array($type, ['customer', 'supplier']) ? [$type, 'both'] : [$type]);
-        foreach (['status', 'assigned_to', 'customer_group'] as $field) {
+        $query = Contact::with(['assignedUser', 'customerGroupRecord'])->whereIn('type', in_array($type, ['customer', 'supplier']) ? [$type, 'both'] : [$type]);
+        foreach (['status', 'assigned_to'] as $field) {
             if (! empty($filters[$field])) {
                 $query->where($field, $filters[$field]);
             }
         }
+        if (! empty($filters['customer_group'])) $query->whereHas('customerGroupRecord', fn ($q) => $q->where('name', $filters['customer_group']));
         foreach (['due' => 'due_balance', 'returns' => 'return_balance', 'advance' => 'advance_balance', 'opening' => 'opening_balance'] as $filter => $column) {
             if ($request->boolean($filter)) {
                 $query->where($column, '>', 0);
@@ -47,6 +49,7 @@ class ContactController extends Controller
     public function store(SaveContactRequest $request)
     {
         $data = $request->contactData();
+        $this->normalizeCustomerGroup($data);
         $data['contact_id'] = $data['contact_id'] ?? 'C-'.Str::upper((string) Str::ulid());
         $contact = $this->databaseTransaction(
             fn () => Contact::create($data),
@@ -65,6 +68,7 @@ class ContactController extends Controller
     public function update(SaveContactRequest $request, Contact $contact)
     {
         $data = $request->contactData();
+        $this->normalizeCustomerGroup($data);
         $data['contact_id'] = $data['contact_id'] ?? $contact->contact_id;
         $this->databaseTransaction(
             fn () => $contact->update($data),
@@ -73,6 +77,13 @@ class ContactController extends Controller
         );
 
         return redirect()->route('contacts.index', $contact->type === 'both' ? 'customer' : $contact->type)->with('success', 'Contact updated successfully.');
+    }
+
+    private function normalizeCustomerGroup(array &$data): void
+    {
+        if (! Schema::hasColumn('contacts', 'customer_group_id')) return;
+        $data['customer_group_id'] = empty($data['customer_group']) ? null : CustomerGroup::where('name', $data['customer_group'])->value('id');
+        unset($data['customer_group']);
     }
 
     public function destroy(Contact $contact)

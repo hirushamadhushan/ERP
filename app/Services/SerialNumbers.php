@@ -17,7 +17,7 @@ class SerialNumbers
         for ($i = 0; $i < $data['count']; $i++) {
             $number = str_pad((string) ($data['start_number'] + $i), $data['padding'], '0', STR_PAD_LEFT);
             $serial = implode($data['separator'] ?? '', array_filter([$data['prefix'] ?? '', $data['middle_fix'] ?? '', $number, $data['post_fix'] ?? ''], fn ($part) => $part !== ''));
-            $rows[] = ['product_id' => $data['product_id'], 'location_id' => $data['location_id'], 'variation' => 'Default', 'serial_number' => $serial];
+            $rows[] = ['product_id' => $data['product_id'], 'location_id' => $data['location_id'], 'product_variant_id' => null, 'serial_number' => $serial];
         }
 
         return $this->validateRows($rows);
@@ -32,6 +32,7 @@ class SerialNumbers
         foreach ($rows as $i => $row) {
             $validator = Validator::make($row, [
                 'product_id' => 'required|integer|exists:products,id',
+                'product_variant_id' => 'nullable|integer|exists:product_variants,id',
                 'location_id' => 'required|integer|exists:locations,id',
                 'serial_number' => ['required', 'string', 'max:100', 'regex:/^[!-~]+$/D'],
             ]);
@@ -39,6 +40,7 @@ class SerialNumbers
                 throw ValidationException::withMessages(['serials' => 'Row '.($i + 2).': '.implode(' ', $validator->errors()->all())]);
             }
             $product = Product::findOrFail($row['product_id']);
+            if (!empty($row['product_variant_id']) && ! $product->variants()->whereKey($row['product_variant_id'])->exists()) throw ValidationException::withMessages(['serials'=>'The variant does not belong to the selected product.']);
             if (! $product->enable_serial || ! $product->manage_stock) {
                 throw ValidationException::withMessages(['serials' => 'Row '.($i + 2).': Enable serial tracking and Manage Stock on this product first.']);
             }

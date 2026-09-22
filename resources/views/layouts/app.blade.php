@@ -165,6 +165,12 @@
 
                 <p class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-4 mb-2">System</p>
 
+                <a href="{{ route('payment-accounts.index') }}"
+                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('payment-accounts.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-credit-card-2-front-fill text-base"></i>
+                    Payment Accounts
+                </a>
+
                 <!-- Settings -->
                 <a href="{{ route('business.settings.index') }}"
                    class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs(['business.*', 'settings.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
@@ -267,9 +273,14 @@
                         @foreach([
                             ['business.settings.index', 'Business Settings', 'bi-sliders', request()->routeIs('business.settings.*')],
                             ['business.locations.index', 'Business Locations', 'bi-geo-alt', request()->routeIs('business.locations.*')],
+                            ['business.invoice-settings.index', 'Invoice Settings', 'bi-receipt', request()->routeIs('business.invoice-settings.*')],
                         ] as [$settingsRoute, $settingsLabel, $settingsIcon, $isActive])
                             <a href="{{ route($settingsRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $settingsIcon }}" aria-hidden="true"></i>{{ $settingsLabel }}</a>
                         @endforeach
+                    </nav>
+                    @elseif(request()->routeIs('payment-accounts.*'))
+                    <nav aria-label="Payment Accounts" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                        <a href="{{ route('payment-accounts.index') }}" class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap bg-purple-600 text-white shadow-md shadow-purple-500/30"><i class="bi bi-credit-card-2-front-fill" aria-hidden="true"></i>List Accounts</a>
                     </nav>
                     @else
                     <div>

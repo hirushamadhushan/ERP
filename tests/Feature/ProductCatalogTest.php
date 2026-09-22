@@ -34,10 +34,10 @@ class ProductCatalogTest extends TestCase
         ]);
         $this->post('/products', $variable)->assertSessionHasNoErrors();
         $this->assertDatabaseCount('product_variants', 3);
-        $this->assertDatabaseHas('product_variants', ['sku' => 'SHIRT-001-M', 'value' => 'M']);
+        $this->assertSame('M', $baseProduct->newQuery()->where('code', 'SHIRT-001')->firstOrFail()->variants()->where('sku', 'SHIRT-001-M')->firstOrFail()->value);
         $variableProduct = Product::where('code', 'SHIRT-001')->firstOrFail();
         $this->put('/products/'.$variableProduct->id, $variable)->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('product_variants', ['product_id' => $variableProduct->id, 'sku' => 'SHIRT-001-M', 'value' => 'M']);
+        $this->assertSame('M', $variableProduct->variants()->where('sku', 'SHIRT-001-M')->firstOrFail()->value);
 
         $combo = array_replace($base, [
             'name' => 'Starter Bundle', 'sku' => 'BUNDLE-001', 'product_type' => 'combo', 'enable_serial' => 0,
@@ -153,7 +153,7 @@ class ProductCatalogTest extends TestCase
         if (DB::connection()->getDriverName() !== 'sqlite' || DB::connection()->getDatabaseName() !== ':memory:') {
             throw new \RuntimeException('Memory tests only.');
         }
-        $this->artisan('migrate', ['--path' => ['database/migrations/0001_01_01_000000_create_users_table.php', 'database/migrations/2026_09_14_100000_create_units_table.php', 'database/migrations/2026_09_14_110000_create_categories_and_brands_tables.php', 'database/migrations/2026_09_14_120000_create_variation_templates_table.php', 'database/migrations/2026_09_14_140000_create_product_serial_numbers_tables.php', 'database/migrations/2026_09_14_150000_expand_product_catalog.php', 'database/migrations/2026_09_15_200000_add_variable_and_combo_products.php', 'database/migrations/2026_09_17_130000_change_image_columns_to_longtext.php'], '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate', ['--force' => true])->assertExitCode(0);
         Storage::fake('local');
     }
 

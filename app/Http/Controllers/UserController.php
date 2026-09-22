@@ -19,7 +19,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = User::select(['id', 'username', 'name', 'role', 'email', 'status'])->latest();
+            $data = User::with('assignedRole')->select(['id', 'username', 'name', 'role_id', 'email', 'status'])->latest();
 
             return DataTables::of($data)
                 ->addColumn('action', function ($row) {
@@ -69,6 +69,8 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         $validated = $request->validated();
+        $validated['role_id'] = Role::where('name', $validated['role'])->value('id');
+        unset($validated['role']);
 
         $validated['password'] = Hash::make($validated['password']);
 
@@ -129,6 +131,8 @@ class UserController extends Controller
         }
 
         $validated = $request->validated();
+        $validated['role_id'] = Role::where('name', $validated['role'])->value('id');
+        unset($validated['role']);
 
         if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);

@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Location;
 use App\Models\User;
+use App\Models\InvoiceScheme;
+use App\Models\InvoiceLayout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,13 +22,15 @@ class BusinessLocationsTest extends TestCase
     public function test_business_locations_can_be_added_edited_and_deactivated(): void
     {
         $this->actingAs(User::factory()->create());
+        $scheme = InvoiceScheme::where('is_default', true)->firstOrFail();
+        $layout = InvoiceLayout::where('is_default', true)->firstOrFail();
 
         $this->get('/business-locations')->assertOk()->assertSee('Business Locations')->assertSee('aria-label="Settings"', false);
         $this->post('/business-locations', [
             'name' => 'North Warehouse', 'code' => 'NORTH-01', 'landmark' => 'Clock Tower',
             'city' => 'Anuradhapura', 'zip_code' => '50000', 'state' => 'North Central',
             'country' => 'Sri Lanka', 'price_group' => 'Retail',
-            'invoice_scheme' => 'Default', 'invoice_layout_pos' => 'Default', 'invoice_layout_sale' => 'Default',
+            'invoice_scheme_id' => $scheme->id, 'invoice_layout_pos_id' => $layout->id, 'invoice_layout_sale_id' => $layout->id,
         ])->assertRedirect('/business-locations')->assertSessionHasNoErrors();
 
         $location = Location::where('code', 'NORTH-01')->firstOrFail();
@@ -35,9 +39,9 @@ class BusinessLocationsTest extends TestCase
 
         $this->put('/business-locations/'.$location->id, [
             'name' => 'North Warehouse', 'code' => 'NORTH-01', 'city' => 'Kurunegala',
-            'invoice_scheme' => 'Retail Invoice', 'invoice_layout_pos' => 'Default', 'invoice_layout_sale' => 'Default',
+            'invoice_scheme_id' => $scheme->id, 'invoice_layout_pos_id' => $layout->id, 'invoice_layout_sale_id' => $layout->id,
         ])->assertRedirect('/business-locations')->assertSessionHasNoErrors();
-        $this->assertSame('Retail Invoice', $location->fresh()->invoice_scheme);
+        $this->assertSame('Default', $location->fresh()->invoiceScheme->name);
         $this->assertSame('Kurunegala', $location->fresh()->city);
 
         $this->patch('/business-locations/'.$location->id.'/status')->assertRedirect('/business-locations');
@@ -50,11 +54,13 @@ class BusinessLocationsTest extends TestCase
     public function test_location_code_must_be_unique(): void
     {
         $this->actingAs(User::factory()->create());
+        $scheme = InvoiceScheme::where('is_default', true)->firstOrFail();
+        $layout = InvoiceLayout::where('is_default', true)->firstOrFail();
         Location::create(['name' => 'Main', 'code' => 'MAIN']);
 
         $this->post('/business-locations', [
-            'name' => 'Second', 'code' => 'MAIN', 'invoice_scheme' => 'Default',
-            'invoice_layout_pos' => 'Default', 'invoice_layout_sale' => 'Default',
+            'name' => 'Second', 'code' => 'MAIN', 'invoice_scheme_id' => $scheme->id,
+            'invoice_layout_pos_id' => $layout->id, 'invoice_layout_sale_id' => $layout->id,
         ])->assertSessionHasErrors('code');
     }
 

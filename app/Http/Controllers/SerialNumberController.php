@@ -147,7 +147,7 @@ class SerialNumberController extends Controller
         $query = ProductSerialNumber::with(['product', 'location'])->latest('id');
         foreach ($request->validated() as $column => $value) {
             if ($value !== null) {
-                $query->where($column, $value);
+                $column === 'product_id' ? $query->forProduct($value) : $query->where($column, $value);
             }
         }
 

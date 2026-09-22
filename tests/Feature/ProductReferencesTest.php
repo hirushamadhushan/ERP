@@ -23,7 +23,7 @@ class ProductReferencesTest extends TestCase
         if (DB::connection()->getDriverName() !== 'sqlite' || DB::connection()->getDatabaseName() !== ':memory:') {
             throw new \RuntimeException('Only in-memory tests allowed.');
         }
-        $this->artisan('migrate', ['--path' => ['database/migrations/0001_01_01_000000_create_users_table.php', 'database/migrations/2026_09_14_110000_create_categories_and_brands_tables.php'], '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate', ['--force' => true])->assertExitCode(0);
     }
 
     public function test_guests_cannot_access_or_create_categories_and_brands(): void

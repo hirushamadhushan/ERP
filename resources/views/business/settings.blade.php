@@ -627,7 +627,7 @@
                         'enable_price_tax' => true, 'enable_our_price' => false, 'enable_sub_units' => false,
                         'enable_racks' => false, 'enable_row' => false, 'enable_position' => false,
                         'enable_warranty' => false, 'enable_secondary_unit' => false, 'enable_serial_numbers' => false,
-                    ], $settings->other_settings['product'] ?? []);
+                    ], $settings->productSettings?->toArray() ?? []);
                     $productOption = fn ($key) => old('product_settings.'.$key, $productOptions[$key]);
                 @endphp
                 <div id="tab-product" class="tab-panel hidden">

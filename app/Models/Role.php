@@ -12,10 +12,16 @@ class Role extends Model
     protected $fillable = [
         'name',
         'description',
-        'permissions',
     ];
+    protected $appends = ['permissions'];
 
-    protected $casts = [
-        'permissions' => 'array',
-    ];
+    public function permissionRecords() { return $this->hasMany(RolePermission::class); }
+    public function users() { return $this->hasMany(User::class); }
+    public function getPermissionsAttribute(): array { return $this->permissionRecords->pluck('permission')->all(); }
+    public function syncPermissions(array $permissions): void
+    {
+        $this->permissionRecords()->delete();
+        $this->permissionRecords()->createMany(collect($permissions)->unique()->map(fn ($permission) => ['permission' => $permission])->all());
+        $this->unsetRelation('permissionRecords');
+    }
 }

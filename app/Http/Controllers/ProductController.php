@@ -27,7 +27,7 @@ class ProductController extends Controller
         $products = Product::query()
             ->with(['unit', 'brand', 'category', 'locations'])
             ->when($filters['product_type'] ?? null, fn ($query, $value) => $query->where('product_type', $value))
-            ->when($filters['category_id'] ?? null, fn ($query, $value) => $query->where('category_id', $value))
+            ->when($filters['category_id'] ?? null, fn ($query, $value) => $query->whereHas('selectedCategory', fn ($category) => $category->where('id', $value)->orWhere('parent_id', $value)))
             ->when($filters['unit_id'] ?? null, fn ($query, $value) => $query->where('unit_id', $value))
             ->when($filters['brand_id'] ?? null, fn ($query, $value) => $query->where('brand_id', $value))
             ->when($filters['location_id'] ?? null, fn ($query, $value) => $query->whereHas('locations', fn ($locations) => $locations->whereKey($value)))
@@ -44,10 +44,11 @@ class ProductController extends Controller
             ->get();
 
         $serialStock = ProductSerialNumber::query()
-            ->selectRaw('product_id, location_id, COUNT(*) as quantity')
+            ->leftJoin('product_variants as stock_variant', 'stock_variant.id', '=', 'product_serial_numbers.product_variant_id')
+            ->selectRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id) as product_id, location_id, COUNT(*) as quantity')
             ->where('status', 'available')
-            ->whereIn('product_id', $products->pluck('id'))
-            ->groupBy('product_id', 'location_id')
+            ->whereIn(\Illuminate\Support\Facades\DB::raw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id)'), $products->pluck('id'))
+            ->groupByRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id), location_id')
             ->get()
             ->keyBy(fn ($row) => $row->product_id.':'.$row->location_id);
         $productDetails = $products->mapWithKeys(fn (Product $product) => [
@@ -87,7 +88,7 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         return view('products.form', $this->references($product) + [
-            'product' => $product->load(['locations', 'variants.template', 'comboItems']),
+            'product' => $product->load(['locations', 'variants.variationValue.template', 'comboItems']),
         ]);
     }
 
@@ -165,7 +166,7 @@ class ProductController extends Controller
     {
         $businessSettings = BusinessSetting::current();
         $defaultMargin = $businessSettings->default_profit_percent ?? 25;
-        $productSettings = $businessSettings->other_settings['product'] ?? [];
+        $productSettings = $businessSettings->productSettings?->toArray() ?? [];
 
         return [
             'units' => Unit::orderBy('name')->get(),

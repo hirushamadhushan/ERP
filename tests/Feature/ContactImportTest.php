@@ -26,13 +26,7 @@ class ContactImportTest extends TestCase
         if (DB::connection()->getDriverName() !== 'sqlite' || DB::connection()->getDatabaseName() !== ':memory:') {
             throw new \RuntimeException('Only in-memory tests are allowed.');
         }
-        $this->artisan('migrate', ['--path' => [
-            'database/migrations/0001_01_01_000000_create_users_table.php',
-            'database/migrations/2026_09_11_120000_create_contacts_table.php',
-            'database/migrations/2026_09_11_130000_create_customer_groups_table.php',
-            'database/migrations/2026_09_11_140000_add_selling_price_group_to_customer_groups.php',
-            'database/migrations/2026_09_11_150000_add_date_of_birth_to_contacts.php',
-        ], '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate', ['--force' => true])->assertExitCode(0);
     }
 
     private function row(array $overrides = []): array

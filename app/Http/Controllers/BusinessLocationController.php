@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SaveBusinessLocationRequest;
 use App\Models\Location;
+use App\Models\InvoiceScheme;
+use App\Models\InvoiceLayout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -12,7 +14,9 @@ class BusinessLocationController extends Controller
     public function index(): View
     {
         return view('business.locations', [
-            'locations' => Location::orderBy('name')->get(),
+            'locations' => Location::with(['invoiceScheme','invoiceLayoutPos','invoiceLayoutSale'])->orderBy('name')->get(),
+            'invoiceSchemes' => InvoiceScheme::orderByDesc('is_default')->orderBy('name')->get(),
+            'invoiceLayouts' => InvoiceLayout::orderByDesc('is_default')->orderBy('name')->get(),
         ]);
     }
 

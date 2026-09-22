@@ -90,8 +90,9 @@ class BusinessSettingsTest extends TestCase
             'product_settings' => $productSettings,
         ])->assertRedirect('/business/settings')->assertSessionHasNoErrors();
 
-        $this->assertSame('NEX', BusinessSetting::current()->fresh()->other_settings['product']['sku_prefix']);
-        $this->assertSame('0', BusinessSetting::current()->fresh()->other_settings['product']['enable_subcategories']);
+        $settings = BusinessSetting::current()->fresh('productSettings');
+        $this->assertSame('NEX', $settings->productSettings->sku_prefix);
+        $this->assertFalse($settings->productSettings->enable_subcategories);
         $page = $this->actingAs($user)->get('/business/settings')
             ->assertOk()
             ->assertSee('name="product_settings[sku_prefix]"', false)

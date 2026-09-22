@@ -21,7 +21,6 @@ class BusinessSetting extends Model
         'time_format',
         'currency_precision',
         'quantity_precision',
-        'other_settings',
     ];
 
     protected $casts = [
@@ -29,14 +28,13 @@ class BusinessSetting extends Model
         'transaction_edit_days' => 'integer',
         'currency_precision' => 'integer',
         'quantity_precision' => 'integer',
-        'other_settings' => 'array',
     ];
 
     public static function current(): self
     {
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('business_settings')) {
-                return static::firstOrCreate([], [
+                $setting = static::firstOrCreate([], [
                     'business_name' => 'Codeza POS',
                     'start_date' => '2015-01-01',
                     'default_profit_percent' => 25.00,
@@ -51,6 +49,11 @@ class BusinessSetting extends Model
                     'currency_precision' => 2,
                     'quantity_precision' => 2,
                 ]);
+                if (\Illuminate\Support\Facades\Schema::hasTable('business_product_settings')) {
+                    $setting->productSettings()->firstOrCreate([]);
+                    $setting->load('productSettings');
+                }
+                return $setting;
             }
         } catch (\Throwable $e) {
             // Ignore missing table error during tests
@@ -72,4 +75,6 @@ class BusinessSetting extends Model
             'quantity_precision' => 2,
         ]);
     }
+
+    public function productSettings() { return $this->hasOne(BusinessProductSetting::class); }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveCustomerGroupRequest;
 use App\Models\Contact;
 use App\Models\CustomerGroup;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerGroupController extends Controller
 {
@@ -35,8 +36,7 @@ class CustomerGroupController extends Controller
             $group = CustomerGroup::lockForUpdate()->findOrFail($group->id);
             $previousName = $group->name;
             $group->update($data);
-            Contact::whereIn('type', ['customer', 'both'])->where('customer_group', $previousName)
-                ->update(['customer_group' => $group->name]);
+            if (! Schema::hasColumn('contacts', 'customer_group_id')) Contact::whereIn('type', ['customer', 'both'])->where('customer_group', $previousName)->update(['customer_group' => $group->name]);
         }, 'A customer group with this name already exists.', 'name');
 
         return redirect()->route('contacts.groups.index')->with('success', 'Customer group updated successfully.');
@@ -46,7 +46,10 @@ class CustomerGroupController extends Controller
     {
         return $this->databaseTransaction(function () use ($group) {
             $group = CustomerGroup::lockForUpdate()->findOrFail($group->id);
-            if (Contact::whereIn('type', ['customer', 'both'])->where('customer_group', $group->name)->exists()) {
+            $assigned = Schema::hasColumn('contacts', 'customer_group_id')
+                ? Contact::whereIn('type', ['customer', 'both'])->where('customer_group_id', $group->id)->exists()
+                : Contact::whereIn('type', ['customer', 'both'])->where('customer_group', $group->name)->exists();
+            if ($assigned) {
                 return back()->with('group_error', 'This group is assigned to customers. Change their group before deleting it.');
             }
             $group->delete();

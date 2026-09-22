@@ -13,7 +13,7 @@ class HomeController extends Controller
     {
         $totalUsers = User::count();
         $activeUsers = User::where('status', 'active')->count();
-        $adminUsers = User::where('role', 'administrator')->count();
+        $adminUsers = User::whereHas('assignedRole', fn ($query) => $query->whereIn('name', ['admin', 'administrator']))->count();
         $recentUsers = User::latest()->take(5)->get();
 
         return view('home.index', compact(

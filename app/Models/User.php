@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
@@ -22,9 +23,21 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'role_id',
         'status',
     ];
+
+    protected $appends = ['role'];
+
+    public function assignedRole() { return $this->belongsTo(Role::class, 'role_id'); }
+
+    protected function role(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->assignedRole?->name,
+            set: fn ($value) => ['role_id' => Role::whereRaw('LOWER(name) = ?', [strtolower((string) $value)])->value('id')],
+        );
+    }
 
     /**
      * The attributes that should be hidden for serialization.
