@@ -11,6 +11,7 @@ class InvoiceScheme extends Model
     public function preview(?int $year = null): string
     {
         $number = str_pad((string)$this->start_number, $this->number_of_digits, '0', STR_PAD_LEFT);
-        return ($this->prefix ?: '#').($this->format === 'year_number' ? ($year ?? now()->year).'-' : '').$number;
+        $prefix = $this->prefix ?: ($this->format === 'year_number' ? ($year ?? now()->year).'-' : '#');
+        return $prefix.$number;
     }
 }

@@ -46,6 +46,8 @@ class InvoiceSettingController extends Controller
     private function persist(InvoiceScheme $scheme, array $data): void
     {
         DB::transaction(function () use ($scheme, $data) {
+            // Format 2 has the year as its default prefix, for example 2026-0000.
+            $data['prefix'] = trim((string) ($data['prefix'] ?? '')) ?: ($data['format'] === 'year_number' ? now()->year.'-' : '#');
             $makeDefault = (bool)($data['is_default'] ?? false) || ! InvoiceScheme::where('is_default',true)->exists();
             if ($makeDefault) InvoiceScheme::where('is_default',true)->when($scheme->exists, fn ($query) => $query->whereKeyNot($scheme->id))->update(['is_default'=>false]);
             $data['is_default'] = $makeDefault;

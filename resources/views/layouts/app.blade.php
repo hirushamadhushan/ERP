@@ -122,14 +122,8 @@
         <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 hidden lg:flex flex-col bg-white border-r border-purple-100 shadow-sm">
 
             <!-- Brand Logo -->
-            <div class="flex items-center gap-3 px-6 py-5 border-b border-purple-100">
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl text-white shadow-md shadow-purple-500/20 shrink-0" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);">
-                    <i class="bi bi-box-seam-fill text-lg"></i>
-                </div>
-                <div>
-                    <span class="font-bold text-lg text-slate-900 leading-tight">Codeza ERP</span>
-                    <span class="block text-[10px] font-semibold text-purple-500 uppercase tracking-wider">Enterprise v4.2</span>
-                </div>
+            <div class="border-b border-purple-100 bg-slate-950 px-4 py-4">
+                <img src="{{ asset('images/codeza-logo.png') }}" alt="Codeza ERP — Empowering Your Digital World" class="h-12 w-full object-contain">
             </div>
 
             <!-- Navigation -->

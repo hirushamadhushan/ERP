@@ -2,7 +2,7 @@
 @section('title','Invoice Settings')
 @section('content')
 <div class="mb-5 flex flex-wrap items-baseline gap-3"><h1 class="text-xl font-bold text-slate-900">Invoice Settings</h1><span class="text-sm text-slate-500">Manage invoice numbering and layouts</span></div>
-@foreach(['status'=>'emerald','error'=>'rose'] as $key=>$color)@if(session($key))<div class="mb-4 rounded-xl border border-{{ $color }}-200 bg-{{ $color }}-50 p-4 text-sm font-semibold text-{{ $color }}-800">{{ session($key) }}</div>@endif @endforeach
+@foreach(['status'=>'emerald','error'=>'rose'] as $key=>$color)@if(session($key))<div id="invoice-{{ $key }}-alert" class="mb-4 rounded-xl border border-{{ $color }}-200 bg-{{ $color }}-50 p-4 text-sm font-semibold text-{{ $color }}-800">{{ session($key) }}</div>@endif @endforeach
 <section class="overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm">
     <div class="flex border-b border-purple-100 px-4">
         <button class="invoice-tab border-b-2 {{ request('tab')==='layouts'?'border-transparent text-slate-500':'border-purple-600 text-purple-700' }} px-4 py-4 text-sm font-bold" data-panel="schemes">Invoice Schemes</button>
@@ -11,7 +11,14 @@
     <div id="schemes-panel" class="{{ request('tab')==='layouts'?'hidden ':'' }}p-4 sm:p-6">
         <div class="mb-5 flex items-center justify-between"><h2 class="font-bold text-slate-900">All your invoice schemes</h2><button id="add-scheme" class="rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-purple-500/20 hover:bg-purple-700"><i class="bi bi-plus-lg"></i> Add</button></div>
         <table id="schemes-table" class="w-full text-left">
-            <thead><tr><th>Name</th><th>Prefix</th><th>Start from</th><th>Invoice Count</th><th>Number of digits</th><th>Action</th></tr></thead>
+            <thead><tr>
+                <th>Name <span class="help-tip" data-tip="Give a short meaningful name to the Invoice Scheme."><i class="bi bi-info-circle-fill"></i></span></th>
+                <th>Prefix <span class="help-tip" data-tip="Prefix for an Invoice Scheme. A Prefix can be a custom text or current year. Ex: #XXXX0001, #2018-0002."><i class="bi bi-info-circle-fill"></i></span></th>
+                <th>Start from <span class="help-tip" data-tip="Start number for invoice numbering. You can make it 1 or any other number from which numbering will start."><i class="bi bi-info-circle-fill"></i></span></th>
+                <th>Invoice Count <span class="help-tip" data-tip="Total number of invoices generated with this Invoice Scheme."><i class="bi bi-info-circle-fill"></i></span></th>
+                <th>Number of digits <span class="help-tip" data-tip="Length of the invoice number excluding its prefix."><i class="bi bi-info-circle-fill"></i></span></th>
+                <th>Action</th>
+            </tr></thead>
             <tbody>@foreach($schemes as $scheme)<tr>
                 <td class="font-semibold">{{ $scheme->name }} @if($scheme->is_default)<span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-[10px] font-bold text-purple-700">Default</span>@endif</td>
                 <td>{{ $scheme->prefix ?: '—' }}</td><td>{{ $scheme->start_number }}</td><td>{{ $scheme->invoice_count }}</td><td>{{ $scheme->number_of_digits }}</td>
@@ -48,12 +55,13 @@
 </form></dialog>
 @endsection
 @push('scripts')
-<style>#scheme-dialog{margin:auto}#scheme-dialog::backdrop{background:rgb(15 23 42/.55);backdrop-filter:blur(3px)}.format-choice.selected{border-color:#7c3aed;background:#f5f3ff}.format-choice.selected .selected-icon{display:block}</style>
+<style>#scheme-dialog{margin:auto}#scheme-dialog::backdrop{background:rgb(15 23 42/.55);backdrop-filter:blur(3px)}.format-choice.selected{border-color:#7c3aed;background:#f5f3ff}.format-choice.selected .selected-icon{display:block}.help-tip{position:relative;display:inline-flex;cursor:help;color:#7c3aed}.help-tip::after{content:attr(data-tip);position:absolute;z-index:30;top:calc(100% + 10px);left:50%;width:260px;transform:translateX(-50%);border:1px solid #cbd5e1;border-radius:.5rem;background:#fff;padding:.7rem .8rem;color:#334155;font-size:.8rem;font-weight:400;line-height:1.4;box-shadow:0 5px 14px rgb(15 23 42/.2);opacity:0;pointer-events:none;transition:opacity .15s}.help-tip:hover::after,.help-tip:focus::after{opacity:1}</style>
 <script>
+ document.addEventListener('DOMContentLoaded',()=>{const alert=document.getElementById('invoice-status-alert');if(alert)setTimeout(()=>{alert.style.transition='opacity .35s';alert.style.opacity='0';setTimeout(()=>alert.remove(),400)},4000);});
 document.addEventListener('DOMContentLoaded',()=>{
  const dialog=document.getElementById('scheme-dialog'),form=document.getElementById('scheme-form'),fields=document.getElementById('scheme-fields'),format=document.getElementById('scheme-format'),preview=document.getElementById('scheme-preview');
- const updatePreview=()=>{if(!format.value){preview.textContent='Not selected';return}const prefix=form.elements.prefix.value||'#',digits=Number(form.elements.number_of_digits.value||4),start=String(form.elements.start_number.value||0).padStart(digits,'0');preview.textContent=prefix+(format.value==='year_number'?@json((string) now()->year.'-'):'')+start};
- const choose=value=>{format.value=value;fields.classList.remove('hidden');fields.classList.add('grid');document.querySelectorAll('.format-choice').forEach(x=>x.classList.toggle('selected',x.dataset.format===value));updatePreview()};
+ const updatePreview=()=>{if(!format.value){preview.textContent='Not selected';return}const prefix=form.elements.prefix.value||(format.value==='year_number'?@json((string) now()->year.'-'):'#'),digits=Number(form.elements.number_of_digits.value||4),start=String(form.elements.start_number.value||0).padStart(digits,'0');preview.textContent=prefix+start};
+ const choose=value=>{format.value=value;fields.classList.remove('hidden');fields.classList.add('grid');if(!form.elements.prefix.value||form.elements.prefix.value==='#')form.elements.prefix.value=value==='year_number'?@json((string) now()->year.'-'):'#';if(!form.elements.start_number.value)form.elements.start_number.value='0';if(!form.elements.number_of_digits.value)form.elements.number_of_digits.value='4';document.querySelectorAll('.format-choice').forEach(x=>x.classList.toggle('selected',x.dataset.format===value));updatePreview()};
  const open=(scheme=null,url=null)=>{form.reset();form.action=url||@json(route('business.invoice-settings.store'));form.elements._method.value=scheme?'PUT':'POST';document.getElementById('scheme-title').textContent=scheme?'Edit invoice scheme':'Add new invoice scheme';format.value='';fields.classList.add('hidden');fields.classList.remove('grid');document.querySelectorAll('.format-choice').forEach(x=>x.classList.remove('selected'));preview.textContent='Not selected';if(scheme){['name','prefix','start_number','number_of_digits'].forEach(k=>form.elements[k].value=scheme[k]??'');form.elements.is_default.checked=!!scheme.is_default;choose(scheme.format)}dialog.showModal()};
  document.getElementById('add-scheme').onclick=()=>open();document.querySelectorAll('.edit-scheme').forEach(b=>b.onclick=()=>open(JSON.parse(b.dataset.scheme),b.dataset.url));document.querySelectorAll('.format-choice').forEach(b=>b.onclick=()=>choose(b.dataset.format));document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dialog.close());['prefix','start_number','number_of_digits'].forEach(k=>form.elements[k].addEventListener('input',updatePreview));
  document.querySelectorAll('.invoice-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.invoice-tab').forEach(x=>{x.classList.toggle('border-purple-600',x===b);x.classList.toggle('text-purple-700',x===b);x.classList.toggle('border-transparent',x!==b)});document.getElementById('schemes-panel').classList.toggle('hidden',b.dataset.panel!=='schemes');document.getElementById('layouts-panel').classList.toggle('hidden',b.dataset.panel!=='layouts')});

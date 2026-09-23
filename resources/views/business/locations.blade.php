@@ -2,112 +2,24 @@
 @section('title', 'Business Locations')
 @section('content')
 @php
-    $fieldClass = 'w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100';
+    $input = 'w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100';
 @endphp
-@if(session('status'))<div role="status" class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">{{ session('status') }}</div>@endif
-<div class="mb-5 flex flex-wrap items-baseline gap-3">
-    <h1 class="text-xl font-bold text-slate-900">Business Locations</h1>
-    <span class="text-sm text-slate-500">Manage your business locations</span>
-</div>
-
-<section class="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm sm:p-6">
-    <div class="mb-5 flex items-center justify-between gap-3">
-        <h2 class="text-base font-bold text-slate-900">All your business locations</h2>
-        <button id="add-location" type="button" class="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-purple-500/20 hover:bg-purple-700"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
-    </div>
-    <div class="sticky-table-host">
-        <table id="locations-table" class="w-full text-left" style="min-width:1450px">
-            <thead><tr>
-                <th>Name</th><th>Location ID</th><th>Landmark</th><th>City</th><th>Zip Code</th><th>State</th><th>Country</th><th>Price Group</th><th>Invoice scheme</th><th>Invoice layout for POS</th><th>Invoice layout for sale</th><th>Action</th>
-            </tr></thead>
-            <tbody>
-            @foreach($locations as $location)
-                @php($locationData = $location->only(['id','name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme_id','invoice_layout_pos_id','invoice_layout_sale_id']))
-                <tr>
-                    <td class="font-semibold text-slate-800">{{ $location->name }}@unless($location->is_active)<span class="mt-1 block text-xs font-medium text-slate-500">Inactive</span>@endunless</td>
-                    <td>{{ $location->code }}</td>
-                    <td>{{ $location->landmark ?: 'â€”' }}</td>
-                    <td>{{ $location->city ?: 'â€”' }}</td>
-                    <td>{{ $location->zip_code ?: 'â€”' }}</td>
-                    <td>{{ $location->state ?: 'â€”' }}</td>
-                    <td>{{ $location->country ?: 'â€”' }}</td>
-                    <td>{{ $location->price_group ?: 'â€”' }}</td>
-                    <td>{{ $location->invoiceScheme?->name }}</td>
-                    <td>{{ $location->invoiceLayoutPos?->name }}</td>
-                    <td>{{ $location->invoiceLayoutSale?->name }}</td>
-                    <td><div class="flex min-w-max flex-wrap gap-1.5">
-                        <button type="button" class="edit-location rounded-lg bg-purple-50 px-2.5 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100" data-location='@json($locationData)' data-url="{{ route('business.locations.update', $location) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Edit</button>
-                        <button type="button" class="settings-location rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200" data-location='@json($locationData)' data-url="{{ route('business.locations.update', $location) }}"><i class="bi bi-sliders" aria-hidden="true"></i> Settings</button>
-                        <form method="POST" action="{{ route('business.locations.toggle', $location) }}" onsubmit="return confirm('{{ $location->is_active ? 'Deactivate' : 'Activate' }} this business location?')">@csrf @method('PATCH')<button type="submit" class="rounded-lg px-2.5 py-1.5 text-xs font-bold {{ $location->is_active ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}"><i class="bi bi-power" aria-hidden="true"></i> {{ $location->is_active ? 'Deactivate' : 'Activate' }}</button></form>
-                    </div></td>
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<dialog id="location-dialog" aria-labelledby="location-dialog-title" class="w-[calc(100%-2rem)] max-w-2xl rounded-2xl border-0 p-0 text-slate-800 shadow-2xl">
-    <div class="flex items-center justify-between border-b border-purple-100 bg-purple-50 px-6 py-4"><h2 id="location-dialog-title" class="font-bold">Add Business Location</h2><button type="button" data-close-location aria-label="Close form" class="rounded-lg p-1 text-slate-500 hover:bg-purple-100"><i class="bi bi-x-lg"></i></button></div>
-    <form id="location-form" method="POST" action="{{ route('business.locations.store') }}">
-        @csrf<input type="hidden" name="_method" value="POST"><input type="hidden" name="_location_id" value="{{ old('_location_id') }}">
-        <div class="grid max-h-[70dvh] grid-cols-1 gap-4 overflow-y-auto p-6 sm:grid-cols-2">
-            @if($errors->any())<div class="sm:col-span-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert"><ul class="list-disc pl-5">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-            @foreach(['name' => 'Business Location', 'code' => 'Location ID', 'landmark' => 'Landmark', 'city' => 'City', 'zip_code' => 'Zip Code', 'state' => 'State', 'country' => 'Country', 'price_group' => 'Price Group'] as $field => $label)
-                <div><label for="location-{{ $field }}" class="mb-1.5 block text-xs font-bold text-slate-700">{{ $label }}@if(in_array($field, ['name','code'])) <span class="text-rose-500">*</span>@endif</label><input id="location-{{ $field }}" name="{{ $field }}" value="{{ old($field) }}" maxlength="{{ $field === 'code' ? 100 : 255 }}" @if(in_array($field, ['name','code'])) required @endif class="{{ $fieldClass }}"></div>
-            @endforeach
-            <div class="sm:col-span-2 border-t border-slate-100 pt-3 text-sm font-bold text-purple-700" id="invoice-settings-heading">Invoice Settings</div>
-            <div><label for="location-invoice_scheme_id" class="mb-1.5 block text-xs font-bold text-slate-700">Invoice scheme</label><select id="location-invoice_scheme_id" name="invoice_scheme_id" required class="{{ $fieldClass }}">@foreach($invoiceSchemes as $option)<option value="{{ $option->id }}">{{ $option->name }}</option>@endforeach</select></div>
-            @foreach(['invoice_layout_pos_id'=>'Invoice layout for POS','invoice_layout_sale_id'=>'Invoice layout for sale'] as $field=>$label)<div><label for="location-{{ $field }}" class="mb-1.5 block text-xs font-bold text-slate-700">{{ $label }}</label><select id="location-{{ $field }}" name="{{ $field }}" required class="{{ $fieldClass }}">@foreach($invoiceLayouts as $option)<option value="{{ $option->id }}">{{ $option->name }}</option>@endforeach</select></div>@endforeach
-        </div>
-        <div class="flex justify-end gap-2 border-t border-purple-100 px-6 py-4"><button type="button" data-close-location class="rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-600">Close</button><button type="submit" class="rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-purple-700">Save</button></div>
-    </form>
-</dialog>
+@if(session('status'))<div id="location-alert" class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">{{ session('status') }}</div>@endif
+<div class="mb-5 flex items-baseline gap-3"><h1 class="text-xl font-bold text-slate-900">Business Locations</h1><span class="text-sm text-slate-500">Manage your business locations</span></div>
+<section class="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm sm:p-6"><div class="mb-5 flex items-center justify-between"><h2 class="font-bold">All your business locations</h2><button id="add-location" class="rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white"><i class="bi bi-plus-lg"></i> Add</button></div><div class="sticky-table-host"><table id="locations-table" class="w-full text-left"><thead><tr><th>Name</th><th>Location ID</th><th>Landmark</th><th>City</th><th>Zip Code</th><th>State</th><th>Country</th><th>Price Group</th><th>Invoice scheme</th><th>Invoice layout for POS</th><th>Invoice layout for sale</th><th>Status</th><th>Action</th></tr></thead><tbody>@foreach($locations as $location)
+@php
+    $data = $location->only(['id', 'name', 'code', 'landmark', 'city', 'zip_code', 'state', 'country', 'price_group', 'invoice_scheme_id', 'invoice_layout_pos_id', 'invoice_layout_sale_id']);
+    $data['contacts'] = $location->contacts->pluck('value', 'type');
+    $data['custom_fields'] = $location->customFieldValues->mapWithKeys(fn ($value) => [$value->field_number - 1 => $value->value]);
+    $data['featured_product_ids'] = $location->featuredProducts->pluck('id');
+    $data['payment_methods'] = $location->paymentMethods->mapWithKeys(fn ($value) => [$value->method => ['enabled' => $value->is_enabled, 'account_id' => $value->payment_account_id]]);
+@endphp
+<tr><td class="font-semibold">{{ $location->name }}</td><td>{{ $location->code }}</td><td>{{ $location->landmark ?: '—' }}</td><td>{{ $location->city ?: '—' }}</td><td>{{ $location->zip_code ?: '—' }}</td><td>{{ $location->state ?: '—' }}</td><td>{{ $location->country ?: '—' }}</td><td>{{ $location->price_group ?: '—' }}</td><td>{{ $location->invoiceScheme?->name }}</td><td>{{ $location->invoiceLayoutPos?->name }}</td><td>{{ $location->invoiceLayoutSale?->name }}</td><td class="location-status">{!! $location->is_active ? '<span class="text-emerald-700 font-bold">Active</span>' : '<span class="text-rose-700 font-bold">Inactive</span>' !!}</td><td><div class="flex gap-1"><button class="edit-location rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold text-purple-700" data-location='@json($data)' data-url="{{ route('business.locations.update',$location) }}">Edit</button><a href="{{ route('business.locations.settings', $location) }}" class="rounded-lg bg-cyan-50 px-2 py-1 text-xs font-bold text-cyan-700">Settings</a><button class="toggle-location rounded-lg px-2 py-1 text-xs font-bold {{ $location->is_active?'bg-rose-50 text-rose-700':'bg-emerald-50 text-emerald-700' }}" data-url="{{ route('business.locations.toggle',$location) }}">{{ $location->is_active?'Deactivate':'Activate' }}</button></div></td></tr>@endforeach</tbody></table></div></section>
+<dialog id="location-dialog" class="w-[calc(100%-2rem)] max-w-4xl rounded-2xl border-0 p-0 shadow-2xl"><div class="flex justify-between border-b border-purple-100 bg-purple-50 px-6 py-4"><h2 id="dialog-title" class="font-bold">Add a new business location</h2><button type="button" data-close class="text-purple-700"><i class="bi bi-x-lg"></i></button></div><form id="location-form" method="POST" action="{{ route('business.locations.store') }}">@csrf<input name="_method" value="POST" type="hidden"><div class="max-h-[72vh] overflow-y-auto p-5"><div class="grid gap-4 sm:grid-cols-2"><label class="sm:col-span-2 text-xs font-bold">Name:*<input class="{{ $input }} mt-1" name="name" required></label><label class="text-xs font-bold">Location ID <span id="code-hint" class="font-normal text-slate-500">(auto if empty)</span><input id="location-code" class="{{ $input }} mt-1" name="code"></label><label class="text-xs font-bold">Landmark<input class="{{ $input }} mt-1" name="landmark"></label>@foreach(['city'=>'City:*','zip_code'=>'Zip Code:*','state'=>'State:*','country'=>'Country:*','price_group'=>'Default Selling Price Group'] as $field=>$label)<label class="text-xs font-bold">{{ $label }}<input class="{{ $input }} mt-1" name="{{ $field }}" @if($field !== 'price_group') required @endif></label>@endforeach
+<label class="text-xs font-bold">Invoice scheme:*<select class="{{ $input }} mt-1" name="invoice_scheme_id" required>@foreach($invoiceSchemes as $x)<option value="{{ $x->id }}">{{ $x->name }}</option>@endforeach</select></label><label class="text-xs font-bold">Invoice layout for POS:*<select class="{{ $input }} mt-1" name="invoice_layout_pos_id" required>@foreach($invoiceLayouts as $x)<option value="{{ $x->id }}">{{ $x->name }}</option>@endforeach</select></label><label class="text-xs font-bold">Invoice layout for sale:*<select class="{{ $input }} mt-1" name="invoice_layout_sale_id" required>@foreach($invoiceLayouts as $x)<option value="{{ $x->id }}">{{ $x->name }}</option>@endforeach</select></label></div>
+<h3 class="mt-6 border-t pt-4 text-sm font-bold text-purple-700">Contact details</h3><div class="mt-3 grid gap-3 sm:grid-cols-2">@foreach(['mobile'=>'Mobile','alternate_phone'=>'Alternate contact number','email'=>'Email','website'=>'Website'] as $key=>$label)<label class="text-xs font-bold">{{ $label }}<input class="{{ $input }} mt-1" name="contacts[{{ $key }}]" @if($key==='email') type="email" @endif @if($key==='website') type="url" @endif></label>@endforeach</div>
+<h3 class="mt-6 border-t pt-4 text-sm font-bold text-purple-700">Custom fields</h3><div class="mt-3 grid gap-3 sm:grid-cols-4">@for($i=0;$i<4;$i++)<input class="{{ $input }}" name="custom_fields[{{ $i }}]" placeholder="Custom field {{ $i+1 }}">@endfor</div>
+<h3 class="mt-6 border-t pt-4 text-sm font-bold text-purple-700">POS screen featured products</h3><select class="{{ $input }} mt-2" name="featured_product_ids[]" multiple size="5">@foreach($products as $product)<option value="{{ $product->id }}">{{ $product->name }} ({{ $product->code }})</option>@endforeach</select>
+<h3 class="mt-6 border-t pt-4 text-sm font-bold text-purple-700">Payment options</h3><div class="mt-2 overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Payment Method</th><th>Enable</th><th>Default Account</th></tr></thead><tbody>@foreach($paymentMethodLabels as $method=>$label)<tr><td>{{ $label }}</td><td><input type="hidden" name="payment_methods[{{ $method }}][enabled]" value="0"><input type="checkbox" name="payment_methods[{{ $method }}][enabled]" value="1" checked></td><td><select class="{{ $input }}" name="payment_methods[{{ $method }}][account_id]"><option value="">None</option>@foreach($paymentAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}{{ $account->account_number ? ' · '.$account->account_number : '' }}</option>@endforeach</select></td></tr>@endforeach</tbody></table></div></div><div class="flex justify-end gap-2 border-t border-purple-100 px-5 py-4"><button data-close type="button" class="rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold">Close</button><button class="rounded-xl bg-purple-600 px-5 py-2 text-xs font-bold text-white">Save</button></div></form></dialog>
 @endsection
-@push('scripts')
-<style>
-#location-dialog{margin:auto}#location-dialog::backdrop{background:rgb(15 23 42 / .5);backdrop-filter:blur(3px)}
-#locations-table_wrapper .dataTables_filter,#locations-table_wrapper .dataTables_length{float:none;text-align:left}
-#locations-table_wrapper .dataTables_filter input{min-width:180px}
-</style>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const dialog = document.getElementById('location-dialog');
-    const form = document.getElementById('location-form');
-    const title = document.getElementById('location-dialog-title');
-    const fields = ['name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme_id','invoice_layout_pos_id','invoice_layout_sale_id'];
-    let previousFocus;
-    function openDialog(button, settingsOnly = false) {
-        previousFocus = document.activeElement;
-        form.reset();
-        const location = button ? JSON.parse(button.dataset.location) : null;
-        form.action = button ? button.dataset.url : @json(route('business.locations.store'));
-        form.elements._method.value = button ? 'PUT' : 'POST';
-        form.elements._location_id.value = location?.id ?? '';
-        fields.forEach(field => { form.elements[field].value = location?.[field] ?? (field.startsWith('invoice_') ? form.elements[field].options[0]?.value : ''); });
-        title.textContent = location ? (settingsOnly ? 'Location Settings: ' : 'Edit Business Location: ') + location.name : 'Add Business Location';
-        dialog.showModal();
-        if (settingsOnly) document.getElementById('location-invoice_scheme_id').focus();
-        else form.elements.name.focus();
-    }
-    document.getElementById('add-location').addEventListener('click', () => openDialog(null));
-    document.getElementById('locations-table').addEventListener('click', event => {
-        const edit = event.target.closest('.edit-location, .settings-location');
-        if (edit) openDialog(edit, edit.classList.contains('settings-location'));
-    });
-    document.querySelectorAll('[data-close-location]').forEach(button => button.addEventListener('click', () => dialog.close()));
-    dialog.addEventListener('close', () => previousFocus?.focus());
-    if (window.jQuery?.fn?.DataTable) {
-        const table = $('#locations-table').DataTable({pageLength:25,order:[[0,'asc']],autoWidth:false,scrollX:false,columnDefs:[{targets:11,orderable:false,searchable:false}],dom:'<"flex flex-wrap items-center justify-between gap-4 mb-5"lf>rt<"flex flex-wrap items-center justify-between gap-4 mt-4"ip>',language:{emptyTable:'No business locations yet. Add one to get started.',searchPlaceholder:'Search locationsâ€¦'}});
-        StickyDataTables.install(table);
-    }
-    @if($errors->any())
-        const oldLocationId = @json(old('_location_id'));
-        const oldButton = oldLocationId ? document.querySelector(`#locations-table .edit-location[data-url$="/${oldLocationId}"]`) : null;
-        openDialog(oldButton);
-        const oldValues = @json(old());
-        fields.forEach(field => { if (Object.hasOwn(oldValues, field)) form.elements[field].value = oldValues[field] ?? ''; });
-    @endif
-});
-</script>
-@endpush
+@push('scripts')<style>#location-dialog{margin:auto}#location-dialog::backdrop{background:rgb(15 23 42/.55);backdrop-filter:blur(3px)}#locations-table{font-size:.75rem;min-width:1180px}#locations-table th{white-space:normal!important;padding:.55rem .6rem!important;line-height:1.25}#locations-table td{padding:.6rem!important;line-height:1.35}.sticky-table-host{overflow-x:auto}</style><script>document.addEventListener('DOMContentLoaded',()=>{const dialog=document.querySelector('#location-dialog'),form=document.querySelector('#location-form'),fields=['name','code','landmark','city','zip_code','state','country','price_group','invoice_scheme_id','invoice_layout_pos_id','invoice_layout_sale_id'];const open=(button)=>{form.reset();const data=button?JSON.parse(button.dataset.location):{};form.action=button?button.dataset.url:@json(route('business.locations.store'));form._method.value=button?'PUT':'POST';document.querySelector('#dialog-title').textContent=button?'Edit business location':'Add a new business location';fields.forEach(k=>form.elements[k].value=data[k]??'');Object.entries(data.contacts??{}).forEach(([k,v])=>form.elements[`contacts[${k}]`].value=v);Object.entries(data.custom_fields??{}).forEach(([k,v])=>form.elements[`custom_fields[${k}]`].value=v);[...form.elements['featured_product_ids[]'].options].forEach(o=>o.selected=(data.featured_product_ids??[]).map(String).includes(o.value));Object.entries(data.payment_methods??{}).forEach(([k,v])=>{form.elements[`payment_methods[${k}][enabled]`].checked=!!v.enabled;form.elements[`payment_methods[${k}][account_id]`].value=v.account_id??''});dialog.showModal()};document.querySelector('#add-location').onclick=()=>open();document.querySelector('#locations-table').onclick=e=>{const b=e.target.closest('.edit-location');if(b)open(b)};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dialog.close());document.querySelector('#location-code').onblur=async e=>{if(!e.target.value)return;const r=await fetch(@json(route('business.locations.check-code'))+'?code='+encodeURIComponent(e.target.value));const d=await r.json();document.querySelector('#code-hint').textContent=d.available?'Available':'Already used'};document.querySelectorAll('.toggle-location').forEach(b=>b.onclick=async()=>{if(!confirm('Change this location status?'))return;const r=await fetch(b.dataset.url,{method:'PATCH',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'}});const d=await r.json();if(d.ok){const row=b.closest('tr'),active=d.is_active;row.querySelector('.location-status').innerHTML=active?'<span class="text-emerald-700 font-bold">Active</span>':'<span class="text-rose-700 font-bold">Inactive</span>';b.textContent=active?'Deactivate':'Activate';b.className='toggle-location rounded-lg px-2 py-1 text-xs font-bold '+(active?'bg-rose-50 text-rose-700':'bg-emerald-50 text-emerald-700');const alert=document.createElement('div');alert.className='fixed right-5 top-5 z-50 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg';alert.textContent=d.message;document.body.append(alert);setTimeout(()=>alert.remove(),3500)}});if(window.jQuery?.fn?.DataTable)$('#locations-table').DataTable({pageLength:25,order:[[0,'asc']]});});</script>@endpush
