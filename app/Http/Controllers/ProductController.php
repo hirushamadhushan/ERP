@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ProductSerialNumber;
 use App\Models\Unit;
 use App\Models\VariationTemplate;
+use App\Models\Warranty;
 use App\Services\ProductCatalogService;
 use App\Services\ProductStockReport;
 use Illuminate\Support\Facades\Storage;
@@ -25,9 +26,11 @@ class ProductController extends Controller
     {
         $filters = $request->validated();
         $products = Product::query()
-            ->with(['unit', 'brand', 'category', 'locations'])
+            ->with(['unit', 'brand', 'warranty', 'category', 'locations', 'variants.variationValues', 'variants.locationStocks'])
             ->when($filters['product_type'] ?? null, fn ($query, $value) => $query->where('product_type', $value))
             ->when($filters['category_id'] ?? null, fn ($query, $value) => $query->whereHas('selectedCategory', fn ($category) => $category->where('id', $value)->orWhere('parent_id', $value)))
+            ->when($filters['subcategory_id'] ?? null, fn ($query, $value) => $query->where('selected_category_id', $value))
+            ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('is_active', $value === 'active'))
             ->when($filters['unit_id'] ?? null, fn ($query, $value) => $query->where('unit_id', $value))
             ->when($filters['brand_id'] ?? null, fn ($query, $value) => $query->where('brand_id', $value))
             ->when($filters['location_id'] ?? null, fn ($query, $value) => $query->whereHas('locations', fn ($locations) => $locations->whereKey($value)))
@@ -45,12 +48,12 @@ class ProductController extends Controller
 
         $serialStock = ProductSerialNumber::query()
             ->leftJoin('product_variants as stock_variant', 'stock_variant.id', '=', 'product_serial_numbers.product_variant_id')
-            ->selectRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id) as product_id, location_id, COUNT(*) as quantity')
+            ->selectRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id) as product_id, product_serial_numbers.product_variant_id, location_id, COUNT(*) as quantity')
             ->where('status', 'available')
             ->whereIn(\Illuminate\Support\Facades\DB::raw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id)'), $products->pluck('id'))
-            ->groupByRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id), location_id')
+            ->groupByRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id), product_serial_numbers.product_variant_id, location_id')
             ->get()
-            ->keyBy(fn ($row) => $row->product_id.':'.$row->location_id);
+            ->keyBy(fn ($row) => $row->product_id.':'.($row->product_variant_id ?: 'product').':'.$row->location_id);
         $productDetails = $products->mapWithKeys(fn (Product $product) => [
             $product->id => [
                 'name' => $product->name,
@@ -104,14 +107,66 @@ class ProductController extends Controller
         return redirect()->route('products.catalog.index')->with('success', 'Product deleted successfully.');
     }
 
+    public function duplicate(Product $product)
+    {
+        $copy = $product->replicate(['code', 'sku_key']);
+        $copy->name = $product->name.' (Copy)';
+        $copy->code = 'PRD-'.strtoupper(\Illuminate\Support\Str::random(10));
+        $copy->is_active = true;
+        $copy->save();
+        $copy->locations()->sync($product->locations()->pluck('locations.id'));
+        $copy->custom_fields = $product->custom_fields;
+        $copy->save();
+        return redirect()->route('products.catalog.edit', $copy)->with('success', 'Product duplicated. Update details and save.');
+    }
+
+    public function bulk(\Illuminate\Http\Request $request, ProductCatalogService $catalog)
+    {
+        $data = $request->validate(['action'=>['required',\Illuminate\Validation\Rule::in(['deactivate','activate','delete','add_location','remove_location'])],'product_ids'=>['required','array','min:1'],'product_ids.*'=>['integer','exists:products,id'],'location_id'=>['nullable','integer','exists:locations,id']]);
+        if (in_array($data['action'], ['add_location','remove_location'], true) && empty($data['location_id'])) return back()->withErrors(['location_id'=>'Select a business location.']);
+        $products = Product::whereIn('id',$data['product_ids'])->get();
+
+        if ($data['action'] === 'delete') {
+            $hasRelatedTransactions = false;
+
+            foreach ($products as $product) {
+                try {
+                    $catalog->delete($product);
+                } catch (\Illuminate\Validation\ValidationException) {
+                    $hasRelatedTransactions = true;
+                }
+            }
+
+            if ($hasRelatedTransactions) {
+                return back()->with('error', "Some products couldn't be deleted because it has transactions related to it.");
+            }
+
+            return back()->with('success', count($products).' products deleted successfully.');
+        }
+
+        foreach ($products as $product) {
+            match ($data['action']) {
+                'activate' => $product->update(['is_active'=>true]),
+                'deactivate' => $product->update(['is_active'=>false]),
+                'add_location' => $product->locations()->syncWithoutDetaching([$data['location_id']=>['opening_quantity'=>0]]),
+                'remove_location' => $product->locations()->detach($data['location_id']),
+            };
+        }
+        return back()->with('success', count($products).' products updated successfully.');
+    }
+
     public function opening(Product $product)
     {
-        return view('products.opening', ['product' => $product->load('locations')]);
+        return view('products.opening', ['product' => $product->load('locations', 'variants.variationValues', 'variants.locationStocks')]);
     }
 
     public function saveOpening(SaveOpeningStockRequest $request, Product $product, ProductCatalogService $catalog)
     {
-        $catalog->saveOpeningStock($product, $request->validated('quantities'));
+        if ($product->product_type === 'variable') {
+            $catalog->saveVariantOpeningStock($product, $request->validated('quantities'));
+        } else {
+            $catalog->saveOpeningStock($product, $request->validated('quantities'));
+        }
 
         return back()->with('success', 'Opening stock saved.');
     }
@@ -171,6 +226,7 @@ class ProductController extends Controller
         return [
             'units' => Unit::orderBy('name')->get(),
             'brands' => Brand::orderBy('name')->get(),
+            'warranties' => Warranty::orderBy('name')->get(),
             'categories' => Category::orderBy('name')->get(),
             'locations' => Location::query()
                 ->when(\Illuminate\Support\Facades\Schema::hasColumn('locations', 'is_active'), function ($query) use ($product) {
@@ -178,7 +234,7 @@ class ProductController extends Controller
                     $query->where(fn ($locations) => $locations->where('is_active', true)->orWhereIn('id', $assignedIds));
                 })
                 ->orderBy('name')->get(),
-            'variationTemplates' => VariationTemplate::orderBy('name')->get(),
+            'variationTemplates' => VariationTemplate::with('valueRecords')->orderBy('name')->get(),
             'comboProducts' => Product::where('product_type', '!=', 'combo')->orderBy('name')->get(['id', 'name', 'code', 'purchase_price', 'selling_price']),
             'defaultMargin' => $defaultMargin,
             'productSettings' => $productSettings,

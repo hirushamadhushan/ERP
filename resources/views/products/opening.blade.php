@@ -12,9 +12,12 @@
 @else
 <p class="text-sm text-slate-500 mb-5">Set the starting quantity at each assigned location. Saving replaces the opening quantity; it does not add to it.</p>
 <form method="POST" action="{{ route('products.catalog.opening.store',$product) }}">@csrf
+@if($product->product_type === 'variable')
+<div class="overflow-x-auto"><table class="serial-table"><thead><tr><th>Variation</th>@foreach($product->locations as $location)<th>{{ $location->name }}</th>@endforeach</tr></thead><tbody>@foreach($product->variants as $variant)<tr><td>{{ $variant->value }}</td>@foreach($product->locations as $location)<td><input type="number" min="0" max="999999999" step="{{ $product->unit?->allow_decimal ? '0.0001' : '1' }}" name="quantities[{{ $variant->id }}][{{ $location->id }}]" value="{{ old('quantities.'.$variant->id.'.'.$location->id, $variant->locationStocks->firstWhere('location_id',$location->id)?->opening_quantity ?? 0) }}" required></td>@endforeach</tr>@endforeach</tbody></table></div>
+@else
 <div class="serial-grid">@foreach($product->locations as $location)<div><label for="quantity-{{ $location->id }}">{{ $location->name }} ({{ $location->code }})</label><input id="quantity-{{ $location->id }}" type="number" min="0" max="999999999" step="{{ $product->unit?->allow_decimal ? '0.0001' : '1' }}" name="quantities[{{ $location->id }}]" value="{{ old('quantities.'.$location->id,$location->pivot->opening_quantity) }}" required></div>@endforeach</div>
+@endif
 <button class="serial-btn mt-6">Save opening stock</button></form>
 @endif
 </section>
 @endsection
-

@@ -5,12 +5,10 @@
 @php
     $input = 'w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all';
 @endphp
-@if(session('success'))
-    <div role="status" class="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm flex items-center gap-2">
-        <i class="bi bi-check-circle-fill text-emerald-600"></i>
-        <span>{{ session('success') }}</span>
-    </div>
-@endif
+<div id="variation-toast" role="status" aria-live="polite" class="variation-toast" hidden>
+    <i id="variation-toast-icon" class="bi" aria-hidden="true"></i>
+    <p id="variation-toast-message"></p>
+</div>
 
 <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
     <div>
@@ -114,6 +112,11 @@
 
 @push('scripts')
 <style>
+    .variation-toast { position:fixed; z-index:100; top:1rem; right:1rem; display:flex; align-items:flex-start; gap:.7rem; width:min(24rem,calc(100vw - 2rem)); padding:1rem 1.1rem; border-radius:.8rem; color:#fff; box-shadow:0 12px 28px rgb(15 23 42 / .24); font-size:.875rem; font-weight:600; }
+    .variation-toast.is-success { background:#138a5b; }
+    .variation-toast.is-error { background:#c94a4a; }
+    .variation-toast i { margin-top:.1rem; font-size:1.1rem; }
+    .variation-toast p { margin:0; line-height:1.35; }
     #variation-dialog { margin:auto; padding:0; border:0; border-radius:1rem; width:calc(100% - 2rem); max-width:34rem; max-height:calc(100dvh - 2rem); }
     #variation-dialog::backdrop { background:rgb(15 23 42 / .5); backdrop-filter:blur(3px); }
     #variations-table_wrapper .dt-buttons { display:flex; flex-wrap:wrap; gap:.25rem; }
@@ -121,6 +124,17 @@
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const toast = document.getElementById('variation-toast');
+    const toastIcon = document.getElementById('variation-toast-icon');
+    const toastMessage = document.getElementById('variation-toast-message');
+    const toastData = @json(session('success') ? ['type' => 'success', 'message' => session('success')] : (session('error') ? ['type' => 'error', 'message' => session('error')] : null));
+    if (toastData) {
+        toast.classList.add(toastData.type === 'success' ? 'is-success' : 'is-error');
+        toastIcon.className = toastData.type === 'success' ? 'bi bi-check-circle-fill' : 'bi bi-shield-exclamation-fill';
+        toastMessage.textContent = toastData.message;
+        toast.hidden = false;
+        window.setTimeout(() => { toast.hidden = true; }, 4000);
+    }
     const dialog = document.getElementById('variation-dialog');
     const form = document.getElementById('variation-form');
     const save = document.getElementById('save-variation');

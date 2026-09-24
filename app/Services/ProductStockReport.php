@@ -13,26 +13,23 @@ final class ProductStockReport
     public function build(Collection $products, Collection $serialStock): array
     {
         $rows = $products->flatMap(function ($product) use ($serialStock) {
+            if ($product->product_type === 'variable') {
+                return $product->variants->flatMap(function ($variant) use ($product, $serialStock) {
+                    return $product->locations->map(function ($location) use ($product, $variant, $serialStock) {
+                        $stock = $product->enable_serial
+                            ? (float) ($serialStock->get($product->id.':'.$variant->id.':'.$location->id)?->quantity ?? 0)
+                            : (float) ($variant->locationStocks->firstWhere('location_id', $location->id)?->opening_quantity ?? 0);
+
+                        return $this->row($product, $location, $variant->value ?: 'Default', $stock, (float) $variant->purchase_price, (float) $variant->selling_price);
+                    });
+                });
+            }
+
             return $product->locations->map(function ($location) use ($product, $serialStock) {
                 $stock = $product->enable_serial
-                    ? (float) ($serialStock->get($product->id.':'.$location->id)?->quantity ?? 0)
+                    ? (float) ($serialStock->get($product->id.':product:'.$location->id)?->quantity ?? 0)
                     : (float) $location->pivot->opening_quantity;
-                $purchaseValue = $stock * (float) $product->purchase_price;
-                $saleValue = $stock * (float) $product->selling_price;
-
-                return [
-                    'product' => $product,
-                    'location' => $location,
-                    'variation' => 'Default',
-                    'stock' => $stock,
-                    'purchase_value' => $purchaseValue,
-                    'sale_value' => $saleValue,
-                    'potential_profit' => $saleValue - $purchaseValue,
-                    // These become transaction aggregates when their modules are added.
-                    'sold' => 0.0,
-                    'transferred' => 0.0,
-                    'adjusted' => 0.0,
-                ];
+                return $this->row($product, $location, 'Default', $stock, (float) $product->purchase_price, (float) $product->selling_price);
             });
         })->values();
 
@@ -47,6 +44,21 @@ final class ProductStockReport
                 'transferred' => $rows->sum('transferred'),
                 'adjusted' => $rows->sum('adjusted'),
             ],
+        ];
+    }
+
+    private function row($product, $location, string $variation, float $stock, float $purchasePrice, float $sellingPrice): array
+    {
+        $purchaseValue = $stock * $purchasePrice;
+        $saleValue = $stock * $sellingPrice;
+
+        return compact('product', 'location', 'variation', 'stock', 'purchaseValue', 'saleValue') + [
+            'purchase_value' => $purchaseValue,
+            'sale_value' => $saleValue,
+            'potential_profit' => $saleValue - $purchaseValue,
+            'sold' => 0.0,
+            'transferred' => 0.0,
+            'adjusted' => 0.0,
         ];
     }
 }

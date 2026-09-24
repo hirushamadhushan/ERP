@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductSerialNumber extends Model
 {
+    public const AVAILABLE = 'available';
+    public const SOLD = 'sold';
+    public const DAMAGED = 'damaged';
     protected static function booted(): void
     {
         static::saving(function ($record) {
@@ -39,4 +42,20 @@ class ProductSerialNumber extends Model
     }
     public function variant() { return $this->belongsTo(ProductVariant::class, 'product_variant_id'); }
     public function getVariationAttribute(): string { return $this->variant?->value ?? 'Default'; }
+
+    public function markSold(int $transactionId, ?int $sellLineId = null, mixed $soldAt = null): void
+    {
+        if ($this->status !== self::AVAILABLE) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['serial' => 'Only an available serial number can be sold.']);
+        }
+        $this->update(['status' => self::SOLD, 'sold_transaction_id' => $transactionId, 'sold_sell_line_id' => $sellLineId, 'sold_at' => $soldAt ?? now()]);
+    }
+
+    public function markDamaged(): void
+    {
+        if ($this->status !== self::AVAILABLE) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['serial' => 'Only an available serial number can be marked damaged.']);
+        }
+        $this->update(['status' => self::DAMAGED]);
+    }
 }

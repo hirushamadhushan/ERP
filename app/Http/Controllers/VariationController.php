@@ -10,9 +10,27 @@ class VariationController extends Controller
 {
     public function index()
     {
-        $records = VariationTemplate::orderBy('name')->get();
+        $records = VariationTemplate::with('valueRecords')->orderBy('name')->get();
 
         return view('variations.index', compact('records'));
+    }
+
+    /**
+     * Active variation templates and their ordered values for product forms,
+     * mobile clients and integrations.
+     */
+    public function api()
+    {
+        return response()->json(
+            VariationTemplate::with('valueRecords:id,variation_template_id,value,sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (VariationTemplate $template) => [
+                    'id' => $template->id,
+                    'name' => $template->name,
+                    'values' => $template->valueRecords->pluck('value')->values(),
+                ])
+        );
     }
 
     public function store(SaveVariationRequest $request)
@@ -43,6 +61,10 @@ class VariationController extends Controller
 
     public function destroy(VariationTemplate $variation)
     {
+        if ($variation->valueRecords()->whereHas('productVariants')->exists()) {
+            return back()->with('error', 'This variation is used by one or more products and cannot be deleted.');
+        }
+
         $this->databaseTransaction(
             fn () => $variation->delete(),
             'This variation is used by one or more products and cannot be deleted.'

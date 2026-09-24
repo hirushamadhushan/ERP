@@ -16,6 +16,7 @@ class SaveProductRequest extends BaseFormRequest
             'sku' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/D', Rule::unique('products', 'sku_key')->ignore($product?->id)],
             'unit_id' => ['required', 'integer', 'exists:units,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
+            'warranty_id' => ['nullable', 'integer', 'exists:warranties,id'],
             'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->whereNull('parent_id')],
             'subcategory_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('parent_id', $this->input('category_id'))],
             'location_ids' => ['required', 'array', 'min:1'],

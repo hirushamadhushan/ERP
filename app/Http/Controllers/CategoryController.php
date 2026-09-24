@@ -10,7 +10,11 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        return view('products.reference', ['kind' => 'categories', 'singular' => 'Category', 'records' => Category::orderBy('name')->get()]);
+        return view('products.reference', [
+            'kind' => 'categories',
+            'singular' => 'Category',
+            'records' => Category::tree(),
+        ]);
     }
 
     public function store(SaveCategoryRequest $request)
@@ -41,12 +45,27 @@ class CategoryController extends Controller
 
     public function destroy(Category $record)
     {
+        if ($record->children()->exists()) {
+            return back()->with('category_error', 'This category has sub-categories. Move or delete them before deleting it.');
+        }
+
         $this->databaseTransaction(
             fn () => $record->delete(),
             'This category is used by one or more products and cannot be deleted.'
         );
 
         return redirect()->route('products.categories.index')->with('success', 'Category deleted successfully.');
+    }
+
+    public function api()
+    {
+        return response()->json(Category::tree()->map(fn (Category $category) => [
+            'id' => $category->id,
+            'name' => $category->name,
+            'short_code' => $category->code,
+            'category_type' => $category->category_type,
+            'parent_id' => $category->parent_id,
+        ]));
     }
 
 }

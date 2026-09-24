@@ -10,7 +10,8 @@ class SaveOpeningStockRequest extends BaseFormRequest
     {
         return [
             'quantities' => ['required', 'array'],
-            'quantities.*' => ['required', 'numeric', 'min:0', 'max:999999999', 'decimal:0,4'],
+            'quantities.*' => ['required'],
+            'quantities.*.*' => ['nullable', 'numeric', 'min:0', 'max:999999999', 'decimal:0,4'],
         ];
     }
 }

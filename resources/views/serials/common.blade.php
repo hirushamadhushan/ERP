@@ -13,6 +13,7 @@
 @media(max-width:480px){.serial-card{padding:16px}}
 @media print{aside,header,nav,.no-print{display:none!important}main{margin:0!important;padding:0!important}.serial-card{border:0;box-shadow:none}body{background:white!important}}
 </style>
+@unless($hideFlashAlerts ?? false)
 @if(session('success'))<p role="status" class="p-4 mb-4 bg-emerald-50 text-emerald-800 rounded-xl">{{ session('success') }}</p>@endif
 @if($errors->any())<div role="alert" class="p-4 mb-4 bg-rose-50 text-rose-800 rounded-xl">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
-
+@endunless

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class VariationTemplate extends Model
 {
@@ -26,7 +27,16 @@ class VariationTemplate extends Model
     }
     public function syncValues(array $values): void
     {
-        foreach (array_values(array_unique($values)) as $order => $value) {
+        $values = array_values(array_unique(array_filter(array_map('trim', $values))));
+        $removedValues = $this->valueRecords()->whereNotIn('value', $values);
+
+        if ($removedValues->whereHas('productVariants')->exists()) {
+            throw ValidationException::withMessages([
+                'values' => 'A variation value used by a product cannot be removed.',
+            ]);
+        }
+
+        foreach ($values as $order => $value) {
             $this->valueRecords()->updateOrCreate(['value' => $value], ['sort_order' => $order]);
         }
         $this->valueRecords()->whereNotIn('value', $values)->delete();

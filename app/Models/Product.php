@@ -16,16 +16,16 @@ class Product extends Model
     public function setCategoryIdAttribute($value): void { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); }
     public function setSubcategoryIdAttribute($value): void { if ($value) { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); } }
 
-    protected $fillable = ['selected_category_id', 'name', 'code', 'unit_id', 'brand_id', 'category_id',
+    protected $fillable = ['selected_category_id', 'name', 'code', 'unit_id', 'brand_id', 'warranty_id', 'category_id',
         'subcategory_id', 'barcode_type', 'manage_stock', 'enable_serial',
         'not_for_selling', 'alert_quantity', 'description', 'image_path',
         'brochure_path', 'brochure_name', 'variant_image_path', 'weight',
         'custom_fields', 'product_type', 'tax_rate', 'selling_price_tax_type',
-        'purchase_price', 'selling_price', 'our_price'];
+        'purchase_price', 'selling_price', 'our_price', 'is_active'];
 
     protected function casts(): array
     {
-        return ['manage_stock' => 'boolean', 'enable_serial' => 'boolean', 'not_for_selling' => 'boolean'];
+        return ['manage_stock' => 'boolean', 'enable_serial' => 'boolean', 'not_for_selling' => 'boolean', 'is_active' => 'boolean'];
     }
 
     protected static function booted(): void
@@ -69,4 +69,10 @@ class Product extends Model
     {
         return $this->belongsToMany(self::class, 'combo_product_items', 'combo_product_id', 'item_product_id')->withPivot('quantity');
     }
+
+    public function warranty()
+    {
+        return $this->belongsTo(Warranty::class);
+    }
+    public function sellingPrices() { return $this->hasMany(ProductSellingPrice::class); }
 }

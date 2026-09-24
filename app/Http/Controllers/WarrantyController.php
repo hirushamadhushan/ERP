@@ -15,6 +15,11 @@ class WarrantyController extends Controller
         return view('warranties.index', compact('records'));
     }
 
+    public function api()
+    {
+        return response()->json(Warranty::orderBy('name')->get(['id', 'name', 'description', 'duration', 'duration_type']));
+    }
+
     public function store(SaveWarrantyRequest $request)
     {
         $validated = $request->validated();
@@ -43,6 +48,10 @@ class WarrantyController extends Controller
 
     public function destroy(Warranty $warranty)
     {
+        if ($warranty->products()->exists()) {
+            return back()->with('error', 'This warranty is assigned to one or more products and cannot be deleted.');
+        }
+
         $this->databaseTransaction(
             fn () => $warranty->delete(),
             'This warranty is used by one or more products and cannot be deleted.'

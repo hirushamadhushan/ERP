@@ -5,8 +5,7 @@
 @php
     $input = 'w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all';
 @endphp
-@if(session('success'))<div role="status" class="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm flex items-center gap-2"><i class="bi bi-check-circle-fill text-emerald-600"></i><span>{{ session('success') }}</span></div>@endif
-@if(session('unit_error'))<div role="alert" class="mb-6 p-4 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-sm flex items-center gap-2"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>{{ session('unit_error') }}</span></div>@endif
+<div id="unit-toast" class="unit-toast hidden" role="status"><div class="flex items-center gap-3"><i id="unit-toast-icon" class="bi bi-shield-exclamation text-2xl"></i><p id="unit-toast-message" class="m-0 leading-5"></p></div></div>
 
 <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
     <div>
@@ -76,9 +75,23 @@
     .unit-tip { position:fixed; margin:0; width:17rem; padding:1rem; background:white; color:#334155; border:1px solid #e2e8f0; border-radius:.5rem; box-shadow:0 8px 20px #0002; font-size:.8125rem; line-height:1.5; font-weight:400; text-transform:none; z-index:100; }
     #units-table_wrapper .dt-buttons { display:flex; flex-wrap:wrap; gap:.25rem; }
     #units-table_wrapper .dataTables_filter, #units-table_wrapper .dataTables_length { float:none; text-align:left; }
+    .unit-toast{position:fixed;right:1.25rem;top:.75rem;z-index:90;width:300px;padding:1rem;border-radius:.375rem;background:#c9534f;color:#fff;font-size:.875rem;font-weight:600;box-shadow:0 12px 28px rgb(15 23 42 / .22)}
+    .unit-toast.success{background:#059669}
+    .unit-toast.hidden{display:none}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const toast = document.getElementById('unit-toast');
+    const showUnitToast = (message, type = 'error') => {
+        document.getElementById('unit-toast-message').textContent = message;
+        document.getElementById('unit-toast-icon').className = type === 'success' ? 'bi bi-check-circle-fill text-2xl' : 'bi bi-shield-exclamation text-2xl';
+        toast.classList.toggle('success', type === 'success');
+        toast.classList.remove('hidden');
+        window.clearTimeout(window.unitToastTimer);
+        window.unitToastTimer = window.setTimeout(() => toast.classList.add('hidden'), 4000);
+    };
+    @if(session('success')) showUnitToast(@json(session('success')), 'success'); @endif
+    @if(session('unit_error')) showUnitToast(@json(session('unit_error'))); @endif
     const dialog = document.getElementById('unit-dialog'), form = document.getElementById('unit-form');
     const multiple = document.getElementById('unit-multiple'), save = document.getElementById('save-unit');
     let previousFocus;

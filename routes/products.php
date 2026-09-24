@@ -8,7 +8,9 @@ Route::controller(ProductController::class)->prefix('products')->name('products.
     Route::get('/create', 'create')->name('create');
     Route::post('/', 'store')->name('store');
     Route::post('/quick-reference', 'quickReference')->name('reference');
+    Route::post('/bulk', 'bulk')->name('bulk');
     Route::get('/{product}/edit', 'edit')->name('edit');
+    Route::post('/{product}/duplicate', 'duplicate')->name('duplicate');
     Route::put('/{product}', 'update')->name('update');
     Route::delete('/{product}', 'destroy')->name('destroy');
     Route::get('/{product}/opening-stock', 'opening')->name('opening');

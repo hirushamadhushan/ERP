@@ -11,7 +11,7 @@ class SerialFilterRequest extends BaseFormRequest
         return [
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
-            'status' => ['nullable', 'in:available,sold'],
+            'status' => ['nullable', 'in:available,sold,damaged'],
         ];
     }
 }

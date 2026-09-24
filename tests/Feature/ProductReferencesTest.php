@@ -54,7 +54,11 @@ class ProductReferencesTest extends TestCase
             $this->put('/'.$kind.'/'.$id, $data)->assertSessionHasNoErrors()->assertRedirect('/'.$kind);
             $this->assertDatabaseHas($kind, $data);
             $this->delete('/'.$kind.'/'.$id)->assertRedirect('/'.$kind);
-            $this->assertDatabaseCount($kind, 0);
+            if ($kind === 'brands') {
+                $this->assertSoftDeleted('brands', ['id' => $id]);
+            } else {
+                $this->assertDatabaseCount($kind, 0);
+            }
         }
     }
 

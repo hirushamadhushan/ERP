@@ -13,6 +13,18 @@ class BrandController extends Controller
         return view('products.reference', ['kind' => 'brands', 'singular' => 'Brand', 'records' => Brand::orderBy('name')->get()]);
     }
 
+    /**
+     * Active brands for mobile clients and integrations.
+     */
+    public function api()
+    {
+        return response()->json(
+            Brand::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'description', 'use_for_repair'])
+        );
+    }
+
     public function store(SaveBrandRequest $request)
     {
         $validated = $request->validated();

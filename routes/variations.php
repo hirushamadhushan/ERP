@@ -10,6 +10,7 @@ Route::controller(VariationController::class)
     ->name('products.variations.')
     ->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('/api', 'api')->name('api');
         Route::post('/', 'store')->name('store');
         Route::put('/{variation}', 'update')->name('update');
         Route::delete('/{variation}', 'destroy')->name('destroy');

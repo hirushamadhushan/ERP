@@ -79,6 +79,19 @@ class VariationsTest extends TestCase
         $this->get('/variations')->assertRedirect('/variation-templates');
     }
 
+    public function test_variation_api_returns_templates_with_ordered_values(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $template = VariationTemplate::create(['name' => 'Size']);
+        $template->syncValues(['Small', 'Medium']);
+
+        $this->getJson('/variation-templates/api')
+            ->assertOk()
+            ->assertJsonPath('0.name', 'Size')
+            ->assertJsonPath('0.values.0', 'Small')
+            ->assertJsonPath('0.values.1', 'Medium');
+    }
+
     public function test_variations_validation(): void
     {
         $user = User::factory()->create();

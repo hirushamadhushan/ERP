@@ -26,6 +26,10 @@ class ProductCatalogService
             if ($product->serialNumbers()->exists()) {
                 throw ValidationException::withMessages(['product' => 'This product has serial-number history and cannot be deleted.']);
             }
+            // A featured-product assignment is presentation data owned by a
+            // business location. It must not keep an otherwise deletable
+            // product record alive.
+            DB::table('location_featured_products')->where('product_id', $product->id)->delete();
             $product->delete();
         });
         $this->cleanupAttachments($files);
@@ -47,6 +51,34 @@ class ProductCatalogService
                     throw ValidationException::withMessages(['quantities' => 'This unit requires whole-number stock.']);
                 }
                 $product->locations()->updateExistingPivot($locationId, ['opening_quantity' => $quantity]);
+            }
+        });
+    }
+
+    public function saveVariantOpeningStock(Product $product, array $quantities): void
+    {
+        DB::transaction(function () use ($product, $quantities) {
+            $product = Product::with(['variants.locationStocks', 'locations', 'unit'])->lockForUpdate()->findOrFail($product->id);
+            if (! $product->manage_stock || $product->enable_serial || $product->product_type !== 'variable') {
+                throw ValidationException::withMessages(['quantities' => 'Variation opening stock is available only for non-serial variable products.']);
+            }
+            $variantIds = $product->variants->pluck('id')->map(fn ($id) => (string) $id)->all();
+            $locationIds = $product->locations->pluck('id')->map(fn ($id) => (string) $id)->all();
+            if (array_diff(array_keys($quantities), $variantIds) || count($quantities) !== count($variantIds)) {
+                throw ValidationException::withMessages(['quantities' => 'Enter stock for every variation.']);
+            }
+            foreach ($quantities as $variantId => $locationQuantities) {
+                if (! is_array($locationQuantities) || array_diff(array_keys($locationQuantities), $locationIds) || count($locationQuantities) !== count($locationIds)) {
+                    throw ValidationException::withMessages(['quantities' => 'Enter stock for every assigned location.']);
+                }
+                foreach ($locationQuantities as $locationId => $quantity) {
+                    if (! $product->unit?->allow_decimal && (float) $quantity !== floor((float) $quantity)) {
+                        throw ValidationException::withMessages(['quantities' => 'This unit requires whole-number stock.']);
+                    }
+                    $product->variants->firstWhere('id', $variantId)->locationStocks()->updateOrCreate(
+                        ['location_id' => $locationId], ['opening_quantity' => $quantity]
+                    );
+                }
             }
         });
     }
@@ -98,7 +130,7 @@ class ProductCatalogService
 
                 $product->fill($data)->save();
                 $product->locations()->sync($locations);
-                $this->syncVariants($request, $product, $data, $variants, $variationTemplateId, $factor, $newFiles, $oldFiles);
+                $this->syncVariants($request, $product, $data, $variants, $variationTemplateId, $factor, $locations, $newFiles, $oldFiles);
                 $product->comboItems()->sync($product->product_type === 'combo'
                     ? collect($comboItems)->mapWithKeys(fn ($item) => [$item['product_id'] => ['quantity' => $item['quantity']]])->all()
                     : []);
@@ -225,7 +257,7 @@ class ProductCatalogService
         }
     }
 
-    private function syncVariants(SaveProductRequest $request, Product $product, array $data, array $variants, ?int $templateId, string $factor, array &$newFiles, array &$oldFiles): void
+    private function syncVariants(SaveProductRequest $request, Product $product, array $data, array $variants, ?int $templateId, string $factor, array $locations, array &$newFiles, array &$oldFiles): void
     {
         $existingVariants = $product->variants()->get()->keyBy('value');
         $keptIds=[];
@@ -253,6 +285,10 @@ class ProductCatalogService
                     'image_path' => $imagePath,
                 ]);
                 $keptIds[]=$savedVariant->id;
+                foreach ($locations as $locationId) {
+                    $savedVariant->locationStocks()->updateOrCreate(['location_id' => $locationId], ['opening_quantity' => 0]);
+                }
+                $savedVariant->locationStocks()->whereNotIn('location_id', $locations)->delete();
             }
         }
         if (\App\Models\ProductSerialNumber::whereIn('product_variant_id',$product->variants()->whereNotIn('id',$keptIds)->pluck('id'))->exists()) {
