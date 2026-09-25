@@ -16,6 +16,8 @@ use App\Models\ProductSerialNumber;
 use App\Models\Unit;
 use App\Models\VariationTemplate;
 use App\Models\Warranty;
+use App\Models\TaxRate;
+use App\Models\SellingPriceGroup;
 use App\Services\ProductCatalogService;
 use App\Services\ProductStockReport;
 use Illuminate\Support\Facades\Storage;
@@ -78,9 +80,20 @@ class ProductController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(\Illuminate\Http\Request $request)
     {
-        return view('products.form', $this->references() + ['product' => new Product]);
+        $product = new Product;
+        if ($request->filled('d')) {
+            $source = Product::with(['locations', 'variants.variationValue.template', 'comboItems'])->findOrFail($request->integer('d'));
+            $product = $source->replicate(['code', 'sku_key', 'image_path', 'variant_image_path', 'brochure_path', 'brochure_name']);
+            $product->name = $source->name.' (Copy)';
+            $product->code = null;
+            $product->setRelation('locations', $source->locations);
+            $product->setRelation('variants', $source->variants);
+            $product->setRelation('comboItems', $source->comboItems);
+        }
+        $locationDetails = isset($source) ? \Illuminate\Support\Facades\DB::table('product_location_details')->where('product_id', $source->id)->get()->keyBy('location_id') : collect();
+        return view('products.form', $this->references($request->filled('d') ? $source : null) + compact('product', 'locationDetails'));
     }
 
     public function store(SaveProductRequest $request, ProductCatalogService $catalog)
@@ -92,6 +105,7 @@ class ProductController extends Controller
     {
         return view('products.form', $this->references($product) + [
             'product' => $product->load(['locations', 'variants.variationValue.template', 'comboItems']),
+            'locationDetails' => \Illuminate\Support\Facades\DB::table('product_location_details')->where('product_id', $product->id)->get()->keyBy('location_id'),
         ]);
     }
 
@@ -109,15 +123,31 @@ class ProductController extends Controller
 
     public function duplicate(Product $product)
     {
-        $copy = $product->replicate(['code', 'sku_key']);
-        $copy->name = $product->name.' (Copy)';
-        $copy->code = 'PRD-'.strtoupper(\Illuminate\Support\Str::random(10));
-        $copy->is_active = true;
-        $copy->save();
-        $copy->locations()->sync($product->locations()->pluck('locations.id'));
-        $copy->custom_fields = $product->custom_fields;
-        $copy->save();
-        return redirect()->route('products.catalog.edit', $copy)->with('success', 'Product duplicated. Update details and save.');
+        return redirect()->route('products.catalog.create', ['d' => $product->id]);
+    }
+
+    public function prices(Product $product)
+    {
+        return view('products.prices', [
+            'product' => $product->load('sellingPrices'),
+            'groups' => SellingPriceGroup::orderBy('name')->get(),
+        ]);
+    }
+
+    public function savePrices(\Illuminate\Http\Request $request, Product $product)
+    {
+        $data = $request->validate([
+            'prices' => ['nullable', 'array'],
+            'prices.*' => ['nullable', 'numeric', 'min:0', 'max:999999999', 'decimal:0,4'],
+        ]);
+        $this->databaseTransaction(function () use ($product, $data) {
+            foreach (SellingPriceGroup::pluck('id') as $groupId) {
+                $price = $data['prices'][$groupId] ?? null;
+                if ($price === null || $price === '') $product->sellingPrices()->where('selling_price_group_id', $groupId)->delete();
+                else $product->sellingPrices()->updateOrCreate(['selling_price_group_id' => $groupId], ['selling_price' => $price]);
+            }
+        });
+        return redirect()->route('products.catalog.index')->with('success', 'Selling price group prices saved.');
     }
 
     public function bulk(\Illuminate\Http\Request $request, ProductCatalogService $catalog)
@@ -157,7 +187,7 @@ class ProductController extends Controller
 
     public function opening(Product $product)
     {
-        return view('products.opening', ['product' => $product->load('locations', 'variants.variationValues', 'variants.locationStocks')]);
+        return view('products.opening', ['product' => $product->load('locations', 'variants.variationValues', 'variants.variationValue', 'variants.locationStocks')]);
     }
 
     public function saveOpening(SaveOpeningStockRequest $request, Product $product, ProductCatalogService $catalog)
@@ -168,7 +198,11 @@ class ProductController extends Controller
             $catalog->saveOpeningStock($product, $request->validated('quantities'));
         }
 
-        return back()->with('success', 'Opening stock saved.');
+        if ($request->boolean('return_to_products')) {
+            return redirect()->route('products.catalog.index')->with('success', 'Opening stock saved.');
+        }
+
+        return back()->with('success', 'Opening stock saved successfully.');
     }
 
     public function attachment(Product $product, string $kind)
@@ -227,7 +261,8 @@ class ProductController extends Controller
             'units' => Unit::orderBy('name')->get(),
             'brands' => Brand::orderBy('name')->get(),
             'warranties' => Warranty::orderBy('name')->get(),
-            'categories' => Category::orderBy('name')->get(),
+            'taxRates' => TaxRate::availableForProducts()->orderBy('is_tax_group')->orderBy('name')->get(),
+            'categories' => Category::tree(),
             'locations' => Location::query()
                 ->when(\Illuminate\Support\Facades\Schema::hasColumn('locations', 'is_active'), function ($query) use ($product) {
                     $assignedIds = $product?->locations()->pluck('locations.id')->all() ?? [];
@@ -249,6 +284,7 @@ class ProductController extends Controller
         $redirect = match ($action) {
             'another' => route('products.catalog.create'),
             'opening' => route('products.catalog.opening', $product),
+            'prices' => route('products.catalog.prices', $product),
             default => route('products.catalog.index'),
         };
 
@@ -261,6 +297,7 @@ class ProductController extends Controller
         $message = match ($action) {
             'another' => 'Product saved. Add another product.',
             'opening' => 'Product saved. Add opening stock below.',
+            'prices' => 'Product saved. Add customer-group prices below.',
             default => 'Product saved with SKU '.$product->code.'.',
         };
 

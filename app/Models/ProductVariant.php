@@ -14,6 +14,14 @@ class ProductVariant extends Model
     public function variationValue() { return $this->belongsTo(VariationTemplateValue::class, 'variation_template_value_id'); }
     public function variationValues() { return $this->belongsToMany(VariationTemplateValue::class, 'product_variant_values')->with('template')->orderBy('variation_template_values.id'); }
     public function locationStocks() { return $this->hasMany(ProductVariantLocationStock::class); }
-    public function getValueAttribute() { return $this->relationLoaded('variationValues') ? $this->variationValues->pluck('value')->implode(' / ') : $this->variationValue?->value; }
+    public function getValueAttribute()
+    {
+        // Older one-template variants use variation_template_value_id, while
+        // newer combination variants use the pivot. Prefer the combination
+        // labels when present, then safely fall back to the original value.
+        $values = $this->relationLoaded('variationValues') ? $this->variationValues->pluck('value')->filter() : collect();
+
+        return $values->isNotEmpty() ? $values->implode(' / ') : $this->variationValue?->value;
+    }
     public function getVariationTemplateIdAttribute() { return $this->variationValue?->variation_template_id; }
 }

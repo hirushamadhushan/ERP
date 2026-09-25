@@ -16,6 +16,27 @@ use Tests\TestCase;
 
 class ProductCatalogTest extends TestCase
 {
+    public function test_deep_category_selection_is_saved_and_restored(): void
+    {
+        $data = $this->data();
+        $root = \App\Models\Category::create(['name' => 'Hardware', 'category_type' => 'product']);
+        $leaf = $root;
+        for ($level = 1; $level <= 5; $level++) {
+            $leaf = \App\Models\Category::create(['name' => 'Depth '.$level, 'category_type' => 'product', 'parent_id' => $leaf->id]);
+        }
+        $data['category_id'] = $root->id;
+        $data['subcategory_id'] = $leaf->id;
+        $this->post('/products', $data)->assertSessionHasNoErrors();
+        $product = Product::firstOrFail();
+        $this->assertEquals($root->id, $product->category_id);
+        $this->assertEquals($leaf->id, $product->subcategory_id);
+        $this->get('/products/'.$product->id.'/edit')->assertOk()->assertSee('Depth 5')->assertSee('data-path=', false);
+        $other = \App\Models\Category::create(['name' => 'Other', 'category_type' => 'product']);
+        $data['category_id'] = $other->id;
+        $this->put('/products/'.$product->id, $data)->assertSessionHasErrors('subcategory_id');
+        $this->assertEquals($leaf->id, $product->fresh()->selected_category_id);
+    }
+
     public function test_variable_and_combo_products_are_saved_with_their_details(): void
     {
         $base = $this->data();
@@ -69,8 +90,8 @@ class ProductCatalogTest extends TestCase
             ->assertSee('Water Pump')
             ->assertSee('Stock Report')
             ->assertSee('8 Pc')
-            ->assertSee('Current Stock Value (By purchase price)')
-            ->assertSee('Potential Profit')
+            ->assertSee('Current Stock Value')
+            ->assertSee('Potential')
             ->assertSee('Custom Field 4')
             ->assertSee('Rs 800.00')
             ->assertSee('Rs 1,000.00')

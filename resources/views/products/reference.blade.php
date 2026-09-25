@@ -33,6 +33,9 @@
         </div>
     @endif
 
+    @if($isCategory)
+        @include('products.partials.category-tree')
+    @else
     <div class="sticky-table-host">
         <table id="reference-table" class="w-full text-left" style="width:100%">
             <thead>
@@ -45,13 +48,21 @@
             </thead>
             <tbody>
                 @foreach($records as $record)
-                    <tr>
-                        <td class="font-medium text-slate-800">{{ $record->name }}</td>
+                    <tr @if($isCategory) data-category-id="{{ $record->id }}" data-parent-id="{{ $record->parent_id }}" @endif>
+                        <td class="font-medium text-slate-800">
+                        @if($isCategory)
+                            <div class="category-branch" style="padding-left:{{ $record->tree_depth * 22 }}px">
+                            @if($records->contains('parent_id', $record->id))<button type="button" class="tree-toggle" aria-expanded="true" aria-label="Toggle {{ $record->name }}">▾</button>@else<span class="tree-leaf" aria-hidden="true">└</span>@endif
+                            <span>{{ $record->name }}</span>
+                            @if($record->tree_depth < \App\Models\Category::MAX_DEPTH)<button type="button" class="add-child" data-parent="{{ $record->id }}" aria-label="Add sub-category to {{ $record->name }}" title="Add sub-category">+</button>@endif
+                            </div>
+                        @else {{ $record->name }} @endif
+                        </td>
                         @if($isCategory)<td class="text-slate-600">{{ $record->code }}</td>@endif
                         <td class="whitespace-pre-wrap text-slate-600">{{ $record->description }}</td>
                         <td>
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <button type="button" class="edit-reference inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-record="{{ json_encode($record->only(['id', 'name', 'code', 'description'])) }}" data-url="{{ route($prefix.'.update', $record) }}">
+                                <button type="button" class="edit-reference inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-record="{{ json_encode($record->only(['id', 'name', 'code', 'description', 'parent_id'])) }}" data-url="{{ route($prefix.'.update', $record) }}">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
                                 </button>
                                 <form class="delete-reference" method="POST" action="{{ route($prefix.'.destroy', $record) }}">
@@ -68,6 +79,7 @@
             </tbody>
         </table>
     </div>
+    @endif
 </section>
 
 <dialog id="reference-dialog" aria-labelledby="reference-title" class="bg-white shadow-2xl text-slate-800 rounded-2xl p-0 overflow-hidden border-0">
@@ -110,6 +122,16 @@
                     <label for="reference-description" class="block text-xs font-bold text-slate-700 mb-1.5">Description</label>
                     <textarea id="reference-description" name="description" rows="3" maxlength="2000" placeholder="Description" class="{{ $input }}">{{ old('description') }}</textarea>
                 </div>
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="is-subcategory" @checked(old('parent_id')) style="accent-color:#9333ea"> Add as sub-category</label>
+                <div id="parent-category-field" hidden>
+                    <label for="parent-category" class="block text-xs font-bold mb-2">Select parent category *</label>
+                    <select id="parent-category" name="parent_id" class="{{ $input }}">
+                        <option value="">Please select</option>
+                        @foreach($records as $parent)
+                        <option value="{{ $parent->id }}" data-parent="{{ $parent->parent_id }}" data-depth="{{ $parent->tree_depth }}" @selected(old('parent_id') == $parent->id)>{{ $parent->tree_path }}</option>
+                        @endforeach
+                    </select>
+                </div>
             @else
                 <div>
                     <label for="reference-description" class="block text-xs font-bold text-slate-700 mb-1.5">Short description</label>
@@ -128,6 +150,8 @@
 
 @push('scripts')
 <style>
+    .category-branch{display:flex;align-items:center;gap:8px;min-height:38px}.tree-toggle,.tree-leaf{width:24px;flex-shrink:0;color:#9333ea}.add-child{width:26px;height:26px;border-radius:7px;background:#faf5ff;color:#9333ea;font-weight:700}.add-child:hover{background:#f3e8ff}
+    #reference-table tr[hidden]{display:none}#reference-table td,#reference-table th{padding:10px;border-bottom:1px solid #f1f5f9}
     #reference-dialog { margin:auto; padding:0; border:0; border-radius:1rem; width:calc(100% - 2rem); max-width:32rem; max-height:calc(100dvh - 2rem); }
     #reference-dialog::backdrop { background:rgb(15 23 42 / .5); backdrop-filter:blur(3px); }
     #reference-table_wrapper .dt-buttons { display:flex; flex-wrap:wrap; gap:.25rem; }
@@ -151,21 +175,120 @@ document.addEventListener('DOMContentLoaded', () => {
     const dialog = document.getElementById('reference-dialog'), form = document.getElementById('reference-form'), save = document.getElementById('save-reference');
     const singular = @json($singular);
     let previousFocus;
+    const subcategory = document.getElementById('is-subcategory'), parentSelect = document.getElementById('parent-category');
+    function syncParent() {
+        if (!subcategory) return;
+        document.getElementById('parent-category-field').hidden = !subcategory.checked;
+        parentSelect.disabled = !subcategory.checked;
+        parentSelect.required = subcategory.checked;
+        const editing = form.elements._record_id.value;
+        Array.from(parentSelect.options).forEach(option => {
+            let cursor = option, excluded = Number(option.dataset.depth) >= 5;
+            while (cursor?.value) {
+                if (editing && cursor.value === editing) { excluded = true; break; }
+                cursor = Array.from(parentSelect.options).find(candidate => candidate.value === cursor.dataset.parent);
+            }
+            option.disabled = excluded;
+        });
+    }
+    const categoryRows = Array.from(document.querySelectorAll('[data-category-id]'));
+    const categoryRowMap = new Map(categoryRows.map(row => [row.dataset.categoryId, row]));
+    function drawCategoryLines() {
+        const visibleRows = categoryRows.filter(row => !row.hidden);
+        const siblingGroups = new Map();
+        visibleRows.forEach(row => {
+            const key = row.dataset.parentId;
+            if (!siblingGroups.has(key)) siblingGroups.set(key, []);
+            siblingGroups.get(key).push(row);
+        });
+        const hasNextSibling = row => siblingGroups.get(row.dataset.parentId)?.at(-1) !== row;
+        visibleRows.forEach(row => {
+            const cell = row.querySelector('.category-tree-cell'), svg = row.querySelector('.category-lines');
+            if (!svg) return;
+            const node = row.querySelector('.category-node');
+            const cellRect = cell.getBoundingClientRect(), nodeRect = node.getBoundingClientRect();
+            const height = cellRect.height, middle = nodeRect.top - cellRect.top + nodeRect.height / 2;
+            const depth = Number(node.style.getPropertyValue('--depth'));
+            const x = level => 14 + level * 24 + 11;
+            let path = '';
+            if (depth) {
+                path += 'M '+x(depth-1)+' -1 V '+middle+' H '+x(depth);
+                if (hasNextSibling(row)) path += ' M '+x(depth-1)+' '+middle+' V '+(height+1);
+                let ancestor = categoryRowMap.get(row.dataset.parentId), level = depth - 1;
+                while (ancestor && level > 0) {
+                    if (hasNextSibling(ancestor)) path += ' M '+x(level-1)+' -1 V '+(height+1);
+                    ancestor = categoryRowMap.get(ancestor.dataset.parentId);
+                    level--;
+                }
+            }
+            if (siblingGroups.has(row.dataset.categoryId)) path += ' M '+x(depth)+' '+middle+' V '+(height+1);
+            svg.replaceChildren();
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            line.setAttribute('d', path);
+            svg.appendChild(line);
+        });
+    }
+    function refreshCategoryTree() {
+        const term = (document.getElementById('category-search')?.value || '').trim().toLowerCase();
+        const visible = new Set();
+        if (term) {
+            categoryRows.forEach(row => {
+                if (!row.dataset.search.includes(term)) return;
+                let cursor = row;
+                while (cursor) { visible.add(cursor.dataset.categoryId); cursor = categoryRowMap.get(cursor.dataset.parentId); }
+            });
+        }
+        categoryRows.forEach(row => {
+            const parent = categoryRowMap.get(row.dataset.parentId);
+            row.hidden = term ? !visible.has(row.dataset.categoryId) : !!parent && (parent.hidden || parent.querySelector('.tree-toggle')?.getAttribute('aria-expanded') === 'false');
+        });
+        const empty = document.getElementById('category-empty');
+        if (empty) empty.hidden = categoryRows.some(row => !row.hidden);
+        requestAnimationFrame(drawCategoryLines);
+    }
+    if (categoryRows.length) {
+        requestAnimationFrame(drawCategoryLines);
+        new ResizeObserver(() => requestAnimationFrame(drawCategoryLines)).observe(document.getElementById('reference-table'));
+    }
+    document.getElementById('category-search')?.addEventListener('input', refreshCategoryTree);
+    for (const [id, expanded] of [['expand-categories', true], ['collapse-categories', false]]) {
+        document.getElementById(id)?.addEventListener('click', () => {
+            document.getElementById('category-search').value = '';
+            document.querySelectorAll('.tree-toggle').forEach(toggle => {
+                toggle.setAttribute('aria-expanded', String(expanded));
+                toggle.innerHTML = expanded ? '<i class="bi bi-chevron-down"></i>' : '<i class="bi bi-chevron-right"></i>';
+            });
+            refreshCategoryTree();
+        });
+    }
+    subcategory?.addEventListener('change', syncParent);
+    syncParent();
     function openForm() { previousFocus = document.activeElement; save.disabled = false; save.textContent = 'Save'; dialog.showModal(); }
     
     document.querySelectorAll('#add-reference').forEach(btn => {
         btn.addEventListener('click', () => {
             form.reset(); form.action = @json(route($prefix.'.store')); form.elements._method.value = 'POST';
         ['_record_id', 'name', 'code', 'description'].forEach(key => {if(form.elements[key]) form.elements[key].value = '';});
+            if (subcategory) { subcategory.checked = false; parentSelect.value = ''; syncParent(); }
             document.getElementById('reference-errors')?.remove(); document.getElementById('reference-title').textContent = 'Add ' + singular.toLowerCase(); openForm();
         });
     });
 
     document.getElementById('reference-table')?.addEventListener('click', event => {
+        const child = event.target.closest('.add-child');
+        if (child) { document.getElementById('add-reference').click(); subcategory.checked = true; parentSelect.value = child.dataset.parent; syncParent(); return; }
+        const toggle = event.target.closest('.tree-toggle');
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', toggle.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
+            toggle.innerHTML = toggle.getAttribute('aria-expanded') === 'true' ? '<i class="bi bi-chevron-down"></i>' : '<i class="bi bi-chevron-right"></i>';
+            refreshCategoryTree();
+            return;
+        }
         const button = event.target.closest('.edit-reference'); if (!button) return;
         const record = JSON.parse(button.dataset.record);
         form.action = button.dataset.url; form.elements._method.value = 'PUT'; form.elements._record_id.value = record.id;
         ['name', 'code', 'description'].forEach(key => {if(form.elements[key]) form.elements[key].value = record[key] ?? '';});
+        if (subcategory) { subcategory.checked = !!record.parent_id; parentSelect.value = record.parent_id ?? ''; syncParent(); }
         document.getElementById('reference-errors')?.remove(); document.getElementById('reference-title').textContent = 'Edit ' + singular.toLowerCase(); openForm();
     });
 
@@ -182,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openForm();
     }
 
-    if (window.jQuery && $.fn.DataTable) {
+    if (!@json($isCategory) && window.jQuery && $.fn.DataTable) {
         const actionColumn = @json($isCategory ? 3 : 2);
         const exportOptions = {columns: Array.from({length:actionColumn}, (_,i) => i),format:{body: data => {const text = $('<div>').html(data).text().trim();return /^[=+\-@\t\r]/.test(text) ? "'" + text : text;}}};
         const referenceTable = $('#reference-table').DataTable({pageLength:25,order:[[0,'asc']],scrollX:false,autoWidth:false,

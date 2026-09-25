@@ -268,6 +268,7 @@
                             ['business.settings.index', 'Business Settings', 'bi-sliders', request()->routeIs('business.settings.*')],
                             ['business.locations.index', 'Business Locations', 'bi-geo-alt', request()->routeIs('business.locations.*')],
                             ['business.invoice-settings.index', 'Invoice Settings', 'bi-receipt', request()->routeIs('business.invoice-settings.*')],
+                            ['business.tax-rates.index', 'Tax Rates', 'bi-percent', request()->routeIs('business.tax-rates.*')],
                         ] as [$settingsRoute, $settingsLabel, $settingsIcon, $isActive])
                             <a href="{{ route($settingsRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $settingsIcon }}" aria-hidden="true"></i>{{ $settingsLabel }}</a>
                         @endforeach

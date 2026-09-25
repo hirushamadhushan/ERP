@@ -9,6 +9,7 @@ use App\Models\BusinessSetting;
 use App\Models\Unit;
 use App\Models\VariationTemplate;
 use App\Models\VariationTemplateValue;
+use App\Models\TaxRate;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -87,6 +88,14 @@ class ProductCatalogService
     public function save(SaveProductRequest $request, Product $product): array
     {
         $data = $request->validated();
+        if (! empty($data['tax_rate_id'])) {
+            // Resolve the percentage on the server; a browser cannot override
+            // the configured amount for the selected single or group tax.
+            $configuredTax = TaxRate::availableForProducts()->findOrFail($data['tax_rate_id']);
+            $data['tax_rate'] = $configuredTax->amount;
+        } else {
+            $data['tax_rate_id'] = null;
+        }
         $unit = Unit::findOrFail($data['unit_id']);
         $this->validateStockConfiguration($data, $unit);
 
@@ -95,6 +104,7 @@ class ProductCatalogService
         $variants = $data['variants'] ?? [];
         $variationTemplateId = $data['variation_template_id'] ?? null;
         $comboItems = $data['combo_items'] ?? [];
+        $locationDetails = $data['location_details'] ?? [];
         $this->applyProductTypePricing($data, $product, $variants, $variationTemplateId, $comboItems);
 
         $data['purchase_price_inc'] = bcmul((string) $data['purchase_price'], $factor, 4);
@@ -111,7 +121,7 @@ class ProductCatalogService
         unset($data['purchase_price_inc'], $data['margin']);
         $action = $data['save_action'];
         $locations = $data['location_ids'];
-        unset($data['sku'], $data['location_ids'], $data['save_action'], $data['image'], $data['variant_image'], $data['variant_images'], $data['brochure'], $data['variants'], $data['variation_template_id'], $data['combo_items']);
+        unset($data['sku'], $data['location_ids'], $data['location_details'], $data['save_action'], $data['image'], $data['variant_image'], $data['variant_images'], $data['brochure'], $data['variants'], $data['variation_template_id'], $data['combo_items']);
         $data['code'] = $code;
         $data['description'] = ProductDescription::clean($data['description'] ?? '');
         if (! $data['manage_stock'] || $data['product_type'] === 'combo') {
@@ -124,12 +134,20 @@ class ProductCatalogService
         $newFiles = [];
         $oldFiles = [];
         try {
-            DB::transaction(function () use ($request, $product, &$data, $locations, $variants, $variationTemplateId, $comboItems, $factor, &$newFiles, &$oldFiles) {
+            DB::transaction(function () use ($request, $product, &$data, $locations, $locationDetails, $variants, $variationTemplateId, $comboItems, $factor, &$newFiles, &$oldFiles) {
                 $this->lockAndValidateExistingProduct($product, $data, $locations);
                 $this->storeAttachments($request, $product, $data, $newFiles, $oldFiles);
 
                 $product->fill($data)->save();
                 $product->locations()->sync($locations);
+                DB::table('product_location_details')->where('product_id', $product->id)->whereNotIn('location_id', $locations)->delete();
+                foreach ($locations as $locationId) {
+                    $details = $locationDetails[$locationId] ?? [];
+                    DB::table('product_location_details')->updateOrInsert(
+                        ['product_id' => $product->id, 'location_id' => $locationId],
+                        ['rack' => $details['rack'] ?? null, 'row' => $details['row'] ?? null, 'position' => $details['position'] ?? null]
+                    );
+                }
                 $this->syncVariants($request, $product, $data, $variants, $variationTemplateId, $factor, $locations, $newFiles, $oldFiles);
                 $product->comboItems()->sync($product->product_type === 'combo'
                     ? collect($comboItems)->mapWithKeys(fn ($item) => [$item['product_id'] => ['quantity' => $item['quantity']]])->all()
@@ -175,8 +193,26 @@ class ProductCatalogService
         if ($data['barcode_type'] === 'CODE39' && ! preg_match('/^[A-Z0-9.\-]+$/D', $code)) {
             throw ValidationException::withMessages(['sku' => 'CODE39 requires uppercase letters, numbers, dots or hyphens. Choose CODE128 for other SKU formats.']);
         }
+        if ($data['barcode_type'] === 'EAN13' && ! $this->validGtin($code, 13)) {
+            throw ValidationException::withMessages(['sku' => 'EAN-13 requires exactly 13 digits with a valid check digit.']);
+        }
+        if ($data['barcode_type'] === 'UPCA' && ! $this->validGtin($code, 12)) {
+            throw ValidationException::withMessages(['sku' => 'UPC-A requires exactly 12 digits with a valid check digit.']);
+        }
 
         return $code;
+    }
+
+    private function validGtin(string $code, int $length): bool
+    {
+        if (! preg_match('/^\d{'.$length.'}$/D', $code)) return false;
+        $digits = array_map('intval', str_split($code));
+        $checkDigit = array_pop($digits);
+        $sum = 0;
+        foreach ($digits as $index => $digit) {
+            $sum += $digit * (($index % 2 === 0) ? ($length === 13 ? 1 : 3) : ($length === 13 ? 3 : 1));
+        }
+        return (10 - ($sum % 10)) % 10 === $checkDigit;
     }
 
     private function applyProductTypePricing(array &$data, Product $product, array $variants, ?int $templateId, array $comboItems): void

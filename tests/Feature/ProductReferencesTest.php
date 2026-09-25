@@ -76,4 +76,24 @@ class ProductReferencesTest extends TestCase
         $this->actingAs(User::factory()->create());
         $this->get('/taxonomies?type=product')->assertRedirect('/categories');
     }
+
+    public function test_category_tree_depth_cycles_and_reparenting(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $parent = null;
+        $ids = [];
+        for ($depth = 0; $depth <= 5; $depth++) {
+            $this->post('/categories', ['name' => 'Level '.$depth, 'parent_id' => $parent])->assertSessionHasNoErrors();
+            $parent = \App\Models\Category::where('name', 'Level '.$depth)->value('id');
+            $ids[] = $parent;
+        }
+        $this->assertSame($ids, \App\Models\Category::tree()->pluck('id')->all());
+        $this->post('/categories', ['name' => 'Too deep', 'parent_id' => $parent])->assertSessionHasErrors('parent_id');
+        $this->put('/categories/'.$ids[0], ['name' => 'Level 0', 'parent_id' => $ids[2]])->assertSessionHasErrors('parent_id');
+        $other = \App\Models\Category::create(['name' => 'Other', 'category_type' => 'product']);
+        $this->put('/categories/'.$ids[0], ['name' => 'Level 0', 'parent_id' => $other->id])->assertSessionHasErrors('parent_id');
+        $this->get('/categories')->assertOk()->assertSee('Add as sub-category')->assertSee('Level 5')->assertSee('add-child');
+        $this->put('/categories/'.$ids[1], ['name' => 'Level 1'])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('categories', ['id' => $ids[1], 'parent_id' => null]);
+    }
 }

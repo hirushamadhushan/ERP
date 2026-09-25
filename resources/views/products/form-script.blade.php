@@ -25,7 +25,15 @@ if(window.tinymce) tinymce.init({
 (()=>{
 const byId=id=>document.getElementById(id);
 const productForm=byId('product-form');
-let productSaving=false;
+let productSaving=false, productDirty=false;
+productForm.addEventListener('input',()=>productDirty=true);
+productForm.addEventListener('change',()=>productDirty=true);
+window.addEventListener('beforeunload',event=>{if(productDirty&&!productSaving){event.preventDefault();event.returnValue='';}});
+const locationChoices=Array.from(document.querySelectorAll('.location-choice'));
+const syncLocationRacks=()=>{const selected=new Set(locationChoices.filter(input=>input.checked).map(input=>input.value));document.querySelectorAll('.location-rack').forEach(card=>{const active=selected.has(card.dataset.location);card.hidden=!active;card.querySelectorAll('input').forEach(input=>input.disabled=!active);});};
+locationChoices.forEach(input=>input.addEventListener('change',syncLocationRacks));syncLocationRacks();
+let scanBuffer='',lastScanAt=0;
+document.addEventListener('keydown',event=>{const target=document.activeElement?.tagName;if(event.ctrlKey||event.altKey||event.metaKey||['INPUT','TEXTAREA','SELECT'].includes(target))return;const now=Date.now();if(now-lastScanAt>80)scanBuffer='';lastScanAt=now;if(event.key==='Enter'){if(scanBuffer.length>=6){byId('sku').value=scanBuffer;byId('sku').dispatchEvent(new Event('input',{bubbles:true}));event.preventDefault();}scanBuffer='';}else if(event.key.length===1)scanBuffer+=event.key;});
 productForm.addEventListener('submit',async event=>{
     event.preventDefault();
     if(productSaving)return;
@@ -43,7 +51,7 @@ productForm.addEventListener('submit',async event=>{
     errorBox.hidden=true;
     try {
         const result=await AppErrors.request(productForm.action,{method:'POST',body:data});
-        location.assign(result.redirect);
+        productDirty=false;location.assign(result.redirect);
     }catch(error){
         errorBox.textContent=error.message;errorBox.hidden=false;
         errorBox.scrollIntoView({behavior:'smooth',block:'center'});
@@ -52,8 +60,10 @@ productForm.addEventListener('submit',async event=>{
 const categories=()=>{const parent=byId('category_id').value, sub=byId('subcategory_id');
     Array.from(sub.options).forEach(option=>{if(option.value){option.hidden=option.dataset.parent!==parent;option.disabled=option.hidden;}});
     if(sub.selectedOptions[0]?.disabled)sub.value='';
+    sub.disabled = !parent;
+    document.getElementById('subcategory-path').textContent = sub.selectedOptions[0]?.dataset.path || (parent ? 'Choose any level below the main category.' : 'Select a main category first.');
 };
-byId('category_id').addEventListener('change',categories);categories();
+byId('category_id').addEventListener('change',categories);byId('subcategory_id').addEventListener('change',categories);categories();
 const stock=()=>{byId('alert_quantity').disabled=!byId('manage_stock').checked;byId('enable_serial').setCustomValidity(byId('enable_serial').checked && (!byId('manage_stock').checked || byId('unit_id').selectedOptions[0]?.dataset.decimal==='1')?'Serial tracking requires stock management and a whole-number unit.':'');};
 ['manage_stock','enable_serial','unit_id'].forEach(id=>byId(id).addEventListener('change',stock));stock();
 let previousTax=Number(byId('tax_rate').value)||0, previousType=byId('selling_price_tax_type').value;
@@ -77,8 +87,8 @@ const taxChange=()=>{
 };
 byId('selling-label').textContent=previousType==='inclusive'?'Inc. tax *':'Exc. tax *';
 byId('tax_rate').addEventListener('input',taxChange);byId('selling_price_tax_type').addEventListener('change',taxChange);
-const taxMode=()=>{byId('tax_rate').readOnly=byId('tax_mode').value==='none';byId('tax_rate').hidden=byId('tax_rate').readOnly;if(byId('tax_rate').readOnly){byId('tax_rate').value=0;taxChange();}};
-byId('tax_mode').addEventListener('change',taxMode);byId('tax_rate').readOnly=byId('tax_mode').value==='none';byId('tax_rate').hidden=byId('tax_rate').readOnly;inc();
+const taxMode=()=>{const mode=byId('tax_mode'),option=mode.selectedOptions[0],configured=mode.value.startsWith('tax:');byId('tax_rate_id').value=configured?mode.value.slice(4):'';byId('tax_rate').readOnly=configured||mode.value==='none';byId('tax_rate').hidden=mode.value==='none';if(configured)byId('tax_rate').value=option.dataset.rate;if(mode.value==='none')byId('tax_rate').value=0;taxChange();};
+byId('tax_mode').addEventListener('change',taxMode);taxMode();inc();
 let imageUrl;
 byId('image').addEventListener('change',event=>{
     if(imageUrl)URL.revokeObjectURL(imageUrl);
@@ -121,7 +131,7 @@ const currency=value=>'Rs '+Number(value||0).toLocaleString('en-LK',{minimumFrac
 function variantRow(value,index,saved={}){
     const defaultMarg = (typeof window.__defaultMargin !== 'undefined' && window.__defaultMargin !== null) ? window.__defaultMargin : 25;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><input name="variants[${index}][sku]" maxlength="100" placeholder="" aria-label="Variation SKU"></td><td><input name="variants[${index}][value]" ${value ? 'readonly' : ''} placeholder="Value" aria-label="Variation value"></td><td><div class="variant-purchase-fields"><input type="number" name="variants[${index}][purchase_price]" min="0" step="0.0001" placeholder="Exc. tax" aria-label="Purchase price excluding tax"><input type="number" class="variant-purchase-inc" min="0" step="0.0001" placeholder="Inc. tax" aria-label="Purchase price including tax"><button type="button" class="variant-sync" data-sync="purchase" title="Calculate tax-inclusive purchase price" aria-label="Calculate tax-inclusive purchase price">✓</button></div></td><td><div class="variant-margin-fields"><input class="variant-margin" type="number" min="-100" max="999999" step="any" value="${defaultMarg}" aria-label="Variation margin percentage"><button type="button" class="variant-sync" data-sync="margin" title="Calculate selling price from margin" aria-label="Calculate selling price from margin">✓</button></div></td><td><input type="number" name="variants[${index}][selling_price]" min="0" step="0.0001" placeholder="${byId('selling_price_tax_type').value==='inclusive'?'Inc. tax':'Exc. tax'}" aria-label="Variation selling price"></td><td><input type="file" name="variant_images[${index}]" accept=".jpg,.jpeg,.png,.webp" aria-label="Variation images"></td><td><button type="button" class="row-remove" aria-label="Remove variation">−</button></td>`;
+    tr.innerHTML=`<td><input name="variants[${index}][sku]" maxlength="100" placeholder="" aria-label="Variation SKU"></td><td><input name="variants[${index}][value]" ${value ? 'readonly' : ''} placeholder="Value" aria-label="Variation value"></td><td><div class="variant-purchase-fields"><input type="number" name="variants[${index}][purchase_price]" min="0" step="0.0001" placeholder="Exc. tax" aria-label="Purchase price excluding tax"><input type="number" class="variant-purchase-inc" min="0" step="0.0001" placeholder="Inc. tax" aria-label="Purchase price including tax"></div></td><td><div class="variant-margin-fields"><input class="variant-margin" type="number" min="-100" max="999999" step="any" value="${defaultMarg}" aria-label="Variation margin percentage"></div></td><td><input type="number" name="variants[${index}][selling_price]" min="0" step="0.0001" placeholder="${byId('selling_price_tax_type').value==='inclusive'?'Inc. tax':'Exc. tax'}" aria-label="Variation selling price"></td><td><input type="file" name="variant_images[${index}]" accept=".jpg,.jpeg,.png,.webp" aria-label="Variation images"></td><td><button type="button" class="row-remove" aria-label="Remove variation">âˆ’</button></td>`;
     const sku=tr.querySelector('[name$="[sku]"]'), variantValue=tr.querySelector('[name$="[value]"]');
     const purchase=tr.querySelector('[name$="[purchase_price]"]'), purchaseInc=tr.querySelector('.variant-purchase-inc');
     const margin=tr.querySelector('.variant-margin'), selling=tr.querySelector('[name$="[selling_price]"]');
@@ -135,8 +145,6 @@ function variantRow(value,index,saved={}){
     purchaseInc.addEventListener('input',()=>{purchase.value=purchaseInc.value===''?'':money((Number(purchaseInc.value)||0)/factor());refreshSelling();});
     margin.addEventListener('input',refreshSelling);
     selling.addEventListener('input',()=>{refreshMargin();syncSummary();});
-    tr.querySelector('[data-sync="purchase"]').addEventListener('click',refreshTax);
-    tr.querySelector('[data-sync="margin"]').addEventListener('click',refreshSelling);
     tr.querySelector('.row-remove').addEventListener('click',()=>{tr.remove();renumberRows(variantBody,'variants');syncSummary();});
     tr.refreshTax=()=>{
         selling.placeholder=byId('selling_price_tax_type').value==='inclusive'?'Inc. tax':'Exc. tax';
@@ -195,7 +203,7 @@ function showComboResults(){
     comboResults.innerHTML='';
     matches.forEach(product=>{
         const button=document.createElement('button');button.type='button';button.className='combo-result';button.setAttribute('role','option');
-        button.innerHTML=`${product.name}<small>${product.code} · ${currency(product.purchase_price)}</small>`;
+        button.innerHTML=`${product.name}<small>${product.code} Â· ${currency(product.purchase_price)}</small>`;
         button.addEventListener('click',()=>addComboProduct(product));comboResults.appendChild(button);
     });
     comboResults.hidden=matches.length===0;

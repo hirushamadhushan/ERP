@@ -11,16 +11,16 @@ class Product extends Model
     protected $with=['selectedCategory'];
     protected $appends=['category_id','subcategory_id','custom_fields','purchase_price_inc','margin'];
     public function selectedCategory() { return $this->belongsTo(Category::class,'selected_category_id'); }
-    public function getCategoryIdAttribute() { return $this->selectedCategory?->parent_id ?? $this->attributes['selected_category_id'] ?? null; }
+    public function getCategoryIdAttribute() { return $this->selectedCategory?->rootCategoryId(); }
     public function getSubcategoryIdAttribute() { return $this->selectedCategory?->parent_id ? $this->selected_category_id : null; }
     public function setCategoryIdAttribute($value): void { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); }
     public function setSubcategoryIdAttribute($value): void { if ($value) { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); } }
 
-    protected $fillable = ['selected_category_id', 'name', 'code', 'unit_id', 'brand_id', 'warranty_id', 'category_id',
+    protected $fillable = ['selected_category_id', 'name', 'code', 'unit_id', 'purchase_unit_id', 'secondary_unit_id', 'brand_id', 'warranty_id', 'category_id',
         'subcategory_id', 'barcode_type', 'manage_stock', 'enable_serial',
         'not_for_selling', 'alert_quantity', 'description', 'image_path',
-        'brochure_path', 'brochure_name', 'variant_image_path', 'weight',
-        'custom_fields', 'product_type', 'tax_rate', 'selling_price_tax_type',
+        'brochure_path', 'brochure_name', 'variant_image_path', 'weight', 'expiry_period', 'expiry_period_type',
+        'custom_fields', 'product_type', 'tax_rate_id', 'tax_rate', 'selling_price_tax_type',
         'purchase_price', 'selling_price', 'our_price', 'is_active'];
 
     protected function casts(): array
@@ -74,5 +74,8 @@ class Product extends Model
     {
         return $this->belongsTo(Warranty::class);
     }
+    public function purchaseUnit() { return $this->belongsTo(Unit::class, 'purchase_unit_id'); }
+    public function secondaryUnit() { return $this->belongsTo(Unit::class, 'secondary_unit_id'); }
+    public function applicableTax() { return $this->belongsTo(TaxRate::class, 'tax_rate_id'); }
     public function sellingPrices() { return $this->hasMany(ProductSellingPrice::class); }
 }

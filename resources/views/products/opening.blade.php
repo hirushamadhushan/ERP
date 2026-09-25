@@ -2,6 +2,7 @@
 @section('title','Opening Stock')
 @section('content')
 @include('serials.common')
+<div id="opening-stock-toast" class="fixed right-5 top-3 z-[90] hidden w-[min(360px,calc(100%-2rem))] rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-2xl" role="status"><i class="bi bi-check-circle-fill mr-2"></i><span id="opening-stock-toast-message"></span></div>
 <div class="flex flex-wrap justify-between gap-3 mb-6"><div><h1 class="text-xl font-bold">Opening Stock — {{ $product->name }}</h1><p class="text-sm text-slate-500 mt-1">SKU: {{ $product->code }}</p></div><a class="serial-btn serial-secondary" href="{{ route('products.catalog.index') }}">Products</a></div>
 <section class="serial-card">
 @if(!$product->manage_stock)
@@ -17,7 +18,19 @@
 @else
 <div class="serial-grid">@foreach($product->locations as $location)<div><label for="quantity-{{ $location->id }}">{{ $location->name }} ({{ $location->code }})</label><input id="quantity-{{ $location->id }}" type="number" min="0" max="999999999" step="{{ $product->unit?->allow_decimal ? '0.0001' : '1' }}" name="quantities[{{ $location->id }}]" value="{{ old('quantities.'.$location->id,$location->pivot->opening_quantity) }}" required></div>@endforeach</div>
 @endif
-<button class="serial-btn mt-6">Save opening stock</button></form>
+<div class="mt-6 flex flex-wrap gap-3"><button class="serial-btn">Save opening stock</button><button class="serial-btn serial-secondary" name="return_to_products" value="1">Save &amp; View Products</button></div></form>
 @endif
 </section>
 @endsection
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ @if(session('success'))
+ const toast=document.getElementById('opening-stock-toast');
+ document.getElementById('opening-stock-toast-message').textContent=@json(session('success'));
+ toast.classList.remove('hidden');
+ window.setTimeout(()=>toast.classList.add('hidden'),4000);
+ @endif
+});
+</script>
+@endpush

@@ -15,5 +15,7 @@ Route::controller(ProductController::class)->prefix('products')->name('products.
     Route::delete('/{product}', 'destroy')->name('destroy');
     Route::get('/{product}/opening-stock', 'opening')->name('opening');
     Route::post('/{product}/opening-stock', 'saveOpening')->name('opening.store');
+    Route::get('/{product}/selling-prices', 'prices')->name('prices');
+    Route::put('/{product}/selling-prices', 'savePrices')->name('prices.update');
     Route::get('/{product}/files/{kind}', 'attachment')->name('attachment');
 });
