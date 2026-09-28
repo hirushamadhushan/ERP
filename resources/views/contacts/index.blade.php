@@ -47,7 +47,7 @@
 
     <details open class="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
         <summary class="px-6 py-4 bg-purple-50/50 border-b border-purple-100 text-sm font-bold text-purple-700 cursor-pointer"><i class="bi bi-funnel-fill mr-2" aria-hidden="true"></i>Filters</summary>
-        <form method="GET" action="{{ route('contacts.index', $type) }}" class="p-6 space-y-5" data-auto-filter>
+        <form method="GET" action="{{ route('contacts.index', $type) }}" class="p-6 space-y-5" data-auto-filter data-async-filter>
             @if($type !== 'commission')
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     @foreach(['due' => $type === 'customer' ? 'Sell Due' : 'Purchase Due', 'returns' => $type === 'customer' ? 'Sell Return' : 'Purchase Return', 'advance' => 'Advance Balance', 'opening' => 'Opening Balance'] as $key => $label)
@@ -63,7 +63,7 @@
                 <div><label for="filter-assigned" class="{{ $labelClass }}">Assigned to</label><select id="filter-assigned" name="assigned_to" class="{{ $inputClass }}"><option value="">All users</option>@foreach($assignees as $assignee)<option value="{{ $assignee->id }}" @selected(request('assigned_to') == $assignee->id)>{{ $assignee->name }}</option>@endforeach</select></div>
                 <div><label for="filter-status" class="{{ $labelClass }}">Status</label><select id="filter-status" name="status" class="{{ $inputClass }}"><option value="">All statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="inactive" @selected(request('status') === 'inactive')>Inactive</option></select></div>
             </div>
-            @if(request()->query())<div><a href="{{ route('contacts.index', $type) }}" class="{{ $secondaryClass }}">Reset filters</a></div>@endif
+            <div><button type="button" data-reset-contact-filters class="{{ $secondaryClass }}">Reset filters</button></div>
         </form>
     </details>
 
@@ -73,7 +73,7 @@
             <button id="add-contact" type="button" class="{{ $primaryClass }} shrink-0"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
         </div>
         <div class="sticky-table-host">
-            <table id="contacts-table" class="w-full text-left" style="width:100%">
+            <table data-async-table id="contacts-table" class="w-full text-left" style="width:100%">
                 <thead><tr><th>Action</th>@foreach($columns as $key => $label)<th>{{ $label }}</th>@endforeach</tr></thead>
                 <tbody>
                 @foreach($contacts as $contact)
@@ -82,7 +82,7 @@
                             <div class="flex items-center gap-1.5">
                                 <button type="button" data-contact-url="{{ route('contacts.show', $contact) }}" data-mode="view" class="contact-action px-2.5 py-1.5 rounded-lg text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100"><i class="bi bi-eye" aria-hidden="true"></i> View</button>
                                 <button type="button" data-contact-url="{{ route('contacts.show', $contact) }}" data-mode="edit" class="contact-action px-2.5 py-1.5 rounded-lg text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100"><i class="bi bi-pencil" aria-hidden="true"></i> Edit</button>
-                                <form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="delete-contact inline">@csrf @method('DELETE')<button type="submit" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100" aria-label="Delete {{ $contact->name }}"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
+                                <form data-async-form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="delete-contact inline">@csrf @method('DELETE')<button type="submit" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100" aria-label="Delete {{ $contact->name }}"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
                             </div>
                         </td>
                         @foreach($columns as $key => $label)

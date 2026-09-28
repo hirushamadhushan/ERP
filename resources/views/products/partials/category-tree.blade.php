@@ -1,7 +1,7 @@
 @php($childCounts = $records->groupBy('parent_id')->map->count())
 <div class="category-browser">
     <div class="category-toolbar">
-        <div><h2>Category directory <span>{{ $records->count() }}</span></h2><p>{{ $records->whereNull('parent_id')->count() }} main categories <span aria-hidden="true">&middot;</span> {{ $records->whereNotNull('parent_id')->count() }} sub-categories</p></div>
+        <div id="category-counts" data-async-region><h2>Category directory <span>{{ $records->count() }}</span></h2><p>{{ $records->whereNull('parent_id')->count() }} main categories <span aria-hidden="true">&middot;</span> {{ $records->whereNotNull('parent_id')->count() }} sub-categories</p></div>
         <div class="category-tools">
             <label class="category-search"><i class="bi bi-search" aria-hidden="true"></i><input type="search" id="category-search" placeholder="Find a category..." aria-label="Search categories"></label>
             <button type="button" id="expand-categories" class="category-tool" title="Expand all categories"><i class="bi bi-arrows-expand" aria-hidden="true"></i> Expand all</button>
@@ -9,7 +9,7 @@
         </div>
     </div>
     <div class="category-scroll">
-    <table id="reference-table" class="category-directory">
+    <table data-async-table id="reference-table" class="category-directory">
         <thead><tr><th>Category hierarchy</th><th>Code</th><th>Description</th><th class="category-actions-heading">Actions</th></tr></thead>
         <tbody>
         @foreach($records as $record)
@@ -25,14 +25,14 @@
                 <td><p class="category-description" title="{{ $record->description }}">{{ $record->description ?: 'No description' }}</p></td>
                 <td><div class="category-row-actions">
                     <button type="button" class="edit-reference category-icon-button" aria-label="Edit {{ $record->name }}" title="Edit category" data-record="{{ json_encode($record->only(['id','name','code','description','parent_id'])) }}" data-url="{{ route($prefix.'.update', $record) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i></button>
-                    <form class="delete-reference" method="POST" action="{{ route($prefix.'.destroy', $record) }}">@csrf @method('DELETE')<button type="submit" class="category-icon-button category-delete" aria-label="Delete {{ $record->name }}" title="Delete category"><i class="bi bi-trash3" aria-hidden="true"></i></button></form>
+                    <form data-async-form class="delete-reference" method="POST" action="{{ route($prefix.'.destroy', $record) }}">@csrf @method('DELETE')<button type="submit" class="category-icon-button category-delete" aria-label="Delete {{ $record->name }}" title="Delete category"><i class="bi bi-trash3" aria-hidden="true"></i></button></form>
                 </div></td>
             </tr>
         @endforeach
         </tbody>
     </table>
     </div>
-    <div id="category-empty" class="category-empty" @if($records->isNotEmpty()) hidden @endif><i class="bi bi-folder2-open" aria-hidden="true"></i><h3>{{ $records->isEmpty() ? 'Build your category directory' : 'No matching categories' }}</h3><p>{{ $records->isEmpty() ? 'Start with a main category, then use + to organise its sub-categories.' : 'Try another name, code or description.' }}</p></div>
+    <div data-async-region id="category-empty" class="category-empty" @if($records->isNotEmpty()) hidden @endif><i class="bi bi-folder2-open" aria-hidden="true"></i><h3>{{ $records->isEmpty() ? 'Build your category directory' : 'No matching categories' }}</h3><p>{{ $records->isEmpty() ? 'Start with a main category, then use + to organise its sub-categories.' : 'Try another name, code or description.' }}</p></div>
     <div class="category-footer"><span><i class="bi bi-diagram-3" aria-hidden="true"></i> Main category + 5 sub-category levels</span><span>Use <strong>+</strong> beside a category to add a child</span></div>
 </div>
 @push('scripts')

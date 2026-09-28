@@ -14,7 +14,7 @@
         <button id="add-group" type="button" class="{{ $buttonClass }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
     </div>
     <div class="sticky-table-host">
-        <table id="groups-table" class="w-full text-left" style="width:100%">
+        <table data-async-table id="groups-table" class="w-full text-left" style="width:100%">
             <thead><tr><th>Customer Group Name</th><th>Calculation Percentage (%)</th><th>Selling Price Group</th><th>Action</th></tr></thead>
             <tbody>
                 @foreach($groups as $group)
@@ -22,7 +22,7 @@
                         <td>{{ $group->name }}</td><td>{{ $group->calculation_type === 'percentage' ? $group->calculation_percentage : '—' }}</td><td>{{ $group->selling_price_group ?? '—' }}</td>
                         <td><div class="flex items-center gap-2 whitespace-nowrap">
                             <button type="button" class="edit-group px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold" data-id="{{ $group->id }}" data-name="{{ $group->name }}" data-type="{{ $group->calculation_type }}" data-price-group="{{ $group->selling_price_group }}" data-percentage="{{ $group->calculation_percentage }}" data-url="{{ route('contacts.groups.update', $group) }}"><i class="bi bi-pencil" aria-hidden="true"></i> Edit</button>
-                            <form method="POST" action="{{ route('contacts.groups.destroy', $group) }}" class="delete-group">@csrf @method('DELETE')<button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
+                            <form data-async-form method="POST" action="{{ route('contacts.groups.destroy', $group) }}" class="delete-group">@csrf @method('DELETE')<button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
                         </div></td>
                     </tr>
                 @endforeach
@@ -35,7 +35,7 @@
         <h2 id="group-dialog-title" class="text-base font-bold">Add Customer Group</h2>
         <button type="button" data-close-group aria-label="Close customer group form" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>
-    <form id="group-form" method="POST" action="{{ old('_group_id') ? route('contacts.groups.update', old('_group_id')) : route('contacts.groups.store') }}">
+    <form data-async-form id="group-form" method="POST" action="{{ old('_group_id') ? route('contacts.groups.update', old('_group_id')) : route('contacts.groups.store') }}">
         @csrf
         <input name="_method" type="hidden" value="{{ old('_group_id') ? 'PUT' : 'POST' }}">
         <input name="_group_id" type="hidden" value="{{ old('_group_id') }}">
@@ -56,7 +56,7 @@
                 </div>
                 <input id="group-percentage" name="calculation_percentage" type="number" min="-100" max="100" step="0.01" required value="{{ old('calculation_percentage', 0) }}" aria-describedby="percentage-tooltip" class="{{ $inputClass }}" placeholder="Calculation Percentage (%)">
             </div>
-            <div id="selling-price-fields" hidden><label for="group-selling-price" class="block text-xs font-bold mb-1.5">Selling Price Group <span class="text-rose-500">*</span></label><input id="group-selling-price" name="selling_price_group" maxlength="255" value="{{ old('selling_price_group') }}" class="{{ $inputClass }}" placeholder="Selling Price Group name" list="selling-price-names"><datalist id="selling-price-names">@foreach($groups->pluck('selling_price_group')->filter()->unique() as $priceGroup)<option value="{{ $priceGroup }}">@endforeach</datalist></div>
+            <div id="selling-price-fields" hidden><label for="group-selling-price" class="block text-xs font-bold mb-1.5">Selling Price Group <span class="text-rose-500">*</span></label><input id="group-selling-price" name="selling_price_group" maxlength="255" value="{{ old('selling_price_group') }}" class="{{ $inputClass }}" placeholder="Selling Price Group name" list="selling-price-names"><datalist data-async-options id="selling-price-names">@foreach($groups->pluck('selling_price_group')->filter()->unique() as $priceGroup)<option value="{{ $priceGroup }}">@endforeach</datalist></div>
         </div>
         <div class="flex justify-end gap-2 px-6 py-4 border-t border-purple-100">
             <button id="save-group" type="submit" class="{{ $buttonClass }}">Save</button>
@@ -141,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.querySelectorAll('[data-close-group]').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('close', () => previousFocus?.focus());
-    form.addEventListener('submit', () => { save.disabled = true; save.textContent = 'Saving…'; });
     if (@json($errors->any())) {
         title.textContent = form.elements._group_id.value ? 'Edit Customer Group' : 'Add Customer Group';
         openGroup();

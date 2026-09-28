@@ -5,7 +5,7 @@
 <h1 class="text-xl font-bold mb-6">Product Serial Numbers</h1>
 <section class="serial-card no-print">
 <h2>Filters</h2>
-<form method="GET" class="serial-grid" data-auto-filter>
+<form method="GET" class="serial-grid" data-auto-filter data-async-filter>
 @foreach(['product'=>'products','location'=>'locations'] as $type=>$collection)
 <div><label for="filter-{{ $type }}">{{ ucfirst($type) }}</label><select id="filter-{{ $type }}" name="{{ $type }}_id"><option value="">All {{ $collection }}</option>@foreach($$collection as $record)<option value="{{ $record->id }}" @selected(request($type.'_id') == $record->id)>{{ $record->name }} (#{{ $record->id }})</option>@endforeach</select></div>
 @endforeach
@@ -15,17 +15,17 @@
 <div class="mt-6 flex flex-wrap gap-3"><a class="serial-btn serial-secondary" target="_blank" rel="noopener" href="{{ route('products.serials.report', request()->only('product_id','location_id','status')) }}">Print Report</a><button type="button" id="open-serial-generator" class="serial-btn">Generate Serial Numbers</button><form id="serial-import-form" method="POST" enctype="multipart/form-data" action="{{ route('products.serials.import') }}">@csrf<input id="serial-file" name="file" type="file" accept=".xlsx,.csv" hidden><button type="button" id="import" class="serial-btn serial-secondary">Import Excel</button></form><a class="serial-btn serial-secondary" href="{{ route('products.serials.template') }}">Download Excel template</a></div>
 </section>
 <section class="serial-card">
-<form method="POST" action="{{ route('products.serials.destroy') }}" onsubmit="return confirm('Delete selected available serial numbers?')">
+<form data-async-form method="POST" action="{{ route('products.serials.destroy') }}" onsubmit="return confirm('Delete selected available serial numbers?')">
 @csrf @method('DELETE')
 <button class="serial-btn no-print mb-4" style="background:#e11d48">Delete Selected (Available only)</button>
-<div class="sticky-table-host"><table id="serials-table" class="serial-table"><thead><tr><th class="no-print"><input type="checkbox" id="select-all" aria-label="Select all available serial numbers"></th><th>#</th><th>Product</th><th>Location</th><th>Serial Number</th><th>Status</th><th>Sold Transaction ID</th><th class="no-print">Action</th></tr></thead>
+<div class="sticky-table-host"><table data-async-table id="serials-table" class="serial-table"><thead><tr><th class="no-print"><input id="select-all" type="checkbox" aria-label="Select all available serial numbers"></th><th>#</th><th>Product</th><th>Location</th><th>Serial Number</th><th>Status</th><th>Sold Transaction ID</th><th class="no-print">Action</th></tr></thead>
 <tbody>@forelse($records as $record)<tr>
 <td class="no-print">@if($record->status==='available' && !$record->sold_transaction_id)<input class="serial-select" type="checkbox" name="ids[]" value="{{ $record->id }}" aria-label="Select {{ $record->serial_number }}">@endif</td>
 <td>{{ $record->id }}</td><td>{{ $record->product->name }}</td><td>{{ $record->location->name }}</td><td>{{ $record->serial_number }}</td><td>{{ ucfirst($record->status) }}</td><td>{{ $record->sold_transaction_id ?? '—' }}</td>
 <td class="no-print">@if($record->status==='available' && !$record->sold_transaction_id)<button type="button" class="text-rose-600" onclick="document.querySelectorAll('.serial-select').forEach(c=>c.checked=c.value==='{{ $record->id }}'); this.form.requestSubmit()">Delete</button>@else Protected @endif</td>
 </tr>@empty<tr><td colspan="8" class="text-center text-slate-500">No serial numbers found.</td></tr>@endforelse</tbody></table></div>
 </form>
-<div class="mt-5 no-print">{{ $records->links() }}</div>
+<div data-async-region id="serial-pagination" class="mt-5 no-print">{{ $records->links() }}</div>
 </section>
 <dialog id="serial-generator-dialog" aria-labelledby="serial-generator-title">
 <div class="flex items-center justify-between gap-3 p-4 bg-purple-50 border-b border-purple-100">
@@ -59,8 +59,9 @@ serialFile.addEventListener('change',async ()=>{
     importButton.disabled=true;
     importButton.textContent='Importing…';
     try {
-        await AppErrors.request(serialImport.action,{method:'POST',body:new FormData(serialImport)});
-        location.reload();
+        const result=await AppErrors.request(serialImport.action,{method:'POST',body:new FormData(serialImport)});
+        await AsyncForms.refresh();
+        AsyncForms.announce(result.message);
     } catch(error) {
         AppErrors.show(error.message);
     } finally {
@@ -80,7 +81,7 @@ document.getElementById('open-serial-generator').addEventListener('click',()=>{
 document.getElementById('open-serial-generator').click();
 @endif
 document.getElementById('close-serial-generator').addEventListener('click',()=>generatorDialog.close());
-generatorDialog.addEventListener('close',()=>{if(generatorSaved) location.reload();});
+generatorDialog.addEventListener('close',async()=>{if(generatorSaved){generatorSaved=false;try{await AsyncForms.refresh()}catch(error){AppErrors.show(error.message)}}});
 window.addEventListener('message',event=>{
     if(event.origin!==location.origin || event.source!==generatorFrame.contentWindow) return;
     if(event.data?.type==='serial-generator-saved') generatorSaved=true;

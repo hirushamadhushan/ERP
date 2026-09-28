@@ -51,6 +51,8 @@ class Category extends Model
 
     public static function tree(string $type = 'product'): Collection
     {
+        // Load once, then build the hierarchy in memory. Recursive database
+        // queries would become expensive as categories grow to five levels.
         $categories = static::query()
             ->where('category_type', $type)
             ->orderBy('name')
@@ -71,8 +73,34 @@ class Category extends Model
         return (new static)->newCollection($ordered);
     }
 
+    /**
+     * Return a category and every child below it. Product filters use this so
+     * selecting a main category also includes products filed at levels 1–5.
+     */
+    public static function descendantIds(int $categoryId, string $type = 'product'): array
+    {
+        $categories = static::query()
+            ->where('category_type', $type)
+            ->get(['id', 'parent_id']);
+
+        $children = $categories->groupBy('parent_id');
+        $ids = [$categoryId];
+        $pending = [$categoryId];
+
+        while ($parentId = array_shift($pending)) {
+            foreach ($children->get($parentId, collect()) as $child) {
+                $ids[] = $child->id;
+                $pending[] = $child->id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
     public static function validateParent(?int $parentId, ?self $record = null): void
     {
+        // Moving a node under one of its descendants creates a cycle, which
+        // would make tree rendering and product filtering recurse forever.
         $all = static::all()->keyBy('id');
         $seen = $record ? [$record->id] : [];
         $depth = 0;
@@ -83,6 +111,8 @@ class Category extends Model
             $seen[] = $id;
             $depth++;
         }
+        // Include the moved subtree height so a valid existing branch cannot
+        // bypass the five-level business limit when it is re-parented.
         $height = function ($id) use (&$height, $all): int {
             $children = $all->where('parent_id', $id);
             return $children->isEmpty() ? 0 : 1 + $children->max(fn ($child) => $height($child->id));

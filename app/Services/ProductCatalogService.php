@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Owns product persistence, prices, locations, variations and attachments.
+ * Keeping these coordinated writes here prevents controllers from saving a
+ * partially configured product.
+ */
 class ProductCatalogService
 {
     public function delete(Product $product): void
@@ -38,6 +43,8 @@ class ProductCatalogService
 
     public function saveOpeningStock(Product $product, array $quantities): void
     {
+        // Lock the product while replacing opening balances so concurrent stock
+        // edits cannot leave one location with an older submitted value.
         DB::transaction(function () use ($product, $quantities) {
             $product = Product::lockForUpdate()->findOrFail($product->id);
             if (! $product->manage_stock || $product->enable_serial) {
@@ -58,6 +65,8 @@ class ProductCatalogService
 
     public function saveVariantOpeningStock(Product $product, array $quantities): void
     {
+        // Variable stock is stored per variation and location; serial products
+        // deliberately use serial records instead of aggregate quantities.
         DB::transaction(function () use ($product, $quantities) {
             $product = Product::with(['variants.locationStocks', 'locations', 'unit'])->lockForUpdate()->findOrFail($product->id);
             if (! $product->manage_stock || $product->enable_serial || $product->product_type !== 'variable') {
@@ -100,6 +109,8 @@ class ProductCatalogService
         $this->validateStockConfiguration($data, $unit);
 
         $code = $this->resolveSku($data, $product);
+        // BCMath prevents float rounding in tax and margin calculations that
+        // later become financial DECIMAL values in the database.
         $factor = bcadd('1', bcdiv((string) $data['tax_rate'], '100', 8), 8);
         $variants = $data['variants'] ?? [];
         $variationTemplateId = $data['variation_template_id'] ?? null;
@@ -134,6 +145,8 @@ class ProductCatalogService
         $newFiles = [];
         $oldFiles = [];
         try {
+            // Product, locations, variants and combo contents are one business
+            // unit. Roll everything back if any related record cannot be saved.
             DB::transaction(function () use ($request, $product, &$data, $locations, $locationDetails, $variants, $variationTemplateId, $comboItems, $factor, &$newFiles, &$oldFiles) {
                 $this->lockAndValidateExistingProduct($product, $data, $locations);
                 $this->storeAttachments($request, $product, $data, $newFiles, $oldFiles);

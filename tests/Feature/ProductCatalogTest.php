@@ -31,6 +31,7 @@ class ProductCatalogTest extends TestCase
         $this->assertEquals($root->id, $product->category_id);
         $this->assertEquals($leaf->id, $product->subcategory_id);
         $this->get('/products/'.$product->id.'/edit')->assertOk()->assertSee('Depth 5')->assertSee('data-path=', false);
+        $this->get('/products?category_id='.$root->id)->assertOk()->assertSee('PUMP-001');
         $other = \App\Models\Category::create(['name' => 'Other', 'category_type' => 'product']);
         $data['category_id'] = $other->id;
         $this->put('/products/'.$product->id, $data)->assertSessionHasErrors('subcategory_id');
@@ -59,6 +60,12 @@ class ProductCatalogTest extends TestCase
         $variableProduct = Product::where('code', 'SHIRT-001')->firstOrFail();
         $this->put('/products/'.$variableProduct->id, $variable)->assertSessionHasNoErrors();
         $this->assertSame('M', $variableProduct->variants()->where('sku', 'SHIRT-001-M')->firstOrFail()->value);
+        $variableProduct->refresh()->load(['variants', 'locations']);
+        $quantities = $variableProduct->variants->mapWithKeys(fn ($variant) => [
+            $variant->id => $variableProduct->locations->mapWithKeys(fn ($location) => [$location->id => 5])->all(),
+        ])->all();
+        $this->post('/products/'.$variableProduct->id.'/opening-stock', ['quantities' => $quantities])->assertSessionHasNoErrors();
+        $this->get('/products?product_id='.$variableProduct->id)->assertOk()->assertSee('15 Pc');
 
         $combo = array_replace($base, [
             'name' => 'Starter Bundle', 'sku' => 'BUNDLE-001', 'product_type' => 'combo', 'enable_serial' => 0,
@@ -102,6 +109,53 @@ class ProductCatalogTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect('/products');
         $this->assertDatabaseMissing('products', ['id' => 1]);
+    }
+
+    public function test_product_tax_filter_returns_every_matching_product(): void
+    {
+        $first = $this->data();
+        $first['sku'] = 'FILTER-TAX-ONE';
+        $first['tax_rate'] = 8;
+        $this->post('/products', $first)->assertSessionHasNoErrors();
+
+        $second = $first;
+        $second['sku'] = 'FILTER-TAX-TWO';
+        $second['name'] = 'Second tax product';
+        $second['tax_rate'] = 8;
+        $this->post('/products', $second)->assertSessionHasNoErrors();
+
+        $other = $first;
+        $other['sku'] = 'FILTER-TAX-OTHER';
+        $other['name'] = 'Other tax product';
+        $other['tax_rate'] = 12;
+        $this->post('/products', $other)->assertSessionHasNoErrors();
+
+        $otherProduct = Product::where('code', 'FILTER-TAX-OTHER')->firstOrFail();
+        $this->get('/products?tax_rate=8')
+            ->assertOk()
+            ->assertSee('FILTER-TAX-ONE')
+            ->assertSee('FILTER-TAX-TWO')
+            ->assertDontSee('data-product-id="'.$otherProduct->id.'"', false);
+    }
+
+    public function test_product_filter_options_do_not_shrink_with_location_results(): void
+    {
+        $first = $this->data();
+        $first['sku'] = 'MAIN-WH-ITEM';
+        $this->post('/products', $first)->assertSessionHasNoErrors();
+
+        $otherLocation = Location::create(['name' => 'Outlet', 'code' => 'OUTLET']);
+        $second = $first;
+        $second['name'] = 'Outlet Item';
+        $second['sku'] = 'OUTLET-ITEM';
+        $second['location_ids'] = [$otherLocation->id];
+        $this->post('/products', $second)->assertSessionHasNoErrors();
+
+        $this->get('/products?location_id=1')
+            ->assertOk()
+            ->assertSee('MAIN-WH-ITEM')
+            ->assertSee('Outlet Item')
+            ->assertDontSee('data-product-id="2"', false);
     }
 
     public function test_ajax_save_returns_destination_and_validation_errors(): void

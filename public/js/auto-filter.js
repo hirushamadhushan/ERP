@@ -6,7 +6,15 @@
             let timer;
 
             function submit() {
+                if (form.hasAttribute('data-async-filter')) {
+                    window.AsyncForms.filter(form);
+                    return;
+                }
                 if (form.dataset.submitting === 'true') return;
+                if (form.dataset.clientFilter === 'true') {
+                    form.dispatchEvent(new CustomEvent('clientfilter'));
+                    return;
+                }
                 form.dataset.submitting = 'true';
                 form.setAttribute('aria-busy', 'true');
                 form.style.opacity = '0.65';

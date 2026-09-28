@@ -44,10 +44,10 @@ class BusinessLocationsTest extends TestCase
         $this->assertSame('Default', $location->fresh()->invoiceScheme->name);
         $this->assertSame('Kurunegala', $location->fresh()->city);
 
-        $this->patch('/business-locations/'.$location->id.'/status')->assertRedirect('/business-locations');
+        $this->patchJson('/business-locations/'.$location->id.'/status')->assertOk()->assertJsonPath('is_active', false);
         $this->assertFalse($location->fresh()->is_active);
         $this->assertDatabaseCount('locations', 1);
-        $this->patch('/business-locations/'.$location->id.'/status')->assertRedirect('/business-locations');
+        $this->patchJson('/business-locations/'.$location->id.'/status')->assertOk()->assertJsonPath('is_active', true);
         $this->assertTrue($location->fresh()->is_active);
     }
 
@@ -62,6 +62,20 @@ class BusinessLocationsTest extends TestCase
             'name' => 'Second', 'code' => 'MAIN', 'invoice_scheme_id' => $scheme->id,
             'invoice_layout_pos_id' => $layout->id, 'invoice_layout_sale_id' => $layout->id,
         ])->assertSessionHasErrors('code');
+    }
+
+    public function test_location_code_check_ignores_the_location_being_edited(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $location = Location::create(['name' => 'Main', 'code' => 'MAIN']);
+
+        $this->getJson('/business-locations/check-code?code=MAIN&location_id='.$location->id)
+            ->assertOk()
+            ->assertJsonPath('available', true);
+
+        $this->getJson('/business-locations/check-code?code=MAIN')
+            ->assertOk()
+            ->assertJsonPath('available', false);
     }
 
     public function test_inactive_location_is_not_offered_for_new_products(): void

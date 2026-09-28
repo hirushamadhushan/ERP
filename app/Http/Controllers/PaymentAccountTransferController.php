@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Moves funds between accounts while retaining an immutable transfer record.
+ */
 class PaymentAccountTransferController extends Controller
 {
     public function options() {
@@ -26,6 +29,8 @@ class PaymentAccountTransferController extends Controller
         ]);
         $path=null;
         try {
+            // Lock both balances before validating funds; this stops concurrent
+            // transfers from spending the same available balance twice.
             DB::transaction(function () use ($request,$data,&$path) {
                 $accounts=PaymentAccount::whereIn('id',[$data['from_account_id'],$data['to_account_id']])->orderBy('id')->lockForUpdate()->get()->keyBy('id');
                 $existing=PaymentAccountTransfer::where('request_id',$data['request_id'])->first();
@@ -49,6 +54,8 @@ class PaymentAccountTransferController extends Controller
                     'note'=>$data['note']??null,'document_path'=>$path,
                     'document_name'=>$request->file('document')?->getClientOriginalName(),'created_by'=>auth()->id(),
                 ]);
+                // Use database decimal arithmetic instead of a stale model
+                // value, so no concurrent balance update is overwritten.
                 DB::update('UPDATE payment_accounts SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?',[$data['amount'],now(),$source->id]);
                 DB::update('UPDATE payment_accounts SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?',[$data['amount'],now(),$destination->id]);
             });
@@ -64,6 +71,7 @@ class PaymentAccountTransferController extends Controller
         return Storage::disk('local')->download($transfer->document_path,$transfer->document_name);
     }
 
+    /** Convert a decimal amount to integer cents to compare money exactly. */
     public static function cents(string $amount): int {
         $negative=str_starts_with($amount,'-');
         [$whole,$fraction]=array_pad(explode('.',ltrim($amount,'-'),2),2,'');

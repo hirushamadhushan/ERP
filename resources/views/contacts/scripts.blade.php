@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const storeUrl = @json(route('contacts.store'));
     const hasErrors = @json($errors->any());
     let previousFocus;
+    document.querySelector('[data-reset-contact-filters]').addEventListener('click', () => {
+        const filters = document.querySelector('[data-async-filter]');
+        filters.querySelectorAll('select').forEach(select => select.value = '');
+        filters.querySelectorAll('input[type=checkbox]').forEach(input => input.checked = false);
+        AsyncForms.filter(filters);
+    });
 
     function updateFields() {
         document.querySelectorAll('[data-contact-types]').forEach(section => {
@@ -59,10 +65,6 @@ document.addEventListener('DOMContentLoaded', function () {
     typeSelect.addEventListener('change', updateFields);
     form.querySelectorAll('[name="entity_type"]').forEach(input => input.addEventListener('change', updateFields));
     form.addEventListener('invalid', () => more.open = true, true);
-    form.addEventListener('submit', () => {
-        saveButton.disabled = true;
-        saveButton.textContent = 'Saving…';
-    });
 
     document.getElementById('contacts-table').addEventListener('click', async event => {
         const button = event.target.closest('.contact-action');

@@ -37,7 +37,7 @@
         @include('products.partials.category-tree')
     @else
     <div class="sticky-table-host">
-        <table id="reference-table" class="w-full text-left" style="width:100%">
+        <table data-async-table id="reference-table" class="w-full text-left" style="width:100%">
             <thead>
                 <tr>
                     <th>{{ $isCategory ? 'Category' : 'Brands' }}</th>
@@ -65,7 +65,7 @@
                                 <button type="button" class="edit-reference inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-record="{{ json_encode($record->only(['id', 'name', 'code', 'description', 'parent_id'])) }}" data-url="{{ route($prefix.'.update', $record) }}">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
                                 </button>
-                                <form class="delete-reference" method="POST" action="{{ route($prefix.'.destroy', $record) }}">
+                                <form data-async-form class="delete-reference" method="POST" action="{{ route($prefix.'.destroy', $record) }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all">
@@ -89,7 +89,7 @@
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
     </div>
-    <form id="reference-form" method="POST" action="{{ old('_record_id') ? route($prefix.'.update', old('_record_id')) : route($prefix.'.store') }}">
+    <form data-async-form id="reference-form" method="POST" action="{{ old('_record_id') ? route($prefix.'.update', old('_record_id')) : route($prefix.'.store') }}">
         @csrf
         <input type="hidden" name="_method" value="{{ old('_record_id') ? 'PUT' : 'POST' }}">
         <input type="hidden" name="_record_id" value="{{ old('_record_id') }}">
@@ -125,7 +125,7 @@
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="is-subcategory" @checked(old('parent_id')) style="accent-color:#9333ea"> Add as sub-category</label>
                 <div id="parent-category-field" hidden>
                     <label for="parent-category" class="block text-xs font-bold mb-2">Select parent category *</label>
-                    <select id="parent-category" name="parent_id" class="{{ $input }}">
+                    <select data-async-options id="parent-category" name="parent_id" class="{{ $input }}">
                         <option value="">Please select</option>
                         @foreach($records as $parent)
                         <option value="{{ $parent->id }}" data-parent="{{ $parent->parent_id }}" data-depth="{{ $parent->tree_depth }}" @selected(old('parent_id') == $parent->id)>{{ $parent->tree_path }}</option>
@@ -191,8 +191,13 @@ document.addEventListener('DOMContentLoaded', () => {
             option.disabled = excluded;
         });
     }
-    const categoryRows = Array.from(document.querySelectorAll('[data-category-id]'));
-    const categoryRowMap = new Map(categoryRows.map(row => [row.dataset.categoryId, row]));
+    let categoryRows = Array.from(document.querySelectorAll('[data-category-id]'));
+    let categoryRowMap = new Map(categoryRows.map(row => [row.dataset.categoryId, row]));
+    document.addEventListener('app:content-updated', () => {
+        categoryRows = Array.from(document.querySelectorAll('[data-category-id]'));
+        categoryRowMap = new Map(categoryRows.map(row => [row.dataset.categoryId, row]));
+        refreshCategoryTree();
+    });
     function drawCategoryLines() {
         const visibleRows = categoryRows.filter(row => !row.hidden);
         const siblingGroups = new Map();
@@ -298,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-close-reference]').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('close', () => previousFocus?.focus());
-    form.addEventListener('submit', () => { save.disabled = true; save.textContent = 'Saving…'; });
+
     
     if (@json($errors->any())) {
         document.getElementById('reference-title').textContent = (form.elements._record_id.value ? 'Edit ' : 'Add ') + singular.toLowerCase();

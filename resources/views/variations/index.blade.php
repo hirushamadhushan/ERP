@@ -28,7 +28,7 @@
     </div>
 
     <div class="sticky-table-host">
-        <table id="variations-table" class="w-full text-left" style="width:100%">
+        <table data-async-table id="variations-table" class="w-full text-left" style="width:100%">
             <thead>
                 <tr>
                     <th>Variations</th>
@@ -46,7 +46,7 @@
                                 <button type="button" class="edit-variation inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-variation="{{ json_encode($record->only(['id', 'name', 'values'])) }}" data-url="{{ route('products.variations.update', $record) }}">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
                                 </button>
-                                <form class="delete-variation" method="POST" action="{{ route('products.variations.destroy', $record) }}">
+                                <form data-async-form class="delete-variation" method="POST" action="{{ route('products.variations.destroy', $record) }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all">
@@ -69,7 +69,7 @@
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
     </div>
-    <form id="variation-form" method="POST" action="{{ old('_record_id') ? route('products.variations.update', old('_record_id')) : route('products.variations.store') }}">
+    <form data-async-form id="variation-form" method="POST" action="{{ old('_record_id') ? route('products.variations.update', old('_record_id')) : route('products.variations.store') }}">
         @csrf
         <input type="hidden" name="_method" value="{{ old('_record_id') ? 'PUT' : 'POST' }}">
         <input type="hidden" name="_record_id" value="{{ old('_record_id') }}">
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-close-variation]').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('close', () => previousFocus?.focus());
-    form.addEventListener('submit', () => { save.disabled = true; save.textContent = 'Saving…'; });
+
 
     if (@json($errors->any())) {
         document.getElementById('variation-title').textContent = form.elements._record_id.value ? 'Edit Variation' : 'Add Variation';

@@ -31,24 +31,29 @@
         box.querySelector('.request-error-message').textContent = text;
     }
     async function request(url, options = {}) {
-        let response;
+        document.dispatchEvent(new CustomEvent('app:request-start'));
         try {
-            response = await fetch(url, {...options, headers: {...options.headers, Accept: 'application/json'}});
-        } catch {
-            throw new Error(messages[0]);
+            let response;
+            try {
+                response = await fetch(url, {...options, headers: {...options.headers, Accept: 'application/json'}});
+            } catch {
+                throw new Error(messages[0]);
+            }
+            let data;
+            try { data = await response.json(); } catch {
+                throw new Error(message(response.redirected ? 401 : response.status));
+            }
+            if (!response.ok) {
+                const error = new Error(response.status === 422 && data.errors
+                    ? Object.values(data.errors).flat().join(' ')
+                    : message(response.status, data));
+                error.status = response.status; error.errors = data.errors || {};
+                throw error;
+            }
+            return data;
+        } finally {
+            document.dispatchEvent(new CustomEvent('app:request-end'));
         }
-        let data;
-        try { data = await response.json(); } catch {
-            throw new Error(message(response.redirected ? 401 : response.status));
-        }
-        if (!response.ok) {
-            const error = new Error(response.status === 422 && data.errors
-                ? Object.values(data.errors).flat().join(' ')
-                : message(response.status, data));
-            error.status = response.status; error.errors = data.errors || {};
-            throw error;
-        }
-        return data;
     }
     window.AppErrors = {message, show, request};
     if (window.jQuery) {

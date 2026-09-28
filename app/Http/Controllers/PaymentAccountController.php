@@ -3,7 +3,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SavePaymentAccountRequest;
 use App\Http\Requests\SavePaymentAccountTypeRequest;
 use App\Models\PaymentAccount;
+use App\Models\PaymentAccountDeposit;
 use App\Models\PaymentAccountType;
+use App\Models\PaymentAccountTransfer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -81,7 +83,12 @@ class PaymentAccountController extends Controller
     }
     public function destroy(PaymentAccount $paymentAccount): RedirectResponse|\Illuminate\Http\JsonResponse
     {
-        if (\App\Models\PaymentAccountTransfer::where('from_account_id',$paymentAccount->id)->orWhere('to_account_id',$paymentAccount->id)->exists()) return $this->failure('Accounts with fund transfers cannot be deleted.');
+        if (PaymentAccountTransfer::where('from_account_id',$paymentAccount->id)->orWhere('to_account_id',$paymentAccount->id)->exists()) {
+            return $this->failure('Accounts with fund transfers cannot be deleted.');
+        }
+        if (PaymentAccountDeposit::where('account_id', $paymentAccount->id)->orWhere('from_account_id', $paymentAccount->id)->exists()) {
+            return $this->failure('Accounts with deposits cannot be deleted.');
+        }
         $paymentAccount->delete();
         return $this->result('Payment account deleted successfully.');
     }

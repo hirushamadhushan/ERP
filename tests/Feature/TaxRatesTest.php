@@ -40,6 +40,23 @@ class TaxRatesTest extends TestCase
         $this->get('/tax-rates')->assertOk()->assertSee('VAT + SSCL')->assertSee('10.500%')->assertSee('For tax group only')->assertSee('name="_token"', false);
     }
 
+    public function test_async_tax_groups_recalculate_and_keep_delete_protection(): void
+    {
+        $headers = ['X-Async-Form' => '1', 'Accept' => 'application/json'];
+        $this->post('/tax-rates', ['name' => 'Async VAT', 'amount' => 8, 'for_tax_group' => 0], $headers)
+            ->assertOk()->assertJsonPath('message', 'Tax rate added successfully.');
+        $vat = TaxRate::where('name', 'Async VAT')->firstOrFail();
+        $other = TaxRate::create(['name' => 'Component', 'amount' => 2.5]);
+        $this->post('/tax-rates/groups', ['name' => 'Async combined', 'tax_rate_ids' => [$vat->id, $other->id]], $headers)
+            ->assertOk();
+        $group = TaxRate::groups()->firstOrFail();
+        $this->put('/tax-rates/'.$vat->id, ['name' => 'Async VAT', 'amount' => 9, 'for_tax_group' => 0], $headers)->assertOk();
+        $this->assertEquals(11.5, $group->fresh()->amount);
+        $this->delete('/tax-rates/'.$vat->id, [], $headers)->assertUnprocessable()->assertJsonValidationErrors('tax_rate');
+        $this->assertDatabaseHas('tax_rates', ['id' => $vat->id]);
+        $this->get('/tax-rates')->assertOk()->assertSee('11.500%');
+    }
+
     public function test_child_update_recalculates_groups_and_safe_delete_is_enforced(): void
     {
         $vat = TaxRate::create(['name' => 'VAT', 'amount' => 8]);

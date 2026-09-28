@@ -21,7 +21,7 @@
 
 <section class="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 sm:p-6">
     <div class="sticky-table-host">
-        <table id="units-table" class="w-full text-left" style="width:100%">
+        <table data-async-table id="units-table" class="w-full text-left" style="width:100%">
             <thead><tr><th>Name</th><th>Short name</th><th>Allow decimal <button type="button" data-unit-help="unit-decimal-help" aria-describedby="unit-decimal-help" aria-label="About decimal quantities" class="text-purple-600 hover:text-purple-700"><i class="bi bi-info-circle-fill" aria-hidden="true"></i></button></th><th>Action</th></tr></thead>
             <tbody>@foreach($units as $unit)
                 <tr>
@@ -30,7 +30,7 @@
                     <td class="text-slate-600">{{ $unit->allow_decimal ? 'Yes' : 'No' }}</td>
                     <td><div class="flex items-center gap-2 whitespace-nowrap">
                         <button type="button" class="edit-unit inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-unit="{{ json_encode($unit->only(['id', 'name', 'short_name', 'allow_decimal', 'base_unit_id', 'base_unit_multiplier'])) }}" data-url="{{ route('products.units.update', $unit) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Edit</button>
-                        <form class="delete-unit" method="POST" action="{{ route('products.units.destroy', $unit) }}">@csrf @method('DELETE')<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all" type="submit"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
+                        <form data-async-form class="delete-unit" method="POST" action="{{ route('products.units.destroy', $unit) }}">@csrf @method('DELETE')<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all" type="submit"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
                     </div></td>
                 </tr>
             @endforeach</tbody>
@@ -40,7 +40,7 @@
 
 <dialog id="unit-dialog" aria-labelledby="unit-title" class="bg-white shadow-2xl text-slate-800 rounded-2xl p-0 overflow-hidden border-0">
     <div class="flex justify-between items-center px-6 py-4 bg-purple-50 border-b border-purple-100"><h2 id="unit-title" class="text-base font-bold text-slate-800">Add Unit</h2><button type="button" data-close-unit aria-label="Close unit form" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100 flex items-center justify-center transition-colors"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
-    <form id="unit-form" method="POST" action="{{ old('_unit_id') ? route('products.units.update', old('_unit_id')) : route('products.units.store') }}">
+    <form data-async-form id="unit-form" method="POST" action="{{ old('_unit_id') ? route('products.units.update', old('_unit_id')) : route('products.units.store') }}">
         @csrf
         <input type="hidden" name="_method" value="{{ old('_unit_id') ? 'PUT' : 'POST' }}"><input type="hidden" name="_unit_id" value="{{ old('_unit_id') }}">
         <div class="p-6 space-y-4">
@@ -57,7 +57,7 @@
                 <p class="text-xs font-semibold text-purple-800">1 of this unit equals:</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div><label for="unit-multiplier" class="block text-xs font-bold text-slate-700 mb-1.5">Multiplier <span class="text-rose-500">*</span></label><input id="unit-multiplier" name="base_unit_multiplier" type="number" min="0.000001" max="999999999999" step="0.000001" value="{{ old('base_unit_multiplier') }}" placeholder="e.g. 12" class="{{ $input }}"></div>
-                    <div><label for="unit-base" class="block text-xs font-bold text-slate-700 mb-1.5">Base unit <span class="text-rose-500">*</span></label><select id="unit-base" name="base_unit_id" class="{{ $input }}"><option value="">Please Select</option>@foreach($units->whereNull('base_unit_id') as $base)<option value="{{ $base->id }}" @selected(old('base_unit_id') == $base->id)>{{ $base->name }} ({{ $base->short_name }})</option>@endforeach</select></div>
+                    <div><label for="unit-base" class="block text-xs font-bold text-slate-700 mb-1.5">Base unit <span class="text-rose-500">*</span></label><select data-async-options id="unit-base" name="base_unit_id" class="{{ $input }}"><option value="">Please Select</option>@foreach($units->whereNull('base_unit_id') as $base)<option value="{{ $base->id }}" @selected(old('base_unit_id') == $base->id)>{{ $base->name }} ({{ $base->short_name }})</option>@endforeach</select></div>
                 </div>
                 @if($units->whereNull('base_unit_id')->isEmpty())<p class="text-xs text-slate-500">Create a base unit first, with the multiple option unchecked.</p>@endif
             </div>
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.querySelectorAll('[data-close-unit]').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('close', () => previousFocus?.focus());
-    form.addEventListener('submit', () => { save.disabled = true; save.textContent = 'Saving…'; });
+
     if (@json($errors->any())) { document.getElementById('unit-title').textContent = form.elements._unit_id.value ? 'Edit Unit' : 'Add Unit'; openUnit(); }
     if (window.jQuery && $.fn.DataTable) {
         const exportOptions = { columns:[0,1,2], format:{body: data => {const text = $('<div>').html(data).text().trim(); return /^[=+\-@\t\r]/.test(text) ? "'" + text : text;}} };

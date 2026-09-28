@@ -6,6 +6,10 @@ use App\Models\TaxRate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Maintains single taxes and composite tax groups without allowing their
+ * stored totals to drift away from the selected sub-tax records.
+ */
 class TaxRateService
 {
     public function saveSingle(array $data, ?TaxRate $taxRate = null): TaxRate
@@ -27,6 +31,8 @@ class TaxRateService
 
     public function saveGroup(array $data, ?TaxRate $taxGroup = null): TaxRate
     {
+        // The row lock and retry count protect simultaneous edits to the same
+        // group from producing an incorrect combined percentage.
         return DB::transaction(function () use ($data, $taxGroup) {
             $taxGroup = $taxGroup?->newQuery()->lockForUpdate()->findOrFail($taxGroup->id) ?? new TaxRate;
             $this->ensureType($taxGroup, true);
@@ -68,6 +74,7 @@ class TaxRateService
 
     private function recalculate(TaxRate $group): void
     {
+        // Group amount is derived data. It is never accepted from the browser.
         $total = $group->subTaxes()->sum('tax_rates.amount');
         if ($total > 100) {
             throw ValidationException::withMessages(['tax_rate_ids' => 'The combined tax rate cannot exceed 100%.']);

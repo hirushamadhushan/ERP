@@ -24,13 +24,35 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    /**
+     * Render the product catalogue and its stock report from one filtered
+     * product collection, so the visible totals and detail modal agree.
+     */
     public function index(ProductFilterRequest $request, ProductStockReport $stockReport)
     {
         $filters = $request->validated();
+        // Filter controls remain complete after a filtered table refresh.
+        // They must not be built from the currently filtered result set.
+        $filterProducts = Product::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+        $filterTaxRates = Product::query()
+            ->whereNotNull('tax_rate')
+            ->distinct()
+            ->orderBy('tax_rate')
+            ->pluck('tax_rate');
+        // A main category represents its entire tree in the catalogue, not
+        // merely its direct children. This preserves level 1–5 filtering.
+        $categoryIds = isset($filters['category_id'])
+            ? Category::descendantIds((int) $filters['category_id'])
+            : [];
+        // Eager loading avoids one query per product, variation and location
+        // while the table, detail modal and stock report are being rendered.
         $products = Product::query()
-            ->with(['unit', 'brand', 'warranty', 'category', 'locations', 'variants.variationValues', 'variants.locationStocks'])
+            ->with(['unit', 'purchaseUnit', 'secondaryUnit', 'brand', 'warranty', 'applicableTax', 'category', 'locations', 'variants.variationValue', 'variants.variationValues', 'variants.locationStocks', 'comboItems.unit'])
+            ->when($filters['product_id'] ?? null, fn ($query, $value) => $query->whereKey($value))
             ->when($filters['product_type'] ?? null, fn ($query, $value) => $query->where('product_type', $value))
-            ->when($filters['category_id'] ?? null, fn ($query, $value) => $query->whereHas('selectedCategory', fn ($category) => $category->where('id', $value)->orWhere('parent_id', $value)))
+            ->when($categoryIds, fn ($query) => $query->whereIn('selected_category_id', $categoryIds))
             ->when($filters['subcategory_id'] ?? null, fn ($query, $value) => $query->where('selected_category_id', $value))
             ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('is_active', $value === 'active'))
             ->when($filters['unit_id'] ?? null, fn ($query, $value) => $query->where('unit_id', $value))
@@ -48,6 +70,8 @@ class ProductController extends Controller
             ->latest('id')
             ->get();
 
+        // Serial-managed products derive available stock from serial records;
+        // normal products use opening stock maintained on their location rows.
         $serialStock = ProductSerialNumber::query()
             ->leftJoin('product_variants as stock_variant', 'stock_variant.id', '=', 'product_serial_numbers.product_variant_id')
             ->selectRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id) as product_id, product_serial_numbers.product_variant_id, location_id, COUNT(*) as quantity')
@@ -56,26 +80,72 @@ class ProductController extends Controller
             ->groupByRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id), product_serial_numbers.product_variant_id, location_id')
             ->get()
             ->keyBy(fn ($row) => $row->product_id.':'.($row->product_variant_id ?: 'product').':'.$row->location_id);
-        $productDetails = $products->mapWithKeys(fn (Product $product) => [
-            $product->id => [
+        $report = $stockReport->build($products, $serialStock);
+        // The modal receives formatted display data only, rather than exposing
+        // raw model attributes or making a second request per selected product.
+        $productDetails = $products->mapWithKeys(function (Product $product) use ($report) {
+            $factor = 1 + ((float) $product->tax_rate / 100);
+            $sellingExclusive = $product->selling_price_tax_type === 'inclusive'
+                ? (float) $product->selling_price / $factor
+                : (float) $product->selling_price;
+            $stockRows = $report['rows']->filter(fn (array $row) => $row['product']->id === $product->id);
+
+            return [$product->id => [
                 'name' => $product->name,
                 'sku' => $product->code,
                 'unit' => $product->unit?->name ?? 'Not set',
                 'brand' => $product->brand?->name ?? 'Not set',
                 'category' => $product->category?->name ?? 'Not set',
+                'warranty' => $product->warranty?->name ?? 'None',
                 'locations' => $product->locations->pluck('name')->implode(', ') ?: 'Not set',
-                'purchase_price' => number_format($product->purchase_price, 2),
-                'selling_price' => number_format($product->selling_price, 2),
+                'barcode_type' => $product->barcode_type,
+                'manage_stock' => $product->manage_stock ? 'Yes' : 'No',
+                'alert_quantity' => $product->alert_quantity ?? '—',
+                'expiry' => $product->expiry_period ? $product->expiry_period.' '.$product->expiry_period_type : 'Not applicable',
+                'tax' => $product->applicableTax?->name ?? ($product->tax_rate ? number_format((float) $product->tax_rate, 3).'%' : 'None'),
+                'tax_type' => ucfirst($product->selling_price_tax_type),
+                'product_type' => ucfirst($product->product_type),
                 'serial_tracking' => $product->enable_serial ? 'Enabled' : 'Disabled',
-            ],
-        ]);
-        $report = $stockReport->build($products, $serialStock);
+                'image_url' => $product->image_path ? route('products.catalog.attachment', [$product, 'image']) : null,
+                'purchase_exclusive' => number_format((float) $product->purchase_price, 2),
+                'purchase_inclusive' => number_format((float) $product->purchase_price * $factor, 2),
+                'margin' => number_format($product->purchase_price ? (($sellingExclusive / (float) $product->purchase_price) - 1) * 100 : 0, 2),
+                'selling_exclusive' => number_format($sellingExclusive, 2),
+                'selling_inclusive' => number_format($sellingExclusive * $factor, 2),
+                'variants' => $product->variants->map(function ($variant) use ($factor, $product) {
+                    $variantSellingExclusive = $product->selling_price_tax_type === 'inclusive'
+                        ? (float) $variant->selling_price / $factor
+                        : (float) $variant->selling_price;
+
+                    return [
+                        'name' => $variant->value ?: 'Default', 'sku' => $variant->sku ?: '—',
+                        'purchase_exclusive' => number_format((float) $variant->purchase_price, 2),
+                        'purchase_inclusive' => number_format((float) $variant->purchase_price * $factor, 2),
+                        'margin' => number_format($variant->purchase_price ? (($variantSellingExclusive / (float) $variant->purchase_price) - 1) * 100 : 0, 2),
+                        'selling_exclusive' => number_format($variantSellingExclusive, 2),
+                        'selling_inclusive' => number_format($variantSellingExclusive * $factor, 2),
+                    ];
+                })->values(),
+                'combo_items' => $product->comboItems->map(fn (Product $item) => [
+                    'name' => $item->name, 'sku' => $item->code, 'quantity' => (float) $item->pivot->quantity,
+                    'unit' => $item->unit?->short_name ?? '',
+                ])->values(),
+                'stock_rows' => $stockRows->map(fn (array $row) => [
+                    'variation' => $row['variation'], 'location' => $row['location']->name,
+                    'stock' => number_format($row['stock'], $product->unit?->allow_decimal ? 2 : 0).' '.$product->unit?->short_name,
+                    'value' => 'Rs '.number_format($row['sale_value'], 2),
+                ])->values(),
+            ]];
+        });
 
         return view('products.index', $this->references() + [
             'products' => $products,
+            'filterProducts' => $filterProducts,
+            'filterTaxRates' => $filterTaxRates,
             'serialStock' => $serialStock,
             'productDetails' => $productDetails,
             'stockRows' => $report['rows'],
+            'stockByProduct' => $report['stock_by_product'],
             'stockTotals' => $report['totals'],
         ]);
     }

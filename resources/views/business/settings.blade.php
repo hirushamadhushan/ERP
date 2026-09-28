@@ -345,7 +345,7 @@
 </div>
 @endif
 
-<form id="business-settings-form" method="POST" action="{{ route('business.settings.update') }}" enctype="multipart/form-data">
+<form data-async-form id="business-settings-form" method="POST" action="{{ route('business.settings.update') }}" enctype="multipart/form-data">
     @csrf
 
     <div class="grid grid-cols-12 gap-6 items-start">

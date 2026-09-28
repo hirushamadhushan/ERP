@@ -35,6 +35,27 @@ class ProductReferencesTest extends TestCase
         }
     }
 
+    public function test_async_crud_returns_messages_without_redirecting_and_preserves_delete_guards(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $headers = ['X-Async-Form' => '1', 'Accept' => 'application/json'];
+        $this->post('/brands', ['name' => 'Async Brand'], $headers)
+            ->assertOk()->assertJsonPath('message', 'Brand added successfully.');
+        $brand = DB::table('brands')->value('id');
+        $this->put('/brands/'.$brand, ['name' => 'Updated Brand'], $headers)
+            ->assertOk()->assertJsonPath('message', 'Brand updated successfully.');
+        $this->post('/brands', ['name' => ''], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('name');
+        $this->delete('/brands/'.$brand, [], $headers)->assertOk();
+
+        $root = \App\Models\Category::create(['name' => 'Parent', 'category_type' => 'product']);
+        \App\Models\Category::create(['name' => 'Child', 'category_type' => 'product', 'parent_id' => $root->id]);
+        $this->delete('/categories/'.$root->id, [], $headers)
+            ->assertUnprocessable()->assertJsonPath('message', 'This category has sub-categories. Move or delete them before deleting it.');
+        $this->assertDatabaseHas('categories', ['id' => $root->id]);
+        $this->get('/categories')->assertSessionMissing('category_error');
+    }
+
     public function test_crud_and_validation_for_both_pages(): void
     {
         $this->actingAs(User::factory()->create());

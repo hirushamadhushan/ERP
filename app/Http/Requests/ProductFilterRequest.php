@@ -10,6 +10,7 @@ class ProductFilterRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
+            'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'product_type' => ['nullable', Rule::in(['single', 'variable', 'combo'])],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'subcategory_id' => ['nullable', 'integer', 'exists:categories,id'],

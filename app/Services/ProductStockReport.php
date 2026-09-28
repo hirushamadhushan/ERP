@@ -33,8 +33,15 @@ final class ProductStockReport
             });
         })->values();
 
+        $stockByProduct = $rows
+            ->groupBy(fn (array $row) => $row['product']->id)
+            ->map(fn (Collection $productRows) => $productRows->sum('stock'));
+
         return [
             'rows' => $rows,
+            // The catalogue's Current Stock must use the same rows as this report.
+            // This includes every variation and every assigned location.
+            'stock_by_product' => $stockByProduct,
             'totals' => [
                 'stock' => $rows->sum('stock'),
                 'purchase_value' => $rows->sum('purchase_value'),

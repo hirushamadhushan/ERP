@@ -29,7 +29,7 @@
     </div>
 
     <div class="sticky-table-host">
-        <table id="warranties-table" class="w-full text-left" style="width:100%">
+        <table data-async-table id="warranties-table" class="w-full text-left" style="width:100%">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -49,7 +49,7 @@
                                 <button type="button" class="edit-warranty inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-warranty="{{ json_encode($record->only(['id', 'name', 'description', 'duration', 'duration_type'])) }}" data-url="{{ route('products.warranties.update', $record) }}">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
                                 </button>
-                                <form class="delete-warranty" method="POST" action="{{ route('products.warranties.destroy', $record) }}">
+                                <form data-async-form class="delete-warranty" method="POST" action="{{ route('products.warranties.destroy', $record) }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all">
@@ -72,7 +72,7 @@
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
     </div>
-    <form id="warranty-form" method="POST" action="{{ old('_record_id') ? route('products.warranties.update', old('_record_id')) : route('products.warranties.store') }}">
+    <form data-async-form id="warranty-form" method="POST" action="{{ old('_record_id') ? route('products.warranties.update', old('_record_id')) : route('products.warranties.store') }}">
         @csrf
         <input type="hidden" name="_method" value="{{ old('_record_id') ? 'PUT' : 'POST' }}">
         <input type="hidden" name="_record_id" value="{{ old('_record_id') }}">
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-close-warranty]').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('close', () => previousFocus?.focus());
-    form.addEventListener('submit', () => { save.disabled = true; save.textContent = 'Saving…'; });
+
 
     if (@json($errors->any())) {
         document.getElementById('warranty-title').textContent = form.elements._record_id.value ? 'Edit Warranty' : 'Add Warranty';

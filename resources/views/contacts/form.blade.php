@@ -3,7 +3,7 @@
         <h2 id="contact-dialog-title" class="text-base font-bold text-slate-900">Add a new contact</h2>
         <button type="button" data-close-contact class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100" aria-label="Close contact form"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>
-    <form id="contact-form" method="POST" action="{{ old('_contact_id') ? route('contacts.update', old('_contact_id')) : route('contacts.store') }}">
+    <form data-async-form id="contact-form" method="POST" action="{{ old('_contact_id') ? route('contacts.update', old('_contact_id')) : route('contacts.store') }}">
         @csrf
         <input type="hidden" name="_method" value="{{ old('_contact_id') ? 'PUT' : 'POST' }}">
         <input type="hidden" name="_contact_id" value="{{ old('_contact_id') }}">

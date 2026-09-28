@@ -15,18 +15,6 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-
     <!-- DataTables CSS & Buttons -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
@@ -302,6 +290,18 @@
         </div>
     </div>
 
+    <div id="async-request-loader" class="async-progress" aria-hidden="true" role="status" aria-label="Updating">
+        <span class="async-progress-track"><span class="async-progress-bar"></span></span>
+    </div>
+    <style>
+        .async-progress { position: fixed; inset: 0 0 auto; z-index: 100; height: 3px; opacity: 0; pointer-events: none; transition: opacity .16s ease; }
+        .async-progress.is-active { opacity: 1; }
+        .async-progress-track { display: block; width: 100%; height: 100%; overflow: hidden; background: rgb(124 58 237 / .10); }
+        .async-progress-bar { display: block; width: 36%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #7c3aed, #c084fc); animation: async-progress-slide .85s ease-in-out infinite; }
+        @keyframes async-progress-slide { from { transform: translateX(-115%); } to { transform: translateX(380%); } }
+        @media (prefers-reduced-motion: reduce) { .async-progress-bar { width: 100%; animation: none; } }
+    </style>
+
     <!-- Scripts -->
     <script>
         const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -337,6 +337,18 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 
     <script src="{{ asset('js/error-handling.js') }}"></script>
+    <script src="{{ asset('js/async-forms.js') }}?v={{ filemtime(public_path('js/async-forms.js')) }}"></script>
+    <script>
+        (() => {
+            const loader = document.getElementById('async-request-loader');
+            let activeRequests = 0, displayTimer;
+            const show = () => { activeRequests++; clearTimeout(displayTimer); displayTimer = setTimeout(() => { if (activeRequests) { loader.classList.add('is-active'); loader.setAttribute('aria-hidden', 'false'); } }, 160); };
+            const hide = () => { activeRequests = Math.max(0, activeRequests - 1); if (activeRequests) return; clearTimeout(displayTimer); loader.classList.remove('is-active'); loader.setAttribute('aria-hidden', 'true'); };
+            document.addEventListener('app:request-start', show);
+            document.addEventListener('app:request-end', hide);
+            if (window.jQuery) jQuery(document).on('ajaxStart', show).on('ajaxStop', hide);
+        })();
+    </script>
     <script src="{{ asset('js/auto-filter.js') }}"></script>
     <script src="{{ asset('js/sticky-data-table.js') }}?v={{ filemtime(public_path('js/sticky-data-table.js')) }}"></script>
     @stack('scripts')
