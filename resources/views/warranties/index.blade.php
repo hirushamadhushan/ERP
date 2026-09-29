@@ -132,7 +132,7 @@
     #warranties-table_wrapper .dataTables_filter, #warranties-table_wrapper .dataTables_length { float:none; text-align:left; }
 </style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+AppPage.ready( () => {
     const dialog = document.getElementById('warranty-dialog');
     const form = document.getElementById('warranty-form');
     const save = document.getElementById('save-warranty');

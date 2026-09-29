@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Contact;
+use App\Models\Location;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\UserManagementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
@@ -63,27 +65,37 @@ class UserController extends Controller
         return view('users.index', compact('roles'));
     }
 
+    /** Display the full user and access-control form. */
+    public function create()
+    {
+        return view('users.create', [
+            'roles' => Role::orderBy('name')->get(),
+            'locations' => Location::where('is_active', true)->orderBy('name')->get(),
+            'contacts' => Contact::where('status', 'active')->orderBy('name')->get(['id', 'name', 'contact_id', 'type']),
+        ]);
+    }
+
     /**
      * Store a newly created user via AJAX modal.
      */
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request, UserManagementService $users)
     {
-        $validated = $request->validated();
-        $validated['role_id'] = Role::where('name', $validated['role'])->value('id');
-        unset($validated['role']);
+        $user = $users->create($request->validated());
 
-        $validated['password'] = Hash::make($validated['password']);
-
-        $user = $this->databaseTransaction(
-            fn () => User::create($validated),
-            'The username or email address is already in use.',
-            'email'
-        );
+        if (! $request->expectsJson()) {
+            return redirect()->route('users.index')->with('success', 'User created successfully.');
+        }
 
         return response()->json([
             'status' => 'success',
             'message' => 'User created successfully!',
-            'user' => $user,
+            'redirect' => route('users.index'),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->assignedRole?->name,
+            ],
         ]);
     }
 
@@ -92,7 +104,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with(['assignedRole', 'profile', 'locations', 'selectedContacts'])->findOrFail($id);
 
         return response()->json($user);
     }

@@ -496,7 +496,7 @@
                             <p class="text-[11px] text-slate-400 mt-1 italic">Previous logo (if exists) will be replaced</p>
                             @if($settings->logo_path)
                             <div class="mt-2 flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
-                                <img src="{{ $settings->logo_path }}" alt="Business Logo" class="h-10 max-w-[120px] object-contain rounded">
+                                <img id="business-settings-logo-preview" src="{{ $settings->logo_path }}" alt="Business Logo" class="h-10 max-w-[120px] object-contain rounded">
                                 <span class="text-xs text-slate-500">Current Logo</span>
                             </div>
                             @endif
@@ -713,7 +713,7 @@
 </form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+AppPage.ready( function() {
     const expiryEnabled = document.getElementById('expiry_enabled');
     const expiryMode = document.getElementById('expiry_mode');
     const onExpiryField = document.getElementById('on-expiry-field');
@@ -989,5 +989,74 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.closeDatepickerPopup) window.closeDatepickerPopup();
     });
 });
+</script>
+<script>
+(() => {
+/* Apply the saved business identity immediately; a full page reload is not
+ * needed just to show the new name or uploaded logo in the shared layout. */
+document.addEventListener('app:form-saved', event => {
+    if (event.detail.form?.id !== 'business-settings-form') return;
+
+    const business = event.detail.result?.business;
+    if (!business?.name) return;
+
+    document.querySelectorAll('#business-brand-name, #business-footer-name').forEach(element => {
+        element.textContent = business.name;
+    });
+    const pageTitle = document.querySelector('title')?.dataset.pageTitle || 'Codeza ERP';
+    document.title = `${pageTitle} - ${business.name}`;
+
+    if (business.logo) {
+        const logo = document.getElementById('business-brand-logo');
+        if (logo) {
+            logo.src = business.logo;
+            logo.alt = `${business.name} logo`;
+        }
+        const preview = document.getElementById('business-settings-logo-preview');
+        if (preview) preview.src = business.logo;
+    }
+}, {signal: AppPage.signal});
+
+/*
+ * This page owns its submit flow because its result changes the surrounding
+ * layout itself. Capturing the event prevents the generic async form handler
+ * from racing this immediate brand update or falling back to a navigation.
+ */
+const businessSettingsForm = document.getElementById('business-settings-form');
+businessSettingsForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const submitButton = businessSettingsForm.querySelector('button[type="submit"]');
+    const originalButton = submitButton?.innerHTML;
+    if (submitButton?.disabled) return;
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Updating…';
+    }
+
+    try {
+        const result = await AppErrors.request(businessSettingsForm.action, {
+            method: 'POST',
+            body: new FormData(businessSettingsForm),
+            headers: {
+                'X-Async-Form': '1',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+        });
+
+        document.dispatchEvent(new CustomEvent('app:form-saved', {detail: {form: businessSettingsForm, result}}));
+        window.AsyncForms?.announce(result.message);
+    } catch (error) {
+        AppErrors.show(error.message);
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButton;
+        }
+    }
+}, true);
+})();
 </script>
 @endsection

@@ -160,7 +160,7 @@
     .reference-toast.success{background:#059669}.reference-toast.hidden{display:none}
 </style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+(() => {
     const toast = document.getElementById('reference-toast');
     const showReferenceToast = (message, type = 'error') => {
         document.getElementById('reference-toast-message').textContent = message;
@@ -321,6 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         StickyDataTables.install(referenceTable);
     }
-});
+})();
 </script>
 @endpush

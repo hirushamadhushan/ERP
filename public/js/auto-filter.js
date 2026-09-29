@@ -1,8 +1,10 @@
 (function () {
     'use strict';
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function initialize() {
         document.querySelectorAll('form[data-auto-filter]').forEach(function (form) {
+            if (form.dataset.autoFilterReady) return;
+            form.dataset.autoFilterReady = 'true';
             let timer;
 
             function submit() {
@@ -32,5 +34,7 @@
                 });
             });
         });
-    });
+    }
+    AppPage.ready(initialize);
+    document.addEventListener('turbo:load', initialize);
 })();

@@ -45,7 +45,7 @@
 @endsection
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
+AppPage.ready(()=>{
  const dialog=document.getElementById('tax-dialog'),form=document.getElementById('tax-form'),single=document.getElementById('single-fields'),group=document.getElementById('group-fields');
  const toast=(message,ok=false)=>{const el=document.getElementById('tax-toast');el.textContent=message;el.className=el.className.replace(/bg-(emerald|rose)-600/g,'').replace(' hidden','')+' '+(ok?'bg-emerald-600':'bg-rose-600');clearTimeout(window.taxToastTimer);window.taxToastTimer=setTimeout(()=>el.classList.add('hidden'),4000)};
  @if(session('success')) toast(@json(session('success')),true); @endif

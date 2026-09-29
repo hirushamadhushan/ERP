@@ -1,5 +1,5 @@
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+AppPage.ready( function () {
     const dialog = document.getElementById('contact-dialog');
     const form = document.getElementById('contact-form');
     const fields = document.getElementById('contact-fields');
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
         form.querySelectorAll('select').forEach(select => select.value = '');
         typeSelect.value = pageType;
         form.elements.status.value = 'active';
-        ['opening_balance', 'opening_due_cans', 'commission_percentage'].forEach(key => form.elements[key].value = '0');
+        ['opening_balance', 'opening_due_cans', 'commission_percentage'].forEach(key => form.elements[key].value = '');
         form.elements._method.value = 'POST';
         form.elements._contact_id.value = '';
         form.action = storeUrl;
@@ -100,6 +100,30 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.getElementById('contacts-table').addEventListener('submit', event => {
         if (event.target.matches('.delete-contact') && !window.confirm('Delete this contact? This cannot be undone.')) event.preventDefault();
+    });
+    document.getElementById('contacts-table').addEventListener('click', async event => {
+        const dueButton = event.target.closest('.collect-customer-due');
+        const statusButton = event.target.closest('.toggle-customer-status');
+        if (statusButton) {
+            const response = await AppErrors.request(statusButton.dataset.statusUrl, {method: 'PUT'});
+            window.showToast?.(response.message, 'success'); Turbo.visit(location.href);
+        }
+        if (!dueButton) return;
+        const amount = window.prompt('Amount to receive (current due: Rs. '+Number(dueButton.dataset.due).toFixed(2)+')');
+        if (!amount) return;
+        const paymentMethod = window.prompt('Payment method', 'Cash');
+        if (!paymentMethod) return;
+        const result = await AppErrors.request(dueButton.dataset.dueUrl, {method: 'POST', headers: {Accept: 'application/json'}, body: JSON.stringify({request_id: crypto.randomUUID(), amount, payment_method: paymentMethod, paid_at: new Date().toISOString()})});
+        window.showToast?.(result.message, 'success'); Turbo.visit(location.href);
+    });
+    document.getElementById('contacts-table').addEventListener('click', async event => {
+        const documents = event.target.closest('.customer-documents');
+        if (documents) {
+            const data = await AppErrors.request(documents.dataset.documentsUrl);
+            const summary = [...data.documents.map(item => 'Document: '+item.name), ...data.notes.map(item => 'Note: '+item.body)].join('\n') || 'No customer documents or notes yet.';
+            window.alert(summary);
+        }
+        if (event.target.closest('.supplier-action')) window.alert('This supplier action will use purchase transactions when the Purchases module is connected.');
     });
 
     if (hasErrors) {

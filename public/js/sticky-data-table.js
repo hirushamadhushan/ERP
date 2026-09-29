@@ -1,6 +1,8 @@
 (() => {
     const states = [];
     let listenersInstalled = false;
+    // Removed tables must not remain referenced after an in-app page visit.
+    document.addEventListener('turbo:before-render', () => { states.length = 0; });
 
     function verticalScrollContainer(element) {
         for (let parent = element.parentElement; parent; parent = parent.parentElement) {

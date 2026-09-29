@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaveBusinessSettingsRequest;
 use App\Models\BusinessSetting;
 use App\Models\Unit;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BusinessSettingController extends Controller
 {
@@ -120,8 +120,31 @@ class BusinessSettingController extends Controller
 
         $productSettings = $data['product_settings'] ?? null;
         unset($data['product_settings']);
-        $settings->update($data);
-        if ($productSettings !== null) $settings->productSettings()->updateOrCreate([], $productSettings);
+
+        /*
+         * The main settings and product defaults are edited in one form. A
+         * transaction prevents a partially saved configuration if either write
+         * fails, which would otherwise leave the product form out of sync.
+         */
+        DB::transaction(function () use ($settings, $data, $productSettings): void {
+            $settings->update($data);
+
+            if ($productSettings !== null) {
+                $settings->productSettings()->updateOrCreate([], $productSettings);
+            }
+        });
+
+        if ($request->header('X-Async-Form') === '1') {
+            // Return only the changed image. Re-sending an existing base64 logo
+            // on every name-only save would make the AJAX response needlessly large.
+            return response()->json([
+                'message' => 'Business settings updated successfully.',
+                'business' => [
+                    'name' => $settings->business_name,
+                    'logo' => $request->hasFile('logo') ? $settings->logo_path : null,
+                ],
+            ]);
+        }
 
         return redirect()->route('business.settings.index')->with('status', 'Business settings updated successfully.');
     }

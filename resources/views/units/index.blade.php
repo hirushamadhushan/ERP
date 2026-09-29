@@ -80,7 +80,7 @@
     .unit-toast.hidden{display:none}
 </style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+AppPage.ready( () => {
     const toast = document.getElementById('unit-toast');
     const showUnitToast = (message, type = 'error') => {
         document.getElementById('unit-toast-message').textContent = message;

@@ -21,7 +21,7 @@
                     @include('contacts.field', ['field' => 'name', 'label' => 'Name', 'required' => true])
                     <div id="business-name-field">@include('contacts.field', ['field' => 'business_name', 'label' => 'Business Name'])</div>
                     <div data-contact-types="customer both"><label for="contact-customer_group" class="{{ $labelClass }}">Customer Group</label><select id="contact-customer_group" name="customer_group" class="{{ $inputClass }}"><option value="">None</option>@foreach($groups as $group)<option value="{{ $group }}" @selected(old('customer_group') === $group)>{{ $group }}</option>@endforeach</select><a href="{{ route('contacts.groups.index') }}" class="inline-block mt-1 text-xs text-purple-600 hover:underline">Manage customer groups</a></div>
-                    <div data-contact-types="commission">@include('contacts.field', ['field' => 'commission_percentage', 'label' => 'Commission (%)', 'inputType' => 'number', 'default' => 0, 'max' => 100])</div>
+                    <div data-contact-types="commission">@include('contacts.field', ['field' => 'commission_percentage', 'label' => 'Commission (%)', 'inputType' => 'number', 'max' => 100])</div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     @include('contacts.field', ['field' => 'mobile', 'label' => 'Mobile', 'inputType' => 'tel', 'maxlength' => 50, 'required' => true])
@@ -38,7 +38,7 @@
                     <div class="mt-6 pt-6 border-t border-slate-200 space-y-6">
                         <div data-contact-types="customer supplier both" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             @include('contacts.field', ['field' => 'tax_number', 'label' => 'Tax number', 'maxlength' => 100])
-                            @include('contacts.field', ['field' => 'opening_balance', 'label' => 'Opening Balance', 'inputType' => 'number', 'default' => 0])
+                            @include('contacts.field', ['field' => 'opening_balance', 'label' => 'Opening Balance', 'inputType' => 'number'])
                             <div>
                                 <label for="contact-pay_term" class="{{ $labelClass }}">Pay term <i class="bi bi-info-circle text-purple-500" aria-hidden="true"></i></label>
                                 <div class="flex gap-2">
@@ -48,7 +48,7 @@
                                 <p id="contact-pay-term-help" class="mt-1 text-xs text-slate-400">Enter the payment period and select months or days.</p>
                             </div>
                             <div data-contact-types="customer both">@include('contacts.field', ['field' => 'credit_limit', 'label' => 'Credit Limit', 'inputType' => 'number', 'help' => 'Keep blank for no limit'])</div>
-                            <div data-contact-types="customer both">@include('contacts.field', ['field' => 'opening_due_cans', 'label' => 'Opening Current Due Empty Cans', 'inputType' => 'number', 'step' => 1, 'default' => 0, 'help' => 'Manual carry-forward due cans for this customer'])</div>
+                            <div data-contact-types="customer both">@include('contacts.field', ['field' => 'opening_due_cans', 'label' => 'Opening Current Due Empty Cans', 'inputType' => 'number', 'step' => 1, 'help' => 'Manual carry-forward due cans for this customer'])</div>
                         </div>
                         <div data-contact-types="customer supplier both">@include('contacts.field', ['field' => 'date_of_birth', 'label' => 'Date of birth', 'inputType' => 'date'])</div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-6 border-t border-slate-200">

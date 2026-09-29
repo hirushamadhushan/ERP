@@ -150,7 +150,21 @@
                     </div>
                 </div>
 
+                <div class="mb-4 border border-slate-200 rounded-xl overflow-hidden">
+                    <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border-b border-slate-200"><span class="text-sm font-bold text-slate-700">Suppliers</span><label class="flex items-center gap-1.5 ml-auto cursor-pointer text-xs text-slate-500 font-semibold" data-group="supplier"><input type="checkbox" class="group-select-all w-3.5 h-3.5 accent-purple-600 cursor-pointer"> Select all</label></div>
+                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">@foreach(['supplier.view' => 'View all suppliers', 'supplier.view_own' => 'View assigned suppliers only'] as $perm => $label)<label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" name="permissions[]" value="{{ $perm }}" class="permission-check supplier-check mt-0.5 w-4 h-4 rounded accent-purple-600 cursor-pointer shrink-0"><span class="text-xs text-slate-600 group-hover:text-slate-800">{{ $label }}</span></label>@endforeach</div>
+                </div>
+
                 <!-- ---- ROLES GROUP ---- -->
+                <div class="mb-4 border border-slate-200 rounded-xl overflow-hidden">
+                    <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border-b border-slate-200"><span class="text-sm font-bold text-slate-700">Customers</span><label class="flex items-center gap-1.5 ml-auto cursor-pointer text-xs text-slate-500 font-semibold" data-group="customer"><input type="checkbox" class="group-select-all w-3.5 h-3.5 accent-purple-600 cursor-pointer"> Select all</label></div>
+                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        @foreach(['customer.view' => 'View all customers', 'customer.view_own' => 'View assigned customers only'] as $perm => $label)
+                        <label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" name="permissions[]" value="{{ $perm }}" class="permission-check customer-check mt-0.5 w-4 h-4 rounded accent-purple-600 cursor-pointer shrink-0"><span class="text-xs text-slate-600 group-hover:text-slate-800">{{ $label }}</span></label>
+                        @endforeach
+                    </div>
+                </div>
+
                 <div class="mb-4 border border-slate-200 rounded-xl overflow-hidden">
                     <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
                         <span class="text-sm font-bold text-slate-700">Roles</span>

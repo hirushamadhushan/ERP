@@ -42,7 +42,7 @@
 .subcategory-empty{padding:12px 16px;font-size:12px;color:#64748b}
 </style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+AppPage.ready( () => {
     const picker=document.getElementById('subcategory-picker'), select=document.getElementById('subcategory_id');
     const root=document.getElementById('category_id'), trigger=document.getElementById('subcategory-trigger');
     const panel=document.getElementById('subcategory-panel'), search=document.getElementById('subcategory-search');

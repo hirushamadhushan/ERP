@@ -14,11 +14,17 @@ class SavePaymentAccountRequest extends FormRequest
             'account_number'=>['required','string','max:80',Rule::unique('payment_accounts')->ignore($account?->id)],
             'payment_account_type_id'=>['nullable','integer',Rule::exists('payment_account_types','id')->whereNull('parent_id')],
             'payment_account_sub_type_id'=>['nullable','integer','exists:payment_account_types,id'],
-            'opening_balance'=>['required','numeric','between:-9999999999999999.99,9999999999999999.99'],
+            'opening_balance'=>['nullable','numeric','between:-9999999999999999.99,9999999999999999.99'],
             'is_active'=>['nullable','boolean'],
             'details'=>['nullable','array','max:2'],
             'details.*.label'=>['nullable','string','max:80','required_with:details.*.value'],
             'details.*.value'=>['nullable','string','max:255','required_with:details.*.label'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // A blank opening balance means no opening amount, which is stored as zero.
+        if (! $this->filled('opening_balance')) $this->merge(['opening_balance' => 0]);
     }
 }

@@ -104,4 +104,26 @@ class BusinessSettingsTest extends TestCase
         preg_match('/<input[^>]*id="expiry_days"[^>]*>/', $page->getContent(), $expiryDays);
         $this->assertStringNotContainsString('disabled', $expiryDays[0]);
     }
+
+    public function test_business_identity_is_returned_for_an_async_save(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Async-Form', '1')
+            ->postJson('/business/settings', [
+                'business_name' => 'VenuraERP', 'start_date' => '2026-01-01',
+                'default_profit_percent' => 25, 'currency' => 'Sri Lanka - Rupees(LKR)',
+                'currency_symbol_placement' => 'Before amount', 'time_zone' => 'Asia/Colombo',
+                'financial_year_start_month' => 'January',
+                'stock_accounting_method' => 'FIFO (First In First Out)',
+                'transaction_edit_days' => 30, 'date_format' => 'mm/dd/yyyy',
+                'time_format' => '24 Hour', 'currency_precision' => 2, 'quantity_precision' => 2,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Business settings updated successfully.')
+            ->assertJsonPath('business.name', 'VenuraERP')
+            ->assertJsonPath('business.logo', null);
+    }
 }

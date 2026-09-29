@@ -123,7 +123,7 @@
     #variations-table_wrapper .dataTables_filter, #variations-table_wrapper .dataTables_length { float:none; text-align:left; }
 </style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+AppPage.ready( () => {
     const toast = document.getElementById('variation-toast');
     const toastIcon = document.getElementById('variation-toast-icon');
     const toastMessage = document.getElementById('variation-toast-message');

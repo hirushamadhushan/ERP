@@ -16,17 +16,25 @@ class SaveBusinessSettingsRequest extends FormRequest
     {
         return [
             'business_name' => ['required', 'string', 'max:255'],
-            'start_date' => ['nullable', 'string', 'max:50'],
+            // Store a real date so financial-year reports can compare it safely.
+            'start_date' => ['nullable', 'date'],
             'default_profit_percent' => ['required', 'numeric', 'min:-100', 'max:999999'],
             'currency' => ['required', 'string', 'max:255'],
-            'currency_symbol_placement' => ['required', 'string', 'max:50'],
-            'time_zone' => ['required', 'string', 'max:255'],
+            'currency_symbol_placement' => ['required', Rule::in(['Before amount', 'After amount'])],
+            // Laravel validates against PHP's timezone database, preventing an
+            // invalid value from breaking date calculations on later requests.
+            'time_zone' => ['required', 'timezone:all'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'financial_year_start_month' => ['required', 'string', 'max:50'],
-            'stock_accounting_method' => ['required', 'string', 'max:100'],
+            'financial_year_start_month' => ['required', Rule::in([
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December',
+            ])],
+            'stock_accounting_method' => ['required', Rule::in([
+                'FIFO (First In First Out)', 'LIFO (Last In First Out)',
+            ])],
             'transaction_edit_days' => ['required', 'integer', 'min:0', 'max:36500'],
-            'date_format' => ['required', 'string', 'max:50'],
-            'time_format' => ['required', 'string', 'max:50'],
+            'date_format' => ['required', Rule::in(['mm/dd/yyyy', 'dd/mm/yyyy', 'yyyy-mm-dd', 'dd-mm-yyyy'])],
+            'time_format' => ['required', Rule::in(['12 Hour', '24 Hour'])],
             'currency_precision' => ['required', 'integer', 'between:0,4'],
             'quantity_precision' => ['required', 'integer', 'between:0,4'],
             'product_settings' => ['sometimes', 'array'],

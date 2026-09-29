@@ -19,7 +19,7 @@
 </dialog>
 @push('scripts')
 <script>
-window.showPaymentSuccess=(message)=>{let alert=document.getElementById('payment-success-alert');if(!alert){alert=document.createElement('div');alert.id='payment-success-alert';alert.className='fixed left-1/2 top-24 z-[100] -translate-x-1/2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg';document.body.append(alert)}alert.textContent=message;alert.hidden=false;clearTimeout(window.paymentSuccessTimer);window.paymentSuccessTimer=setTimeout(()=>alert.hidden=true,4500)};document.addEventListener('DOMContentLoaded',()=>{
+window.showPaymentSuccess=(message)=>{let alert=document.getElementById('payment-success-alert');if(!alert){alert=document.createElement('div');alert.id='payment-success-alert';alert.className='fixed left-1/2 top-24 z-[100] -translate-x-1/2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg';document.body.append(alert)}alert.textContent=message;alert.hidden=false;clearTimeout(window.paymentSuccessTimer);window.paymentSuccessTimer=setTimeout(()=>alert.hidden=true,4500)};AppPage.ready(()=>{
     const modal=document.getElementById('transfer-modal'),form=document.getElementById('transfer-form');
     const source=form.elements.from_account_id,destination=form.elements.to_account_id;
     const error=document.getElementById('transfer-error'),submit=form.querySelector('[type=submit]');

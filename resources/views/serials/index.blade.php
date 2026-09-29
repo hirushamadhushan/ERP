@@ -43,6 +43,7 @@
 @endsection
 @push('scripts')
 <script>
+(() => {
 const serialFile=document.getElementById('serial-file');
 const serialImport=document.getElementById('serial-import-form');
 const importButton=document.getElementById('import');
@@ -87,6 +88,7 @@ window.addEventListener('message',event=>{
     if(event.data?.type==='serial-generator-saved') generatorSaved=true;
     if(event.data?.type==='close-serial-generator') generatorDialog.close();
 });
+})();
 </script>
 @endpush
 @push('scripts')<script>document.getElementById('select-all').addEventListener('change',e=>document.querySelectorAll('.serial-select').forEach(c=>c.checked=e.target.checked));</script>@endpush

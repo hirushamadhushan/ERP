@@ -118,6 +118,9 @@
                 return;
             }
             if (document.querySelector('[data-async-table], [data-async-options], [data-async-region]')) await refresh();
+            // Page-specific screens can apply returned state immediately while
+            // the generic form layer remains responsible for requests and errors.
+            document.dispatchEvent(new CustomEvent('app:form-saved', {detail: {form, result}}));
             announce(result.message);
         } catch (error) {
             if (form.closest('dialog')?.open || !form.closest('dialog')) showErrors(form, error);

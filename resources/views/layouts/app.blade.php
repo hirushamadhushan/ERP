@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Codeza ERP') – Codeza ERP</title>
+    <title data-page-title="@yield('title', $businessSetting->business_name ?? 'Codeza ERP')">@yield('title', $businessSetting->business_name ?? 'Codeza ERP') – {{ $businessSetting->business_name ?? 'Codeza ERP' }}</title>
 
+    <script src="{{ asset('js/page-lifecycle.js') }}" data-turbo-eval="false"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,14 +38,14 @@
             background-color: #f8fafc;
             color: #475569;
             font-weight: 700;
-            padding: 12px 16px;
+            padding: 10px 12px;
             border-bottom: 2px solid #e2e8f0 !important;
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
         }
         table.dataTable tbody td {
-            padding: 12px 16px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f1f5f9;
             color: #334155;
             vertical-align: middle;
@@ -110,8 +111,15 @@
         <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 hidden lg:flex flex-col bg-white border-r border-purple-100 shadow-sm">
 
             <!-- Brand Logo -->
-            <div class="border-b border-purple-100 bg-slate-950 px-4 py-4">
-                <img src="{{ asset('images/codeza-logo.png') }}" alt="Codeza ERP — Empowering Your Digital World" class="h-12 w-full object-contain">
+            <div class="border-b border-purple-100 bg-slate-950 px-4 py-3">
+                @php($brandLogo = $businessSetting->logo_path ?? asset('images/codeza-logo.png'))
+                <div class="flex items-center gap-3">
+                    <img id="business-brand-logo" src="{{ $brandLogo }}" alt="{{ $businessSetting->business_name ?? 'Codeza ERP' }} logo" class="h-10 w-12 shrink-0 rounded object-contain">
+                    <div class="min-w-0">
+                        <p id="business-brand-name" class="truncate text-sm font-bold text-white">{{ $businessSetting->business_name ?? 'Codeza ERP' }}</p>
+                        <p class="truncate text-[10px] text-slate-400">Business Management System</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Navigation -->
@@ -280,7 +288,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 min-w-0 overflow-x-auto p-6 lg:p-8">
+            <main class="flex-1 min-w-0 overflow-x-auto p-4 lg:p-6">
 
                 @yield('content')
             </main>
@@ -304,6 +312,7 @@
 
     <!-- Scripts -->
     <script>
+        (() => {
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.getElementById('main-sidebar');
         const sidebarBackdrop = document.getElementById('sidebar-backdrop');
@@ -323,34 +332,38 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && sidebarToggle.getAttribute('aria-expanded') === 'true') setSidebarOpen(false);
         });
+        })();
     </script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script data-turbo-eval="false" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 
+    <script data-turbo-eval="false" src="{{ asset('js/vendor/tinymce/tinymce.min.js') }}"></script>
     <!-- DataTables Buttons extensions for Export PDF, Excel, CSV, Print, ColVis -->
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script data-turbo-eval="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script data-turbo-eval="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 
-    <script src="{{ asset('js/error-handling.js') }}"></script>
-    <script src="{{ asset('js/async-forms.js') }}?v={{ filemtime(public_path('js/async-forms.js')) }}"></script>
+    <script data-turbo-eval="false" src="{{ asset('js/error-handling.js') }}"></script>
+    <script data-turbo-eval="false" src="{{ asset('js/async-forms.js') }}?v={{ filemtime(public_path('js/async-forms.js')) }}"></script>
     <script>
         (() => {
             const loader = document.getElementById('async-request-loader');
             let activeRequests = 0, displayTimer;
             const show = () => { activeRequests++; clearTimeout(displayTimer); displayTimer = setTimeout(() => { if (activeRequests) { loader.classList.add('is-active'); loader.setAttribute('aria-hidden', 'false'); } }, 160); };
             const hide = () => { activeRequests = Math.max(0, activeRequests - 1); if (activeRequests) return; clearTimeout(displayTimer); loader.classList.remove('is-active'); loader.setAttribute('aria-hidden', 'true'); };
-            document.addEventListener('app:request-start', show);
-            document.addEventListener('app:request-end', hide);
+            const lifecycle = new AbortController();
+            document.addEventListener('turbo:before-render', () => { lifecycle.abort(); clearTimeout(displayTimer); jQuery(document).off('ajaxStart', show).off('ajaxStop', hide); }, {once: true});
+            document.addEventListener('app:request-start', show, {signal: lifecycle.signal});
+            document.addEventListener('app:request-end', hide, {signal: lifecycle.signal});
             if (window.jQuery) jQuery(document).on('ajaxStart', show).on('ajaxStop', hide);
         })();
     </script>
-    <script src="{{ asset('js/auto-filter.js') }}"></script>
-    <script src="{{ asset('js/sticky-data-table.js') }}?v={{ filemtime(public_path('js/sticky-data-table.js')) }}"></script>
+    <script data-turbo-eval="false" src="{{ asset('js/auto-filter.js') }}"></script>
+    <script data-turbo-eval="false" src="{{ asset('js/sticky-data-table.js') }}?v={{ filemtime(public_path('js/sticky-data-table.js')) }}"></script>
     @stack('scripts')
 </body>
 </html>

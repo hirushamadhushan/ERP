@@ -15,7 +15,7 @@
                 <h2 class="text-lg font-bold text-slate-900">All users</h2>
                 <p class="text-xs text-slate-400">View, add, edit and manage system user accounts</p>
             </div>
-            <button id="openAddUserBtn" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20 transition-all duration-200 cursor-pointer">
+            <button id="openFullUserBtn" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20 transition-all duration-200 cursor-pointer">
                 <i class="bi bi-plus-lg text-sm"></i> Add
             </button>
         </div>
@@ -41,6 +41,7 @@
 </div>
 
 <!-- ==================== ADD USER IN-PAGE AJAX MODAL ==================== -->
+@if(false)
 <div id="addUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl border border-purple-100 shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
         <!-- Modal Header -->
@@ -114,6 +115,22 @@
                 <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20">Save User</button>
             </div>
         </form>
+    </div>
+</div>
+@endif
+
+<!-- Full Add User form: the shell opens immediately and AJAX supplies the form. -->
+<div id="fullUserModal" class="fixed inset-0 z-50 hidden bg-slate-950/55 p-3 backdrop-blur-sm sm:p-5" role="dialog" aria-modal="true" aria-labelledby="full-user-title">
+    <div class="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl">
+        <div class="flex shrink-0 items-center justify-between border-b border-purple-100 bg-white px-5 py-3.5">
+            <div><h2 id="full-user-title" class="text-base font-bold text-slate-900"><i class="bi bi-person-plus-fill mr-2 text-purple-600"></i>Add user</h2><p class="mt-0.5 text-[11px] text-slate-400">Create the account, role and access rules</p></div>
+            <button id="closeFullUserModal" type="button" class="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label="Close add user form">&times;</button>
+        </div>
+        <div id="fullUserModalBody" class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+            <div id="fullUserLoading" class="flex min-h-72 items-center justify-center">
+                <div class="text-center"><span class="mx-auto block h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span><p class="mt-3 text-xs font-semibold text-slate-500">Loading user form…</p></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -247,7 +264,11 @@ function togglePwd(inputId, btn) {
     }
 }
 
-$(document).ready(function() {
+AppPage.ready(function() {
+
+    // Delegated handlers survive DataTable redraws; namespace them so a Turbo
+    // revisit cannot register a second copy of the same user action.
+    $(document).off('.usersPage');
 
     // Setup CSRF header for Ajax
     $.ajaxSetup({
@@ -301,6 +322,94 @@ $(document).ready(function() {
         setTimeout(function(){ $t.css('opacity',0); setTimeout(function(){ $t.remove(); },400); }, 3000);
     }
 
+    const fullUserModal = document.getElementById('fullUserModal');
+    const fullUserBody = document.getElementById('fullUserModalBody');
+    let fullUserFormLoaded = false;
+
+    function closeFullUserModal() {
+        fullUserModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        document.getElementById('openFullUserBtn')?.focus();
+    }
+
+    function initializeFullUserForm(form) {
+        const login = form.querySelector('#allow_login');
+        const allLocations = form.querySelector('#all_locations');
+        const selectedContacts = form.querySelector('#restrict_contacts');
+        const toggle = (control, target, inverse = false) => {
+            const visible = inverse ? !control.checked : control.checked;
+            target.hidden = !visible;
+            target.querySelectorAll('input,select').forEach(input => input.disabled = !visible);
+        };
+        const sync = () => {
+            toggle(login, form.querySelector('#login-fields'));
+            const locationList = form.querySelector('#location-list');
+            locationList.hidden = false;
+            locationList.classList.toggle('opacity-50', allLocations.checked);
+            locationList.querySelectorAll('input').forEach(input => input.disabled = allLocations.checked);
+            toggle(selectedContacts, form.querySelector('#contact-list'));
+        };
+        [login, allLocations, selectedContacts].forEach(control => control.addEventListener('change', sync));
+        sync();
+
+        // Help icons sit inside labels, so prevent a click on the icon from changing its checkbox.
+        form.querySelectorAll('.field-help').forEach(help => help.addEventListener('click', event => event.preventDefault()));
+
+        // The Cancel link belongs to the modal while the standalone route remains usable.
+        form.querySelector('a[href="{{ route('users.index') }}"]')?.addEventListener('click', event => {
+            event.preventDefault(); closeFullUserModal();
+        });
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const save = form.querySelector('#save-user');
+            const errors = form.querySelector('#user-form-errors');
+            errors.hidden = true; save.disabled = true; save.textContent = 'Saving…';
+            try {
+                const result = await AppErrors.request(form.action, {method:'POST', body:new FormData(form)});
+                closeFullUserModal();
+                form.reset(); sync();
+                table.ajax.reload(null, false);
+                showToast(result.message, 'success');
+            } catch (error) {
+                const messages = error.errors ? Object.values(error.errors).flat() : [error.message];
+                errors.replaceChildren(...messages.map(message => $('<p>').text(message)[0]));
+                errors.hidden = false;
+                errors.scrollIntoView({behavior:'smooth', block:'center'});
+            } finally {
+                save.disabled = false; save.textContent = 'Save user';
+            }
+        });
+    }
+
+    $('#openFullUserBtn').on('click', async function() {
+        fullUserModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        if (fullUserFormLoaded) {
+            fullUserBody.querySelector('input:not([type=hidden]),select')?.focus();
+            return;
+        }
+        try {
+            const response = await fetch(@json(route('users.create')), {headers:{'X-Requested-With':'XMLHttpRequest'}});
+            if (!response.ok) throw new Error(AppErrors.message(response.status));
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const form = page.getElementById('create-user-form');
+            if (!form) throw new Error('The Add User form could not be loaded.');
+            form.classList.remove('mx-auto');
+            fullUserBody.replaceChildren(document.importNode(form, true));
+            initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
+            fullUserFormLoaded = true;
+            fullUserBody.querySelector('#prefix')?.focus();
+        } catch (error) {
+            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
+            fullUserBody.firstElementChild.textContent = error.message;
+        }
+    });
+    $('#closeFullUserModal').on('click', closeFullUserModal);
+    fullUserModal.addEventListener('click', event => { if (event.target === fullUserModal) closeFullUserModal(); });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !fullUserModal.classList.contains('hidden')) closeFullUserModal();
+    }, {signal: AppPage.signal});
+
     // Open Add User Modal
     $('#openAddUserBtn').click(function() {
         $('#addUserForm')[0].reset();
@@ -344,7 +453,7 @@ $(document).ready(function() {
     });
 
     // View User Details via AJAX
-    $(document).on('click', '.view-user-btn', function() {
+    $(document).on('click.usersPage', '.view-user-btn', function() {
         var id = $(this).data('id');
         $.get("/users/" + id, function(user) {
             $('#view_username').text(user.username || 'N/A');
@@ -357,7 +466,7 @@ $(document).ready(function() {
     });
 
     // Edit User via AJAX
-    $(document).on('click', '.edit-user-btn', function() {
+    $(document).on('click.usersPage', '.edit-user-btn', function() {
         var id = $(this).data('id');
         $('.error-text').text('');
         $.ajax({
@@ -416,7 +525,7 @@ $(document).ready(function() {
     });
 
     // Delete User via AJAX
-    $(document).on('click', '.delete-user-btn', function() {
+    $(document).on('click.usersPage', '.delete-user-btn', function() {
         var id = $(this).data('id');
         if(!confirm('Are you sure you want to delete this user?')) return;
         $.ajax({

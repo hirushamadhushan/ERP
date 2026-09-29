@@ -59,7 +59,7 @@
 @push('scripts')
 <style>#opening-dialog::backdrop{background:rgb(15 23 42 / .55)}</style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+AppPage.ready( () => {
     const dialog = document.getElementById('opening-dialog');
     const form = document.getElementById('opening-form');
     const from = document.getElementById('date-from'), to = document.getElementById('date-to');

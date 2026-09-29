@@ -9,11 +9,18 @@
 <a href="{{ route('products.serials.create', request()->boolean('embedded') ? ['embedded'=>1] : []) }}" class="serial-btn serial-secondary">New generation</a><a href="{{ route('products.serials.index') }}" @if(request()->boolean('embedded')) data-close-generator @endif class="serial-btn serial-secondary">{{ request()->boolean('embedded') ? 'Close' : 'Serial numbers' }}</a></div>
 <p id="barcode-error" role="alert" class="text-rose-600 mt-4 hidden"></p>
 <p class="text-sm text-slate-500 mt-4">Print at 100% scale with browser headers and footers turned off. Match the printer paper width to {{ $data['paper_width'] }} mm.</p></section>
-<div class="overflow-auto"><div id="label-roll">
+<div class="label-preview overflow-auto"><div id="label-roll">
 @foreach($rows as $row)@for($copy=0;$copy<$data['copies'];$copy++)<div class="label-row"><div class="serial-label"><svg class="serial-barcode" data-serial="{{ $row['serial_number'] }}"></svg></div></div>@endfor@endforeach
 </div></div>
 <style>
 #label-roll{width:{{ $data['paper_width'] }}mm;background:white}
+/*
+ * Physical labels are deliberately measured in millimetres for printers.
+ * Enlarging only the browser preview makes the barcode and its text readable
+ * without changing the saved label dimensions or the 100% print output.
+ */
+.label-preview{padding:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px}
+.label-preview #label-roll{zoom:2.25;box-shadow:0 8px 20px rgb(15 23 42 / .12)}
 .label-row{width:100%;height:{{ $data['label_height'] + $data['gap'] + $data['y_offset'] }}mm;padding-top:{{ $data['y_offset'] }}mm;display:flex;justify-content:{{ ['left'=>'flex-start','center'=>'center','right'=>'flex-end'][$data['position']] }};padding-left:{{ $data['position']==='right'?0:$data['x_offset'] }}mm;padding-right:{{ $data['position']==='right'?$data['x_offset']:0 }}mm;max-width:100%;box-sizing:border-box}
 .serial-label{width:{{ $data['label_width'] }}mm;height:{{ $data['label_height'] }}mm;flex-shrink:0;display:flex;align-items:center;justify-content:center;outline:1px dashed #ddd;padding:{{ $data['barcode_margin'] }}mm}
 .serial-barcode{width:100%;height:{{ $data['barcode_height'] + ($data['show_text']?4:0) }}mm}
@@ -24,10 +31,12 @@ body > #label-roll{display:block!important}
 body *{visibility:hidden}
 #label-roll,#label-roll *{visibility:visible}
 #label-roll{position:absolute;left:0;top:0}
+.label-preview #label-roll{zoom:1;box-shadow:none}
 .serial-label{outline:none}
 .label-row{break-inside:avoid}
 @page{size:{{ $data['paper_width'] }}mm {{ $data['label_height'] + $data['gap'] + $data['y_offset'] }}mm;margin:0}
 }
+@media(max-width:640px){.label-preview #label-roll{zoom:1.5}}
 </style>
 @endsection
 @push('scripts')

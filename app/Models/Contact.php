@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Contact extends Model
 {
@@ -31,6 +32,7 @@ class Contact extends Model
             'opening_balance' => 'decimal:2', 'advance_balance' => 'decimal:2',
             'due_balance' => 'decimal:2', 'return_balance' => 'decimal:2',
             'credit_limit' => 'decimal:2', 'commission_percentage' => 'decimal:2',
+            'reward_points' => 'integer',
         ];
     }
 
@@ -38,6 +40,9 @@ class Contact extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+    public function customerPayments(): HasMany { return $this->hasMany(CustomerPayment::class); }
+    public function customerDocuments(): HasMany { return $this->hasMany(CustomerDocument::class); }
+    public function customerNotes(): HasMany { return $this->hasMany(CustomerNote::class); }
 
     public function customerGroupRecord(): BelongsTo { return $this->belongsTo(CustomerGroup::class, 'customer_group_id'); }
     public function getCustomerGroupAttribute(): ?string

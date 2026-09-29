@@ -6,8 +6,10 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -35,7 +37,16 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
         Fortify::loginView(function () {
-        return view('auth.login');
+            return view('auth.login');
+        });
+
+        // Disabled and suspended users must be rejected at authentication time,
+        // not merely hidden from navigation after a session has been created.
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = User::where('email', Str::lower((string) $request->email))->first();
+
+            return $user && $user->allow_login && $user->status === 'active'
+                && Hash::check((string) $request->password, $user->password) ? $user : null;
         });
 
         RateLimiter::for('login', function (Request $request) {

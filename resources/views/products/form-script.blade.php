@@ -1,4 +1,4 @@
-<script src="{{ asset('js/vendor/tinymce/tinymce.min.js') }}"></script>
+
 <script>
 if(window.tinymce) tinymce.init({
     selector:'#description',
@@ -28,12 +28,14 @@ const productForm=byId('product-form');
 let productSaving=false, productDirty=false;
 productForm.addEventListener('input',()=>productDirty=true);
 productForm.addEventListener('change',()=>productDirty=true);
-window.addEventListener('beforeunload',event=>{if(productDirty&&!productSaving){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(productDirty&&!productSaving){event.preventDefault();event.returnValue='';}}, {signal: AppPage.signal});
+// Protect unsaved product edits during in-app navigation as well.
+document.addEventListener('turbo:before-visit', event => { if(productDirty && !productSaving && !confirm('Discard unsaved product changes?')) event.preventDefault(); }, {signal: AppPage.signal});
 const locationChoices=Array.from(document.querySelectorAll('.location-choice'));
 const syncLocationRacks=()=>{const selected=new Set(locationChoices.filter(input=>input.checked).map(input=>input.value));document.querySelectorAll('.location-rack').forEach(card=>{const active=selected.has(card.dataset.location);card.hidden=!active;card.querySelectorAll('input').forEach(input=>input.disabled=!active);});};
 locationChoices.forEach(input=>input.addEventListener('change',syncLocationRacks));syncLocationRacks();
 let scanBuffer='',lastScanAt=0;
-document.addEventListener('keydown',event=>{const target=document.activeElement?.tagName;if(event.ctrlKey||event.altKey||event.metaKey||['INPUT','TEXTAREA','SELECT'].includes(target))return;const now=Date.now();if(now-lastScanAt>80)scanBuffer='';lastScanAt=now;if(event.key==='Enter'){if(scanBuffer.length>=6){byId('sku').value=scanBuffer;byId('sku').dispatchEvent(new Event('input',{bubbles:true}));event.preventDefault();}scanBuffer='';}else if(event.key.length===1)scanBuffer+=event.key;});
+document.addEventListener('keydown',event=>{const target=document.activeElement?.tagName;if(event.ctrlKey||event.altKey||event.metaKey||['INPUT','TEXTAREA','SELECT'].includes(target))return;const now=Date.now();if(now-lastScanAt>80)scanBuffer='';lastScanAt=now;if(event.key==='Enter'){if(scanBuffer.length>=6){byId('sku').value=scanBuffer;byId('sku').dispatchEvent(new Event('input',{bubbles:true}));event.preventDefault();}scanBuffer='';}else if(event.key.length===1)scanBuffer+=event.key;}, {signal: AppPage.signal});
 productForm.addEventListener('submit',async event=>{
     event.preventDefault();
     if(productSaving)return;
@@ -63,20 +65,34 @@ const categories=()=>{const parent=byId('category_id').value, sub=byId('subcateg
     sub.disabled = !parent;
     document.getElementById('subcategory-path').textContent = sub.selectedOptions[0]?.dataset.path || (parent ? 'Choose any level below the main category.' : 'Select a main category first.');
 };
-byId('category_id').addEventListener('change',categories);byId('subcategory_id').addEventListener('change',categories);categories();
-const stock=()=>{byId('alert_quantity').disabled=!byId('manage_stock').checked;byId('enable_serial').setCustomValidity(byId('enable_serial').checked && (!byId('manage_stock').checked || byId('unit_id').selectedOptions[0]?.dataset.decimal==='1')?'Serial tracking requires stock management and a whole-number unit.':'');};
-['manage_stock','enable_serial','unit_id'].forEach(id=>byId(id).addEventListener('change',stock));stock();
+if (byId('category_id') && byId('subcategory_id')) {
+    byId('category_id').addEventListener('change',categories);
+    byId('subcategory_id').addEventListener('change',categories);
+    categories();
+}
+const stock = () => {
+    const manageStock = byId('manage_stock').checked;
+    const serialInput = byId('enable_serial');
+    byId('alert_quantity').disabled = !manageStock;
+    // Business settings can hide serial tracking entirely from this form.
+    if (!serialInput) return;
+    const decimalUnit = byId('unit_id').selectedOptions[0]?.dataset.decimal === '1';
+    serialInput.setCustomValidity(serialInput.checked && (!manageStock || decimalUnit)
+        ? 'Serial tracking requires stock management and a whole-number unit.' : '');
+};
+['manage_stock','enable_serial','unit_id'].forEach(id=>byId(id)?.addEventListener('change',stock));stock();
 let previousTax=Number(byId('tax_rate').value)||0, previousType=byId('selling_price_tax_type').value;
-const n=id=>Number(byId(id).value)||0, put=(id,v)=>byId(id).value=(Math.round((v+Number.EPSILON)*10000)/10000).toFixed(4);
+const n=id=>Number(byId(id).value)||0, empty=id=>byId(id).value.trim()==='', put=(id,v)=>byId(id).value=(Math.round((v+Number.EPSILON)*10000)/10000).toFixed(4);
 const factor=()=>1+n('tax_rate')/100;
-const inc=()=>put('purchase_price_inc',n('purchase_price')*factor());
-const sellingFromMargin=()=>put('selling_price',n('purchase_price')*(1+n('margin')/100)*(byId('selling_price_tax_type').value==='inclusive'?factor():1));
-const marginFromSelling=()=>{const sell=n('selling_price')/(byId('selling_price_tax_type').value==='inclusive'?factor():1);if(n('purchase_price')>0)put('margin',((sell/n('purchase_price'))-1)*100);};
+const inc=()=>{if(empty('purchase_price')){byId('purchase_price_inc').value='';return;}put('purchase_price_inc',n('purchase_price')*factor());};
+const sellingFromMargin=()=>{if(empty('purchase_price')){byId('selling_price').value='';return;}put('selling_price',n('purchase_price')*(1+n('margin')/100)*(byId('selling_price_tax_type').value==='inclusive'?factor():1));};
+const marginFromSelling=()=>{if(empty('purchase_price')||empty('selling_price'))return;const sell=n('selling_price')/(byId('selling_price_tax_type').value==='inclusive'?factor():1);if(n('purchase_price')>0)put('margin',((sell/n('purchase_price'))-1)*100);};
 byId('purchase_price').addEventListener('input',()=>{inc();sellingFromMargin();});
 byId('purchase_price_inc').addEventListener('input',()=>{put('purchase_price',n('purchase_price_inc')/factor());sellingFromMargin();});
 byId('margin').addEventListener('input',sellingFromMargin);
 byId('selling_price').addEventListener('input',marginFromSelling);
 const taxChange=()=>{
+    if(empty('selling_price')){previousTax=n('tax_rate');previousType=byId('selling_price_tax_type').value;byId('selling-label').textContent=previousType==='inclusive'?'Inc. tax *':'Exc. tax *';byId('variant-selling-tax-label').textContent=previousType==='inclusive'?'Inc. Tax':'Exc. Tax';Array.from(byId('variant-rows').rows).forEach(row=>row.refreshTax?.());inc();return;}
     const exclusive=n('selling_price')/(previousType==='inclusive'?1+previousTax/100:1);
     put('selling_price',exclusive*(byId('selling_price_tax_type').value==='inclusive'?factor():1));
     previousTax=n('tax_rate');previousType=byId('selling_price_tax_type').value;
@@ -172,6 +188,14 @@ function addVariationRow(){
     syncSummary();
 }
 function comboPricing(){
+    if(!comboBody.rows.length){
+        byId('purchase_price').value='';
+        byId('purchase_price_inc').value='';
+        byId('selling_price').value='';
+        byId('combo-net-total').textContent=currency(0);
+        byId('combo_selling_price').value='';
+        return;
+    }
     let purchase=0;
     Array.from(comboBody.rows).forEach(row=>{
         const product=comboProducts.find(item=>String(item.id)===row.dataset.productId);
@@ -221,13 +245,19 @@ function comboRow(index,saved={},product=null){
 }
 function renumberRows(body,prefix){Array.from(body.rows).forEach((row,index)=>row.querySelectorAll('[name]').forEach(input=>{input.name=input.name.replace(new RegExp(`^${prefix}\\[\\d+\\]`),`${prefix}[${index}]`);if(prefix==='variants')input.name=input.name.replace(/^variant_images\[\d+\]/,`variant_images[${index}]`);}));}
 function syncSummary(){
-    if(productType.value==='variable'&&variantBody.rows.length){const rows=Array.from(variantBody.rows);byId('purchase_price').value=Math.min(...rows.map(row=>Number(row.querySelector('[name$="[purchase_price]"]').value)||0));byId('selling_price').value=Math.min(...rows.map(row=>Number(row.querySelector('[name$="[selling_price]"]').value)||0));}
+    if(productType.value==='variable'&&variantBody.rows.length){
+        const rows=Array.from(variantBody.rows);
+        const purchases=rows.map(row=>row.querySelector('[name$="[purchase_price]"]').value).filter(value=>value!=='').map(Number);
+        const sales=rows.map(row=>row.querySelector('[name$="[selling_price]"]').value).filter(value=>value!=='').map(Number);
+        byId('purchase_price').value=purchases.length?Math.min(...purchases):'';
+        byId('selling_price').value=sales.length?Math.min(...sales):'';
+    }
     if(productType.value==='combo'){comboPricing();inc();return;}
     inc();marginFromSelling();
 }
 function switchProductType(){
     const type=productType.value;singlePanel.hidden=type!=='single';variablePanel.hidden=type!=='variable';comboPanel.hidden=type!=='combo';
-    if(type==='combo'){byId('enable_serial').checked=false;byId('manage_stock').checked=false;}stock();
+    if(type==='combo'){if(byId('enable_serial')) byId('enable_serial').checked=false;byId('manage_stock').checked=false;}stock();
     templateSelect.disabled=type!=='variable';Array.from(variablePanel.querySelectorAll('input')).forEach(input=>input.disabled=type!=='variable');Array.from(comboPanel.querySelectorAll('input,select')).forEach(input=>input.disabled=type!=='combo');
     if(type==='variable'&&!variantBody.rows.length&&templateSelect.value)loadVariationRows();syncSummary();
 }
@@ -237,7 +267,7 @@ byId('add-variant-row').addEventListener('click',addVariationRow);
 byId('variant-selling-tax-label').textContent=byId('selling_price_tax_type').value==='inclusive'?'Inc. Tax':'Exc. Tax';
 comboSearch.addEventListener('input',showComboResults);
 comboSearch.addEventListener('keydown',event=>{if(event.key==='Enter'&&!comboResults.hidden){event.preventDefault();comboResults.querySelector('button')?.click();}});
-document.addEventListener('click',event=>{if(!event.target.closest('.combo-search'))comboResults.hidden=true;});
+document.addEventListener('click',event=>{if(!event.target.closest('.combo-search'))comboResults.hidden=true;}, {signal: AppPage.signal});
 byId('combo_margin').addEventListener('input',()=>{put('margin',Number(byId('combo_margin').value)||0);sellingFromMargin();byId('combo_selling_price').value=byId('selling_price').value;});
 byId('combo_selling_price').addEventListener('input',()=>{put('selling_price',Number(byId('combo_selling_price').value)||0);marginFromSelling();byId('combo_margin').value=byId('margin').value;});
 byId('margin').addEventListener('input',()=>{if(productType.value==='combo')comboPricing();});

@@ -24,7 +24,7 @@
 @endsection
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
+AppPage.ready(()=>{
  @if(session('success'))
  const toast=document.getElementById('opening-stock-toast');
  document.getElementById('opening-stock-toast-message').textContent=@json(session('success'));

@@ -54,7 +54,7 @@
                         </span>
                     </span>
                 </div>
-                <input id="group-percentage" name="calculation_percentage" type="number" min="-100" max="100" step="0.01" required value="{{ old('calculation_percentage', 0) }}" aria-describedby="percentage-tooltip" class="{{ $inputClass }}" placeholder="Calculation Percentage (%)">
+                <input id="group-percentage" name="calculation_percentage" type="number" min="-100" max="100" step="0.01" required value="{{ old('calculation_percentage') }}" aria-describedby="percentage-tooltip" class="{{ $inputClass }}" placeholder="Calculation Percentage (%)">
             </div>
             <div id="selling-price-fields" hidden><label for="group-selling-price" class="block text-xs font-bold mb-1.5">Selling Price Group <span class="text-rose-500">*</span></label><input id="group-selling-price" name="selling_price_group" maxlength="255" value="{{ old('selling_price_group') }}" class="{{ $inputClass }}" placeholder="Selling Price Group name" list="selling-price-names"><datalist data-async-options id="selling-price-names">@foreach($groups->pluck('selling_price_group')->filter()->unique() as $priceGroup)<option value="{{ $priceGroup }}">@endforeach</datalist></div>
         </div>
@@ -76,7 +76,7 @@
     #groups-table_wrapper .dataTables_filter, #groups-table_wrapper .dataTables_length { float: none; text-align: left; }
 </style>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+AppPage.ready( () => {
     const dialog = document.getElementById('group-dialog');
     const form = document.getElementById('group-form');
     const title = document.getElementById('group-dialog-title');
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.name.value = '';
         form.elements.calculation_type.value = 'percentage';
         form.elements.selling_price_group.value = '';
-        form.elements.calculation_percentage.value = '0';
+        form.elements.calculation_percentage.value = '';
         title.textContent = 'Add Customer Group';
         document.getElementById('group-errors')?.remove();
         openGroup();
