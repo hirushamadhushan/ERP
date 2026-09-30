@@ -135,7 +135,7 @@ main form label {
     font-weight: 500;
     line-height: 1.45;
     text-align: left;
-    white-space: normal;
+    white-space: pre-line;
 }
 
 .field-help::before {

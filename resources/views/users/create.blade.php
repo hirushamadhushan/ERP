@@ -1,15 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Add User')
-@section('subtitle', 'Create a user and control their access')
+@section('title', isset($user) ? 'Edit User' : 'Add User')
+@section('subtitle', isset($user) ? 'Update user details and access' : 'Create a user and control their access')
 
 @section('content')
 @php
+    $editing = isset($user);
     $input = 'mt-1 w-full rounded-xl border border-purple-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100';
     $label = 'block text-xs font-bold text-slate-800';
 @endphp
-<form id="create-user-form" action="{{ route('users.store') }}" method="POST" class="mx-auto max-w-6xl space-y-5">
+<form id="create-user-form" data-edit-user='@json($editing ? $user->loadMissing(["profile", "locations", "selectedContacts"]) : null)' action="{{ $editing ? route('users.profile.update', $user) : route('users.store') }}" method="POST" class="mx-auto max-w-6xl space-y-5">
     @csrf
+    @if($editing) @method('PUT') @endif
+    <div><h1 class="text-2xl font-extrabold tracking-tight text-slate-900">{{ $editing ? 'Edit User' : 'Add User' }}</h1><p class="mt-1 text-sm text-slate-500">{{ $editing ? 'Update this user’s profile, role and access settings.' : 'Create a user and control their access.' }}</p></div>
     <div id="user-form-errors" class="hidden rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert"></div>
 
     <section class="rounded-2xl border border-slate-100 bg-white px-6 py-5 shadow-sm">
@@ -79,7 +82,7 @@
         </div>
     </section>
 
-    <div class="flex justify-center gap-3 pb-6"><a href="{{ route('users.index') }}" class="rounded-full bg-slate-200 px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-300">Cancel</a><button id="save-user" class="rounded-full bg-purple-600 px-8 py-2.5 text-sm font-bold text-white shadow-md shadow-purple-500/20 hover:bg-purple-700">Save</button></div>
+    <div class="flex justify-center gap-3 pb-6"><a href="{{ $editing ? route('users.view', $user) : route('users.index') }}" class="rounded-full bg-slate-200 px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-300">Cancel</a><button id="save-user" class="rounded-full bg-purple-600 px-8 py-2.5 text-sm font-bold text-white shadow-md shadow-purple-500/20 hover:bg-purple-700">{{ $editing ? 'Update' : 'Save' }}</button></div>
 </form>
 @endsection
 
@@ -87,6 +90,8 @@
 <script>
 (() => {
     const form = document.getElementById('create-user-form');
+    const editing = @json($editing);
+    const editUser = @json($editing ? $user : null);
     const login = document.getElementById('allow_login');
     const allLocations = document.getElementById('all_locations');
     const contacts = document.getElementById('restrict_contacts');
@@ -103,6 +108,21 @@
         locationList.querySelectorAll('input').forEach(input => input.disabled = allLocations.checked);
         toggle(contacts, document.getElementById('contact-list'));
     };
+    if (editing) {
+        const profile = editUser.profile || {};
+        const values = {...editUser, ...profile};
+        Object.entries(values).forEach(([name, value]) => {
+            if (value === null || value === undefined || ['id', 'password', 'role', 'profile', 'locations', 'selected_contacts'].includes(name)) return;
+            const field = form.querySelector(`[name="${name}"]`);
+            if (field && field.type !== 'checkbox') field.value = String(value).replace(' 00:00:00', '');
+        });
+        document.getElementById('status').checked = editUser.status === 'active';
+        login.checked = !!editUser.allow_login;
+        allLocations.checked = !!editUser.all_locations;
+        contacts.checked = !!editUser.restrict_contacts;
+        (editUser.locations || []).forEach(location => { const field = form.querySelector(`[name="location_ids[]"][value="${location.id}"]`); if (field) field.checked = true; });
+        (editUser.selected_contacts || []).forEach(contact => { const field = form.querySelector(`[name="contact_ids[]"][value="${contact.id}"]`); if (field) field.checked = true; });
+    }
     [login, allLocations, contacts].forEach(control => control.addEventListener('change', sync));
     sync();
 
@@ -121,7 +141,7 @@
             const messages = error.errors ? Object.values(error.errors).flat() : [error.message];
             errors.replaceChildren(...messages.map(message => { const item=document.createElement('p'); item.textContent=message; return item; }));
             errors.hidden = false; errors.scrollIntoView({behavior:'smooth', block:'center'});
-        } finally { button.disabled = false; button.textContent = 'Save user'; }
+        } finally { button.disabled = false; button.textContent = editing ? 'Update' : 'Save'; }
     });
 })();
 </script>

@@ -137,7 +137,9 @@ class ContactController extends Controller
     public function storeNote(Request $request, Contact $contact) { $this->customerOnly($contact); $data=$request->validate(['body'=>['required','string','max:5000']]); $note=$contact->customerNotes()->create($data+['created_by'=>auth()->id()]); return response()->json(['message'=>'Note saved.','note'=>$note]); }
     public function downloadDocument(CustomerDocument $document) { $this->customerOnly($document->customer); abort_unless(Storage::disk('local')->exists($document->path),404); return Storage::disk('local')->download($document->path,$document->name); }
     public function toggleStatus(Contact $contact) { $this->customerOnly($contact); $contact->update(['status'=>$contact->status==='active'?'inactive':'active']); return response()->json(['message'=>'Customer status updated.','status'=>$contact->status]); }
+    public function toggleSupplierStatus(Contact $contact) { $this->supplierOnly($contact); $contact->update(['status'=>$contact->status==='active'?'inactive':'active']); return response()->json(['message'=>'Supplier status updated.','status'=>$contact->status]); }
     private function customerOnly(Contact $contact): void { abort_unless(in_array($contact->type,['customer','both']),404); $this->ensureCustomerVisible($contact); }
+    private function supplierOnly(Contact $contact): void { abort_unless(in_array($contact->type,['supplier','both']),404); $this->ensureContactVisible($contact, 'supplier'); }
     private function applyContactVisibility($query, string $type): void
     {
         $user=auth()->user(); $role=$user?->assignedRole;

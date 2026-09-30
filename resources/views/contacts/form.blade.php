@@ -40,7 +40,7 @@
                             @include('contacts.field', ['field' => 'tax_number', 'label' => 'Tax number', 'maxlength' => 100])
                             @include('contacts.field', ['field' => 'opening_balance', 'label' => 'Opening Balance', 'inputType' => 'number'])
                             <div>
-                                <label for="contact-pay_term" class="{{ $labelClass }}">Pay term <i class="bi bi-info-circle text-purple-500" aria-hidden="true"></i></label>
+                                <label for="contact-pay_term" class="{{ $labelClass }}">Pay term <span class="field-help" tabindex="0" aria-label="Pay term help" data-tooltip="Payments to be paid for purchases/sales within the given time period.&#10;&#10;All upcoming or due payments will be displayed in dashboard - Payment Due section"><i class="bi bi-info-circle-fill" aria-hidden="true"></i></span></label>
                                 <div class="flex gap-2">
                                     <input type="number" id="contact-pay_term" name="pay_term" min="0" max="100000" step="1" value="{{ old('pay_term') }}" placeholder="Pay term" aria-describedby="contact-pay-term-help" class="{{ $inputClass }} min-w-0">
                                     <select name="pay_term_unit" id="contact-pay_term_unit" aria-label="Pay term unit" aria-describedby="contact-pay-term-help" class="{{ $inputClass }} min-w-0"><option value="">Please Select</option><option value="months" @selected(old('pay_term_unit') === 'months')>Months</option><option value="days" @selected(old('pay_term_unit') === 'days')>Days</option></select>
@@ -50,7 +50,6 @@
                             <div data-contact-types="customer both">@include('contacts.field', ['field' => 'credit_limit', 'label' => 'Credit Limit', 'inputType' => 'number', 'help' => 'Keep blank for no limit'])</div>
                             <div data-contact-types="customer both">@include('contacts.field', ['field' => 'opening_due_cans', 'label' => 'Opening Current Due Empty Cans', 'inputType' => 'number', 'step' => 1, 'help' => 'Manual carry-forward due cans for this customer'])</div>
                         </div>
-                        <div data-contact-types="customer supplier both">@include('contacts.field', ['field' => 'date_of_birth', 'label' => 'Date of birth', 'inputType' => 'date'])</div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-6 border-t border-slate-200">
                             @include('contacts.field', ['field' => 'address_line_1', 'label' => 'Address line 1'])
                             @include('contacts.field', ['field' => 'address_line_2', 'label' => 'Address line 2'])

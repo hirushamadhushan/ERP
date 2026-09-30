@@ -84,6 +84,31 @@ class ContactsTest extends TestCase
         $this->getJson(route('contacts.show', $contact))->assertOk()->assertJsonPath('custom_fields.9', 'Value 10');
     }
 
+    public function test_supplier_action_menu_retains_the_full_reference_action_set_and_toggles_status(): void
+    {
+        $this->signIn();
+        Contact::create($this->payload([
+            'type' => 'supplier', 'entity_type' => 'business', 'name' => 'Menu Supplier',
+            'business_name' => 'Menu Supplier Ltd', 'contact_id' => 'SUP-MENU-001',
+        ]));
+
+        $supplier = Contact::create($this->payload([
+            'type' => 'supplier', 'entity_type' => 'business', 'name' => 'Status Supplier',
+            'business_name' => 'Status Supplier Ltd', 'contact_id' => 'SUP-STATUS-001',
+        ]));
+        $page = $this->get('/contacts/supplier')->assertOk();
+        preg_match('/<div class="absolute left-0 z-40.*?<\\/div>\\s*<\\/details>/s', $page->getContent(), $matches);
+        $this->assertNotEmpty($matches);
+
+        $actions = trim(preg_replace('/\\s+/', ' ', strip_tags($matches[0])));
+        $this->assertMatchesRegularExpression(
+            '/Pay.*View.*Edit.*Delete.*Deactivate.*Ledger.*Purchases.*Stock Report/',
+            $actions
+        );
+        $this->putJson(route('contacts.suppliers.status', $supplier))->assertOk()->assertJsonPath('status', 'inactive');
+        $this->assertSame('inactive', $supplier->fresh()->status);
+    }
+
     public function test_all_three_pages_render_in_the_shared_layout_and_separate_records(): void
     {
         $this->signIn();

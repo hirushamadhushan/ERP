@@ -14,6 +14,7 @@ Route::controller(ContactController::class)->prefix('contacts')->name('contacts.
     Route::post('/customers/{contact}/notes', 'storeNote')->name('customers.notes.store');
     Route::get('/customer-documents/{document}/download', 'downloadDocument')->name('customers.documents.download');
     Route::put('/customers/{contact}/status', 'toggleStatus')->name('customers.status');
+    Route::put('/suppliers/{contact}/status', 'toggleSupplierStatus')->name('suppliers.status');
     Route::get('/records/{contact}', 'show')->name('show');
     Route::put('/records/{contact}', 'update')->name('update');
     Route::delete('/records/{contact}', 'destroy')->name('destroy');

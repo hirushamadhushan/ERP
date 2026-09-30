@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\UpdateManagedUserRequest;
 use App\Models\Contact;
 use App\Models\Location;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserDocument;
 use App\Services\UserManagementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -24,20 +27,34 @@ class UserController extends Controller
             $data = User::with('assignedRole')->select(['id', 'username', 'name', 'role_id', 'email', 'status'])->latest();
 
             return DataTables::of($data)
+                ->filter(function ($query) use ($request) {
+                    $search = trim((string) $request->input('search.value'));
+                    if ($search === '') {
+                        return;
+                    }
+
+                    $query->where(function ($userQuery) use ($search) {
+                        $like = '%'.$search.'%';
+                        $userQuery->where('users.username', 'like', $like)
+                            ->orWhere('users.name', 'like', $like)
+                            ->orWhere('users.email', 'like', $like)
+                            ->orWhereHas('assignedRole', fn ($roleQuery) => $roleQuery->where('name', 'like', $like));
+                    });
+                })
                 ->addColumn('action', function ($row) {
                     $isAdmin = strtolower($row->role) === 'admin';
 
                     $btn = '<div class="flex items-center gap-2">';
 
                     // View â€” always visible
-                    $btn .= '<button type="button" class="view-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);box-shadow:0 2px 8px rgba(14,165,233,.35);" data-id="'.$row->id.'"><i class="bi bi-eye-fill"></i> View</button>';
+                    $btn .= '<button type="button" class="view-full-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);box-shadow:0 2px 8px rgba(124,58,237,.35);" data-url="'.route('users.view', $row->id).'"><i class="bi bi-eye-fill"></i> View</button>';
 
                     if ($isAdmin) {
                         // Admin row â€” locked badge instead of Edit/Delete
                         $btn .= '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-100 border border-amber-200 cursor-not-allowed select-none" title="Admin account is protected"><i class="bi bi-shield-lock-fill"></i> Protected</span>';
                     } else {
                         // Normal users â€” show Edit & Delete
-                        $btn .= '<button type="button" class="edit-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 2px 8px rgba(124,58,237,.35);" data-id="'.$row->id.'"><i class="bi bi-pencil-fill"></i> Edit</button>';
+                        $btn .= '<button type="button" class="edit-full-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 2px 8px rgba(124,58,237,.35);" data-url="'.route('users.edit', $row->id).'"><i class="bi bi-pencil-fill"></i> Edit</button>';
                         $btn .= '<button type="button" class="delete-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 2px 8px rgba(239,68,68,.35);" data-id="'.$row->id.'"><i class="bi bi-trash-fill"></i> Delete</button>';
                     }
 
@@ -109,12 +126,73 @@ class UserController extends Controller
         return response()->json($user);
     }
 
+    /** Render the complete user profile and its related records. */
+    public function view(User $user)
+    {
+        $user->load(['assignedRole', 'profile', 'locations', 'selectedContacts', 'documents.creator', 'notes.creator', 'activities.actor']);
+        $switchUsers = User::orderBy('name')->get(['id', 'name', 'username']);
+
+        return view('users.view', compact('user', 'switchUsers'));
+    }
+
+    public function storeDocument(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'document' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
+        ]);
+        $file = $validated['document'];
+        $path = $file->store('user-documents/'.$user->id);
+        $document = $user->documents()->create([
+            'name' => $file->getClientOriginalName(), 'path' => $path,
+            'mime_type' => $file->getClientMimeType(), 'size' => $file->getSize(),
+            'created_by' => $request->user()?->id,
+        ]);
+        $user->activities()->create([
+            'actor_id' => $request->user()?->id, 'action' => 'Document added', 'note' => $document->name,
+        ]);
+
+        return response()->json(['message' => 'Document added successfully.']);
+    }
+
+    public function storeNote(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'heading' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:5000'],
+            'is_private' => ['nullable', 'boolean'],
+            'documents' => ['nullable', 'array', 'max:10'],
+            'documents.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
+        ]);
+        $user->notes()->create([
+            'heading' => $validated['heading'], 'body' => $validated['body'],
+            'is_private' => $request->boolean('is_private'), 'created_by' => $request->user()?->id,
+        ]);
+        foreach ($request->file('documents', []) as $file) {
+            $user->documents()->create([
+                'name' => $file->getClientOriginalName(), 'path' => $file->store('user-documents/'.$user->id),
+                'mime_type' => $file->getClientMimeType(), 'size' => $file->getSize(), 'created_by' => $request->user()?->id,
+            ]);
+        }
+        $user->activities()->create([
+            'actor_id' => $request->user()?->id, 'action' => 'Note added', 'note' => $validated['heading'],
+        ]);
+
+        return response()->json(['message' => 'Note added successfully.']);
+    }
+
+    public function downloadDocument(UserDocument $document)
+    {
+        abort_unless(Storage::exists($document->path), 404);
+
+        return Storage::download($document->path, $document->name);
+    }
+
     /**
      * Show edit form data for Edit Modal.
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with(['profile', 'locations', 'selectedContacts'])->findOrFail($id);
 
         // Block editing Admin users
         if (strtolower($user->role) === 'admin') {
@@ -124,7 +202,36 @@ class UserController extends Controller
             ], 403);
         }
 
-        return response()->json($user);
+        if ($request->boolean('form')) {
+            return view('users.create', [
+                'user' => $user,
+                'roles' => Role::orderBy('name')->get(),
+                'locations' => Location::where('is_active', true)->orderBy('name')->get(),
+                'contacts' => Contact::where('status', 'active')->orderBy('name')->get(['id', 'name', 'contact_id', 'type']),
+            ]);
+        }
+
+        if ($request->ajax()) {
+            return response()->json($user);
+        }
+
+        return view('users.create', [
+            'user' => $user,
+            'roles' => Role::orderBy('name')->get(),
+            'locations' => Location::where('is_active', true)->orderBy('name')->get(),
+            'contacts' => Contact::where('status', 'active')->orderBy('name')->get(['id', 'name', 'contact_id', 'type']),
+        ]);
+    }
+
+    /** Update the full Add User form when it is opened in edit mode. */
+    public function updateProfile(UpdateManagedUserRequest $request, User $user, UserManagementService $users)
+    {
+        $users->update($user, $request->validated());
+
+        return response()->json([
+            'message' => 'User updated successfully.',
+            'redirect' => route('users.view', $user),
+        ]);
     }
 
     /**
@@ -153,7 +260,14 @@ class UserController extends Controller
         }
 
         $this->databaseTransaction(
-            fn () => $user->update($validated),
+            function () use ($user, $validated) {
+                $user->update($validated);
+                $user->activities()->create([
+                    'actor_id' => auth()->id(),
+                    'action' => 'User account updated',
+                    'note' => 'Account details were updated from User Management.',
+                ]);
+            },
             'The username or email address is already in use.',
             'email'
         );

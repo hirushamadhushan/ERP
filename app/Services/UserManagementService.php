@@ -23,6 +23,11 @@ class UserManagementService
         return DB::transaction(function () use ($data) {
             $user = User::create($this->userAttributes($data, true));
             $this->syncRelatedData($user, $data);
+            $user->activities()->create([
+                'actor_id' => auth()->id(),
+                'action' => 'User account created',
+                'note' => 'User profile and access settings were created.',
+            ]);
 
             return $user->load(['assignedRole', 'profile', 'locations', 'selectedContacts']);
         });
@@ -34,6 +39,11 @@ class UserManagementService
         return DB::transaction(function () use ($user, $data) {
             $user->update($this->userAttributes($data, false));
             $this->syncRelatedData($user, $data);
+            $user->activities()->create([
+                'actor_id' => auth()->id(),
+                'action' => 'User profile updated',
+                'note' => 'User profile or access settings were updated.',
+            ]);
 
             return $user->refresh()->load(['assignedRole', 'profile', 'locations', 'selectedContacts']);
         });

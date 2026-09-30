@@ -8,6 +8,8 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class UserRoleTest extends TestCase
@@ -176,6 +178,82 @@ class UserRoleTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors([
             'location_ids', 'contact_ids', 'commission_percent', 'max_sales_discount_percent',
         ]);
+    }
+
+    public function test_ajax_user_view_actions_and_note_document_flow_work_together(): void
+    {
+        Storage::fake('local');
+        $actor = User::factory()->create();
+        $target = User::factory()->create(['name' => 'Modal Test User']);
+        $this->actingAs($actor);
+
+        $this->get('/users')->assertOk()
+            ->assertSee('view-full-user-btn')
+            ->assertSee("querySelector('#open-note-modal')", false)
+            ->assertSee("querySelector('#open-user-editor')", false)
+            ->assertSee("fullUserModal.dataset.editOrigin === 'view'", false)
+            ->assertSee('fullUserModal._viewTrigger.click()', false)
+            ->assertSee('Cancel must return to the page behind the modal');
+
+        $this->get('/users/'.$target->id.'/view')->assertOk()
+            ->assertSee('Documents &amp; Notes', false)
+            ->assertSee('id="open-note-modal"', false)
+            ->assertSee('id="note-modal"', false)
+            ->assertSee('id="user-note-form"', false);
+
+        $this->postJson('/users/'.$target->id.'/notes', [
+            'heading' => 'Employment contract',
+            'body' => 'Contract and onboarding documents.',
+            'is_private' => true,
+            'documents' => [UploadedFile::fake()->create('contract.pdf', 25, 'application/pdf')],
+        ])->assertOk()->assertJsonPath('message', 'Note added successfully.');
+
+        $this->assertDatabaseHas('user_notes', [
+            'user_id' => $target->id, 'heading' => 'Employment contract', 'is_private' => true,
+        ]);
+        $document = $target->documents()->firstOrFail();
+        Storage::disk('local')->assertExists($document->path);
+        $this->assertDatabaseHas('user_activities', [
+            'user_id' => $target->id, 'action' => 'Note added', 'note' => 'Employment contract',
+        ]);
+    }
+
+    public function test_user_datatable_searches_displayed_username_name_email_and_assigned_role(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $manager = Role::create(['name' => 'Inventory Manager']);
+        User::factory()->create([
+            'username' => 'kasun', 'name' => 'Mr kasun perera',
+            'email' => 'kasunperera@example.test', 'role_id' => $manager->id,
+        ]);
+        User::factory()->create([
+            'username' => 'nimal', 'name' => 'Nimal Silva',
+            'email' => 'nimal@example.test',
+        ]);
+
+        foreach (['k', 'perera', 'kasunperera@', 'Inventory'] as $term) {
+            $response = $this->getJson('/users?draw=1&start=0&length=25&search[value]='.urlencode($term), [
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])->assertOk();
+
+            $this->assertGreaterThanOrEqual(1, $response->json('recordsFiltered'), 'Search failed for: '.$term);
+            $this->assertContains('kasun', collect($response->json('data'))->pluck('username')->all());
+        }
+    }
+
+    public function test_role_datatable_searches_the_role_name_that_is_displayed(): void
+    {
+        $this->actingAs(User::factory()->create());
+        Role::create(['name' => 'Purchase Supervisor', 'description' => 'Purchase approvals']);
+        Role::create(['name' => 'Cashier', 'description' => 'POS counter']);
+
+        $response = $this->getJson('/roles?draw=1&start=0&length=25&search[value]=Supervisor', [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->assertOk();
+
+        $roleCells = collect($response->json('data'))->pluck('roles')->map(fn ($cell) => trim(strip_tags($cell)))->all();
+        $this->assertContains('Purchase Supervisor', $roleCells);
+        $this->assertNotContains('Cashier', $roleCells);
     }
 
     public function createApplication()

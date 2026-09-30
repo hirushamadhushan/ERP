@@ -20,6 +20,18 @@ class RoleController extends Controller
             $data = Role::select(['id', 'name', 'description'])->latest();
 
             return DataTables::of($data)
+                ->filter(function ($query) use ($request) {
+                    $search = trim((string) $request->input('search.value'));
+                    if ($search === '') {
+                        return;
+                    }
+
+                    $like = '%'.$search.'%';
+                    $query->where(function ($roleQuery) use ($like) {
+                        $roleQuery->where('roles.name', 'like', $like)
+                            ->orWhere('roles.description', 'like', $like);
+                    });
+                })
                 ->addColumn('roles', function ($row) {
                     return '
                         <div class="flex items-center gap-3">

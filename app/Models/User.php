@@ -58,6 +58,21 @@ class User extends Authenticatable
         return $this->belongsToMany(Contact::class);
     }
 
+    public function documents()
+    {
+        return $this->hasMany(UserDocument::class)->latest();
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(UserNote::class)->latest();
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(UserActivity::class)->latest();
+    }
+
     protected function role(): Attribute
     {
         return Attribute::make(

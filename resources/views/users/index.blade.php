@@ -349,15 +349,33 @@ AppPage.ready(function() {
             locationList.querySelectorAll('input').forEach(input => input.disabled = allLocations.checked);
             toggle(selectedContacts, form.querySelector('#contact-list'));
         };
+        const editUser = form.dataset.editUser ? JSON.parse(form.dataset.editUser) : null;
+        if (editUser) {
+            const values = {...editUser, ...(editUser.profile || {})};
+            Object.entries(values).forEach(([name, value]) => {
+                if (value === null || value === undefined || ['id', 'password', 'role', 'profile', 'locations', 'selected_contacts'].includes(name)) return;
+                const field = form.querySelector(`[name="${name}"]`);
+                if (field && field.type !== 'checkbox') field.value = String(value).replace(' 00:00:00', '');
+            });
+            form.querySelector('#status').checked = editUser.status === 'active';
+            login.checked = !!editUser.allow_login; allLocations.checked = !!editUser.all_locations; selectedContacts.checked = !!editUser.restrict_contacts;
+            (editUser.locations || []).forEach(location => { const field = form.querySelector(`[name="location_ids[]"][value="${location.id}"]`); if (field) field.checked = true; });
+            (editUser.selected_contacts || []).forEach(contact => { const field = form.querySelector(`[name="contact_ids[]"][value="${contact.id}"]`); if (field) field.checked = true; });
+        }
         [login, allLocations, selectedContacts].forEach(control => control.addEventListener('change', sync));
         sync();
 
         // Help icons sit inside labels, so prevent a click on the icon from changing its checkbox.
         form.querySelectorAll('.field-help').forEach(help => help.addEventListener('click', event => event.preventDefault()));
 
-        // The Cancel link belongs to the modal while the standalone route remains usable.
-        form.querySelector('a[href="{{ route('users.index') }}"]')?.addEventListener('click', event => {
-            event.preventDefault(); closeFullUserModal();
+        // Inside the AJAX shell, Cancel must return to the page behind the modal.
+        [...form.querySelectorAll('a')].find(link => link.textContent.trim() === 'Cancel')?.addEventListener('click', event => {
+            event.preventDefault();
+            if (fullUserModal.dataset.editOrigin === 'view' && fullUserModal._viewTrigger) {
+                fullUserModal._viewTrigger.click();
+            } else {
+                closeFullUserModal();
+            }
         });
         form.addEventListener('submit', async event => {
             event.preventDefault();
@@ -366,7 +384,11 @@ AppPage.ready(function() {
             errors.hidden = true; save.disabled = true; save.textContent = 'Saving…';
             try {
                 const result = await AppErrors.request(form.action, {method:'POST', body:new FormData(form)});
-                closeFullUserModal();
+                if (fullUserModal.dataset.editOrigin === 'view' && fullUserModal._viewTrigger) {
+                    fullUserModal._viewTrigger.click();
+                } else {
+                    closeFullUserModal();
+                }
                 form.reset(); sync();
                 table.ajax.reload(null, false);
                 showToast(result.message, 'success');
@@ -382,6 +404,8 @@ AppPage.ready(function() {
     }
 
     $('#openFullUserBtn').on('click', async function() {
+        fullUserModal.dataset.editOrigin = 'list';
+        fullUserModal._viewTrigger = null;
         fullUserModal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
         if (fullUserFormLoaded) {
@@ -399,6 +423,119 @@ AppPage.ready(function() {
             initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
             fullUserFormLoaded = true;
             fullUserBody.querySelector('#prefix')?.focus();
+        } catch (error) {
+            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
+            fullUserBody.firstElementChild.textContent = error.message;
+        }
+    });
+    $(document).on('click.usersPage', '.edit-full-user-btn', async function() {
+        fullUserModal.dataset.editOrigin = 'list';
+        fullUserModal._viewTrigger = null;
+        fullUserModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        fullUserFormLoaded = false;
+        document.getElementById('full-user-title').innerHTML = '<i class="bi bi-pencil-square mr-2 text-purple-600"></i>Edit user';
+        fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>';
+        try {
+            const response = await fetch(this.dataset.url + '?form=1');
+            if (!response.ok) throw new Error(AppErrors.message(response.status));
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const form = page.getElementById('create-user-form');
+            if (!form) throw new Error('The Edit User form could not be loaded.');
+            form.classList.remove('mx-auto');
+            fullUserBody.replaceChildren(document.importNode(form, true));
+            initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
+            fullUserBody.querySelector('#first_name')?.focus();
+        } catch (error) {
+            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
+            fullUserBody.firstElementChild.textContent = error.message;
+        }
+    });
+    $(document).on('click.usersPage', '.view-full-user-btn', async function() {
+        const viewTrigger = this;
+        fullUserModal._viewTrigger = viewTrigger;
+        fullUserModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        fullUserFormLoaded = false;
+        document.getElementById('full-user-title').innerHTML = '<i class="bi bi-person-badge-fill mr-2 text-purple-600"></i>View User';
+        fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><div class="text-center"><span class="mx-auto block h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span><p class="mt-3 text-xs font-semibold text-slate-500">Loading user profile...</p></div></div>';
+        try {
+            const response = await fetch(this.dataset.url, {headers:{Accept:'text/html'}});
+            if (!response.ok) throw new Error(AppErrors.message(response.status));
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const profile = page.querySelector('main > div.mx-auto');
+            const noteModal = page.querySelector('#note-modal');
+            if (!profile) throw new Error('The user profile could not be loaded.');
+            profile.classList.remove('max-w-7xl');
+            profile.classList.add('max-w-none');
+            const importedProfile = document.importNode(profile, true);
+            const importedNoteModal = noteModal ? document.importNode(noteModal, true) : null;
+            fullUserBody.replaceChildren(importedProfile, ...(importedNoteModal ? [importedNoteModal] : []));
+            fullUserBody.querySelectorAll('.user-tab').forEach(tab => tab.addEventListener('click', () => {
+                fullUserBody.querySelectorAll('.user-tab').forEach(item => item.className = 'user-tab border-t-4 border-transparent px-3 py-4 text-sm font-bold text-slate-600 hover:bg-slate-50 sm:text-base');
+                tab.className = 'user-tab border-t-4 border-purple-600 bg-purple-50 px-3 py-4 text-sm font-bold text-purple-700 sm:text-base';
+                fullUserBody.querySelectorAll('[data-user-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.userPanel !== tab.dataset.userTab));
+            }));
+            fullUserBody.querySelector('#open-user-editor')?.addEventListener('click', async (event) => {
+                fullUserModal.dataset.editOrigin = 'view';
+                document.getElementById('full-user-title').innerHTML = '<i class="bi bi-pencil-square mr-2 text-purple-600"></i>Edit user';
+                fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>';
+                try {
+                    const response = await fetch(event.currentTarget.dataset.url + '?form=1');
+                    if (!response.ok) throw new Error(AppErrors.message(response.status));
+                    const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+                    const form = page.getElementById('create-user-form');
+                    if (!form) throw new Error('The Edit User form could not be loaded.');
+                    form.classList.remove('mx-auto');
+                    fullUserBody.replaceChildren(document.importNode(form, true));
+                    initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
+                    fullUserBody.querySelector('#first_name')?.focus();
+                } catch (error) {
+                    fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
+                    fullUserBody.firstElementChild.textContent = error.message;
+                }
+            });
+            const addNoteModal = fullUserBody.querySelector('#note-modal');
+            fullUserBody.querySelector('#open-note-modal')?.addEventListener('click', () => {
+                if (!addNoteModal) return;
+                addNoteModal.classList.remove('hidden');
+                addNoteModal.classList.add('flex');
+                addNoteModal.querySelector('[name="heading"]')?.focus();
+            });
+            addNoteModal?.querySelectorAll('[data-close-note]').forEach(button => button.addEventListener('click', () => {
+                addNoteModal.classList.remove('flex');
+                addNoteModal.classList.add('hidden');
+            }));
+            addNoteModal?.addEventListener('click', event => {
+                if (event.target === addNoteModal) {
+                    addNoteModal.classList.remove('flex');
+                    addNoteModal.classList.add('hidden');
+                }
+            });
+            addNoteModal?.querySelector('#note-documents')?.addEventListener('change', event => {
+                const selected = addNoteModal.querySelector('#selected-files');
+                if (selected) selected.textContent = [...event.target.files].map(file => file.name).join(', ');
+            });
+            addNoteModal?.querySelector('#user-note-form')?.addEventListener('submit', async event => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const save = form.querySelector('button:not([type="button"])');
+                save.disabled = true;
+                save.textContent = 'Saving...';
+                try {
+                    const result = await AppErrors.request(form.action, {method:'POST', body:new FormData(form)});
+                    showToast(result.message, 'success');
+                    viewTrigger.click();
+                } catch (error) {
+                    showToast(error.message, 'danger');
+                    save.disabled = false;
+                    save.textContent = 'Save';
+                }
+            });
+            fullUserBody.querySelector('#user-switcher')?.addEventListener('change', event => {
+                const option = event.currentTarget.options[event.currentTarget.selectedIndex];
+                if (option?.value) { fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>'; fetch(option.value).then(r => r.text()).then(html => { const next = new DOMParser().parseFromString(html, 'text/html').querySelector('main > div.mx-auto'); if (next) fullUserBody.replaceChildren(document.importNode(next, true)); }); }
+            });
         } catch (error) {
             fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
             fullUserBody.firstElementChild.textContent = error.message;

@@ -11,6 +11,36 @@ AppPage.ready( function () {
     const storeUrl = @json(route('contacts.store'));
     const hasErrors = @json($errors->any());
     let previousFocus;
+    const contactsTableElement = document.getElementById('contacts-table');
+
+    // The data-table wrapper scrolls horizontally. Native absolute menus are
+    // clipped by that scrolling viewport, so place an opened action menu in
+    // viewport coordinates instead.
+    contactsTableElement.addEventListener('toggle', event => {
+        const details = event.target;
+        if (!details.matches?.('.contact-actions')) return;
+
+        const menu = details.querySelector(':scope > div');
+        if (!details.open) {
+            ['position', 'left', 'top', 'z-index'].forEach(property => menu.style.removeProperty(property));
+            return;
+        }
+
+        const trigger = details.querySelector('summary').getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.zIndex = '100';
+        menu.style.left = '0px';
+        menu.style.top = '0px';
+
+        const left = Math.min(trigger.left, window.innerWidth - menu.offsetWidth - 8);
+        const below = trigger.bottom + 4;
+        const top = below + menu.offsetHeight > window.innerHeight - 8
+            ? Math.max(8, trigger.top - menu.offsetHeight - 4)
+            : below;
+        menu.style.left = Math.max(8, left) + 'px';
+        menu.style.top = top + 'px';
+    }, true);
+
     document.querySelector('[data-reset-contact-filters]').addEventListener('click', () => {
         const filters = document.querySelector('[data-async-filter]');
         filters.querySelectorAll('select').forEach(select => select.value = '');
@@ -104,8 +134,9 @@ AppPage.ready( function () {
     document.getElementById('contacts-table').addEventListener('click', async event => {
         const dueButton = event.target.closest('.collect-customer-due');
         const statusButton = event.target.closest('.toggle-customer-status');
-        if (statusButton) {
-            const response = await AppErrors.request(statusButton.dataset.statusUrl, {method: 'PUT'});
+        const supplierStatusButton = event.target.closest('.toggle-supplier-status');
+        if (statusButton || supplierStatusButton) {
+            const response = await AppErrors.request((statusButton || supplierStatusButton).dataset.statusUrl, {method: 'PUT'});
             window.showToast?.(response.message, 'success'); Turbo.visit(location.href);
         }
         if (!dueButton) return;
@@ -123,7 +154,6 @@ AppPage.ready( function () {
             const summary = [...data.documents.map(item => 'Document: '+item.name), ...data.notes.map(item => 'Note: '+item.body)].join('\n') || 'No customer documents or notes yet.';
             window.alert(summary);
         }
-        if (event.target.closest('.supplier-action')) window.alert('This supplier action will use purchase transactions when the Purchases module is connected.');
     });
 
     if (hasErrors) {
