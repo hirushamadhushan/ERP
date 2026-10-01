@@ -7,6 +7,11 @@ use Illuminate\Validation\Rule;
 
 class SaveProductRequest extends BaseFormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['track_lots' => $this->boolean('track_lots')]);
+    }
+
     public function after(): array
     {
         return [function ($validator) {
@@ -59,6 +64,7 @@ class SaveProductRequest extends BaseFormRequest
             'barcode_type' => ['required', Rule::in(['CODE128', 'CODE39', 'EAN13', 'UPCA'])],
             'manage_stock' => ['required', 'boolean'],
             'enable_serial' => ['required', 'boolean'],
+            'track_lots' => ['required', 'boolean'],
             'not_for_selling' => ['required', 'boolean'],
             'alert_quantity' => ['nullable', 'numeric', 'min:0', 'max:999999999', 'decimal:0,4'],
             'description' => ['nullable', 'string', 'max:20000'],

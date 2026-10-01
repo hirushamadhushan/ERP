@@ -153,6 +153,11 @@
                     <i class="bi bi-boxes text-base" aria-hidden="true"></i>Products
                 </a>
 
+                @if(auth()->user()->canUseDelivery())
+                <a href="{{ route('delivery.vehicles.index') }}" class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('delivery.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-truck text-base" aria-hidden="true"></i>Delivery
+                </a>
+                @endif
                 <p class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-4 mb-2">System</p>
 
                 <a href="{{ route('payment-accounts.index') }}"
@@ -236,6 +241,8 @@
                             <a href="{{ route($productRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $productIcon }}" aria-hidden="true"></i>{{ $productLabel }}</a>
                         @endforeach
                     </nav>
+                    @elseif(request()->routeIs('delivery.*'))
+                    @include('delivery.nav')
                     @elseif(request()->routeIs('contacts.*'))
                     <nav aria-label="Contacts" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
                         @foreach(['customer' => ['Customers', 'bi-person-fill'], 'supplier' => ['Suppliers', 'bi-truck'], 'commission' => ['Commission', 'bi-percent']] as $contactType => [$contactLabel, $contactIcon])

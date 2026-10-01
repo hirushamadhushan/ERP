@@ -43,6 +43,12 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id');
     }
 
+    public function canUseDelivery(string $permission = 'delivery.view'): bool
+    {
+        $role = $this->assignedRole;
+        return ! $role || strcasecmp($role->name, 'admin') === 0 || in_array($permission, $role->permissions, true);
+    }
+
     public function profile()
     {
         return $this->hasOne(UserProfile::class);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BusinessSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -82,5 +83,39 @@ class LoginTest extends TestCase
             ->assertRedirect('/home');
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_login_page_uses_business_name_and_logo(): void
+    {
+        BusinessSetting::current()->update([
+            'business_name' => 'Nexus Super Store',
+            'logo_path' => 'data:image/png;base64,dGVzdA==',
+        ]);
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Nexus Super Store - Sign In')
+            ->assertSee('>Nexus Super Store</h1>', false)
+            ->assertSee('src="data:image/png;base64,dGVzdA=="', false);
+    }
+
+    public function test_livewire_login_limits_repeated_failed_attempts(): void
+    {
+        User::factory()->create(['username' => 'throttled', 'password' => 'correct-password']);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            Livewire::test('auth.login')
+                ->set('username', 'throttled')
+                ->set('password', 'wrong-password')
+                ->call('login')
+                ->assertHasErrors('username');
+        }
+
+        Livewire::test('auth.login')
+            ->set('username', 'throttled')
+            ->set('password', 'correct-password')
+            ->call('login')
+            ->assertSee('Too many login attempts');
+        $this->assertGuest();
     }
 }

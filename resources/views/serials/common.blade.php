@@ -14,6 +14,21 @@
 @media print{aside,header,nav,.no-print{display:none!important}main{margin:0!important;padding:0!important}.serial-card{border:0;box-shadow:none}body{background:white!important}}
 </style>
 @unless($hideFlashAlerts ?? false)
-@if(session('success'))<p role="status" class="p-4 mb-4 bg-emerald-50 text-emerald-800 rounded-xl">{{ session('success') }}</p>@endif
+@if(session('success'))<p id="delivery-success-alert" role="status" class="p-4 mb-4 bg-emerald-50 text-emerald-800 rounded-xl transition-opacity duration-500" style="opacity:1">{{ session('success') }}</p>@endif
 @if($errors->any())<div role="alert" class="p-4 mb-4 bg-rose-50 text-rose-800 rounded-xl">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
 @endunless
+@if(session('success'))
+@push('scripts')
+<script>
+AppPage.ready(() => {
+    const alert = document.getElementById('delivery-success-alert');
+    if (!alert) return;
+    const timer = window.setTimeout(() => {
+        alert.style.opacity = '0';
+        window.setTimeout(() => alert.remove(), 500);
+    }, 5000);
+    AppPage.signal.addEventListener('abort', () => window.clearTimeout(timer), {once:true});
+});
+</script>
+@endpush
+@endif

@@ -7,6 +7,34 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Deployment
+
+After installing dependencies and applying migrations, run `php scripts/deploy-cache.php`
+on each deployment. This builds Laravel's config, route and Blade view caches.
+Restart long-running PHP workers after deployment so they load the new code.
+
+The Products and Stock Report page loads 50 products per server page. Filters
+are applied before pagination; stock totals and exports on the page cover the
+displayed page. The product picker loads at most 200 names; the name/SKU search
+finds products outside that list. Existing product, location and serial filter
+indexes support the report query.
+
+## Security review
+
+ERP routes use web authentication and Laravel's CSRF protection. User and role
+actions check their matching role permissions; settings and payment
+administration require `system.settings`. Contact record changes enforce
+customer/supplier visibility, and mixed contact imports require full customer
+and supplier access. The Livewire login limits failed attempts, and contact and
+serial imports are throttled. Uploads have type and size validation; document
+files use private local storage.
+
+Product and inventory routes currently have authentication but no dedicated
+product permissions in the role editor. Add those permissions and map each
+product action before granting granular catalogue access to non-admin roles.
+There is no standalone `routes/api.php` in this project; browser JSON actions
+use the authenticated web routes.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

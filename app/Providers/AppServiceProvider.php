@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
         // A safe fallback lets maintenance, migration and error views render
         // before the business_settings table exists.
         View::share('businessSetting', new BusinessSetting(['business_name' => 'Codeza ERP']));
+        View::composer('auth.login', function () {
+            View::share('businessSetting', BusinessSetting::current());
+        });
 
         /*
          * Time-sensitive screens and reports must use the business-selected

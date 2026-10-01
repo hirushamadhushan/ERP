@@ -16,6 +16,36 @@ use Tests\TestCase;
 
 class ProductCatalogTest extends TestCase
 {
+    public function test_catalogue_and_stock_report_only_render_the_requested_server_page(): void
+    {
+        $this->data();
+        for ($number = 1; $number <= 51; $number++) {
+            Product::create([
+                'name' => 'Paged Product '.$number,
+                'code' => sprintf('PAGE-%03d', $number),
+                'product_type' => 'single',
+                'unit_id' => 1,
+                'purchase_price' => 10,
+                'selling_price' => 15,
+                'selling_price_tax_type' => 'exclusive',
+            ]);
+        }
+
+        $firstPage = $this->get('/products')->assertOk()
+            ->assertSee('page=2', false)
+            ->assertSee('id="product-server-pagination" data-async-region', false)
+            ->assertSee('paging:false', false);
+        $this->assertCount(50, $firstPage->viewData('products'));
+        $this->assertSame('PAGE-051', $firstPage->viewData('products')->first()->code);
+
+        $secondPage = $this->get('/products?page=2')->assertOk();
+        $this->assertCount(1, $secondPage->viewData('products'));
+        $this->assertSame('PAGE-001', $secondPage->viewData('products')->first()->code);
+
+        $searched = $this->get('/products?product_search=PAGE-001')->assertOk();
+        $this->assertSame(['PAGE-001'], $searched->viewData('products')->pluck('code')->all());
+    }
+
     public function test_deep_category_selection_is_saved_and_restored(): void
     {
         $data = $this->data();

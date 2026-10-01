@@ -20,6 +20,7 @@ use App\Models\TaxRate;
 use App\Models\SellingPriceGroup;
 use App\Services\ProductCatalogService;
 use App\Services\ProductStockReport;
+use App\Services\ProductLotService;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -28,14 +29,19 @@ class ProductController extends Controller
      * Render the product catalogue and its stock report from one filtered
      * product collection, so the visible totals and detail modal agree.
      */
-    public function index(ProductFilterRequest $request, ProductStockReport $stockReport)
+    public function index(ProductFilterRequest $request, ProductStockReport $stockReport, ProductLotService $lotService)
     {
         $filters = $request->validated();
         // Filter controls remain complete after a filtered table refresh.
         // They must not be built from the currently filtered result set.
         $filterProducts = Product::query()
             ->orderBy('name')
+            ->limit(200)
             ->get(['id', 'name', 'code']);
+        if (isset($filters['product_id']) && ! $filterProducts->contains('id', (int) $filters['product_id'])) {
+            $selectedProduct = Product::query()->find($filters['product_id'], ['id', 'name', 'code']);
+            if ($selectedProduct) $filterProducts->push($selectedProduct);
+        }
         $filterTaxRates = Product::query()
             ->whereNotNull('tax_rate')
             ->distinct()
@@ -51,6 +57,9 @@ class ProductController extends Controller
         $products = Product::query()
             ->with(['unit', 'purchaseUnit', 'secondaryUnit', 'brand', 'warranty', 'applicableTax', 'category', 'locations', 'variants.variationValue', 'variants.variationValues', 'variants.locationStocks', 'comboItems.unit'])
             ->when($filters['product_id'] ?? null, fn ($query, $value) => $query->whereKey($value))
+            ->when($filters['product_search'] ?? null, function ($query, $value) {
+                $query->where(fn ($products) => $products->where('name', 'like', '%'.$value.'%')->orWhere('code', 'like', '%'.$value.'%'));
+            })
             ->when($filters['product_type'] ?? null, fn ($query, $value) => $query->where('product_type', $value))
             ->when($categoryIds, fn ($query) => $query->whereIn('selected_category_id', $categoryIds))
             ->when($filters['subcategory_id'] ?? null, fn ($query, $value) => $query->where('selected_category_id', $value))
@@ -68,7 +77,10 @@ class ProductController extends Controller
             })
             ->when($request->boolean('not_for_selling'), fn ($query) => $query->where('not_for_selling', true))
             ->latest('id')
-            ->get();
+            ->paginate(50)
+            ->withQueryString();
+        $productPages = $products;
+        $products = $productPages->getCollection();
 
         // Serial-managed products derive available stock from serial records;
         // normal products use opening stock maintained on their location rows.
@@ -80,7 +92,8 @@ class ProductController extends Controller
             ->groupByRaw('COALESCE(product_serial_numbers.product_id, stock_variant.product_id), product_serial_numbers.product_variant_id, location_id')
             ->get()
             ->keyBy(fn ($row) => $row->product_id.':'.($row->product_variant_id ?: 'product').':'.$row->location_id);
-        $report = $stockReport->build($products, $serialStock);
+        $lotStock = $lotService->stockByProductAndLocation($products->pluck('id'));
+        $report = $stockReport->build($products, $serialStock, $lotStock);
         // The modal receives formatted display data only, rather than exposing
         // raw model attributes or making a second request per selected product.
         $productDetails = $products->mapWithKeys(function (Product $product) use ($report) {
@@ -140,6 +153,7 @@ class ProductController extends Controller
 
         return view('products.index', $this->references() + [
             'products' => $products,
+            'productPages' => $productPages,
             'filterProducts' => $filterProducts,
             'filterTaxRates' => $filterTaxRates,
             'serialStock' => $serialStock,
@@ -225,6 +239,13 @@ class ProductController extends Controller
         $data = $request->validate(['action'=>['required',\Illuminate\Validation\Rule::in(['deactivate','activate','delete','add_location','remove_location'])],'product_ids'=>['required','array','min:1'],'product_ids.*'=>['integer','exists:products,id'],'location_id'=>['nullable','integer','exists:locations,id']]);
         if (in_array($data['action'], ['add_location','remove_location'], true) && empty($data['location_id'])) return back()->withErrors(['location_id'=>'Select a business location.']);
         $products = Product::whereIn('id',$data['product_ids'])->get();
+        if (in_array($data['action'], ['add_location', 'remove_location'], true)
+            && \Illuminate\Support\Facades\DB::table('delivery_vehicle_stores')->where('location_id', $data['location_id'])->exists()) {
+            return back()->with('error', 'Vehicle store assignments are maintained by Delivery loading and unloading.');
+        }
+        if ($data['action'] === 'remove_location' && $products->contains(fn ($product) => $product->lots()->whereHas('movements', fn ($query) => $query->where('location_id', $data['location_id']))->exists())) {
+            return back()->with('error', 'A location with lot history cannot be removed from the selected products.');
+        }
 
         if ($data['action'] === 'delete') {
             $hasRelatedTransactions = false;
@@ -257,11 +278,13 @@ class ProductController extends Controller
 
     public function opening(Product $product)
     {
+        if ($product->track_lots) return redirect()->route('products.catalog.lots.index', $product);
         return view('products.opening', ['product' => $product->load('locations', 'variants.variationValues', 'variants.variationValue', 'variants.locationStocks')]);
     }
 
     public function saveOpening(SaveOpeningStockRequest $request, Product $product, ProductCatalogService $catalog)
     {
+        if ($product->track_lots) return redirect()->route('products.catalog.lots.index', $product)->with('error', 'Use lot receiving to maintain this product stock.');
         if ($product->product_type === 'variable') {
             $catalog->saveVariantOpeningStock($product, $request->validated('quantities'));
         } else {
@@ -353,22 +376,26 @@ class ProductController extends Controller
         $action = $result['action'];
         $redirect = match ($action) {
             'another' => route('products.catalog.create'),
-            'opening' => route('products.catalog.opening', $product),
+            'opening' => $product->track_lots ? route('products.catalog.lots.index', $product) : route('products.catalog.opening', $product),
             'prices' => route('products.catalog.prices', $product),
-            default => route('products.catalog.index'),
+            default => $product->track_lots ? route('products.catalog.lots.index', $product) : route('products.catalog.index'),
         };
 
         if ($request->expectsJson()) {
-            $request->session()->flash('success', 'Product saved with SKU '.$product->code.'.');
+            $request->session()->flash('success', $product->track_lots
+                ? 'Product saved. Enter the received quantity and lot details to create the lot.'
+                : 'Product saved with SKU '.$product->code.'.');
 
             return response()->json(['status' => 'success', 'redirect' => $redirect]);
         }
 
         $message = match ($action) {
             'another' => 'Product saved. Add another product.',
-            'opening' => 'Product saved. Add opening stock below.',
+            'opening' => $product->track_lots ? 'Product saved. Enter the initial quantity and lot details to create the first lot.' : 'Product saved. Add opening stock below.',
             'prices' => 'Product saved. Add customer-group prices below.',
-            default => 'Product saved with SKU '.$product->code.'.',
+            default => $product->track_lots
+                ? 'Product saved. Enter the received quantity and lot details; saving the receipt will create the lot automatically.'
+                : 'Product saved with SKU '.$product->code.'.',
         };
 
         return redirect()->to($redirect)->with('success', $message);

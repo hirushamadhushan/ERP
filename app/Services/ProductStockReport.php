@@ -10,26 +10,30 @@ final class ProductStockReport
      * Build one report row per product location. Serial-tracked stock is based
      * on available serials; other products use their opening-stock balance.
      */
-    public function build(Collection $products, Collection $serialStock): array
+    public function build(Collection $products, Collection $serialStock, array $lotStock = []): array
     {
-        $rows = $products->flatMap(function ($product) use ($serialStock) {
+        $rows = $products->flatMap(function ($product) use ($serialStock, $lotStock) {
             if ($product->product_type === 'variable') {
-                return $product->variants->flatMap(function ($variant) use ($product, $serialStock) {
-                    return $product->locations->map(function ($location) use ($product, $variant, $serialStock) {
+                return $product->variants->flatMap(function ($variant) use ($product, $serialStock, $lotStock) {
+                    return $product->locations->map(function ($location) use ($product, $variant, $serialStock, $lotStock) {
                         $stock = $product->enable_serial
                             ? (float) ($serialStock->get($product->id.':'.$variant->id.':'.$location->id)?->quantity ?? 0)
-                            : (float) ($variant->locationStocks->firstWhere('location_id', $location->id)?->opening_quantity ?? 0);
+                            : ($product->track_lots ? (float) ($lotStock[$product->id.':'.$variant->id.':'.$location->id]->quantity ?? 0)
+                                : (float) ($variant->locationStocks->firstWhere('location_id', $location->id)?->opening_quantity ?? 0));
 
-                        return $this->row($product, $location, $variant->value ?: 'Default', $stock, (float) $variant->purchase_price, (float) $variant->selling_price);
+                        $lotValues = $lotStock[$product->id.':'.$variant->id.':'.$location->id] ?? null;
+                        return $this->row($product, $location, $variant->value ?: 'Default', $stock, (float) $variant->purchase_price, (float) $variant->selling_price, $product->track_lots ? (float) ($lotValues->inventory_value ?? 0) : null, $product->track_lots ? (float) ($lotValues->sale_value ?? 0) : null);
                     });
                 });
             }
 
-            return $product->locations->map(function ($location) use ($product, $serialStock) {
+            return $product->locations->map(function ($location) use ($product, $serialStock, $lotStock) {
                 $stock = $product->enable_serial
                     ? (float) ($serialStock->get($product->id.':product:'.$location->id)?->quantity ?? 0)
-                    : (float) $location->pivot->opening_quantity;
-                return $this->row($product, $location, 'Default', $stock, (float) $product->purchase_price, (float) $product->selling_price);
+                    : ($product->track_lots ? (float) ($lotStock[$product->id.':product:'.$location->id]->quantity ?? 0)
+                        : (float) $location->pivot->opening_quantity);
+                $lotValues = $lotStock[$product->id.':product:'.$location->id] ?? null;
+                return $this->row($product, $location, 'Default', $stock, (float) $product->purchase_price, (float) $product->selling_price, $product->track_lots ? (float) ($lotValues->inventory_value ?? 0) : null, $product->track_lots ? (float) ($lotValues->sale_value ?? 0) : null);
             });
         })->values();
 
@@ -54,10 +58,10 @@ final class ProductStockReport
         ];
     }
 
-    private function row($product, $location, string $variation, float $stock, float $purchasePrice, float $sellingPrice): array
+    private function row($product, $location, string $variation, float $stock, float $purchasePrice, float $sellingPrice, ?float $inventoryValue = null, ?float $saleValue = null): array
     {
-        $purchaseValue = $stock * $purchasePrice;
-        $saleValue = $stock * $sellingPrice;
+        $purchaseValue = $inventoryValue ?? ($stock * $purchasePrice);
+        $saleValue = $saleValue ?? ($stock * $sellingPrice);
 
         return compact('product', 'location', 'variation', 'stock', 'purchaseValue', 'saleValue') + [
             'purchase_value' => $purchaseValue,

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('login'));
+Route::redirect('/', '/login');
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
     // Specific product paths must be registered before model-bound paths.
     require __DIR__.'/serial-numbers.php';
     require __DIR__.'/products.php';
+    require __DIR__.'/delivery.php';
     require __DIR__.'/units.php';
     require __DIR__.'/categories.php';
     require __DIR__.'/brands.php';
@@ -33,10 +34,12 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/customer-groups.php';
     require __DIR__.'/contacts.php';
 
-    // Settings routes
-    require __DIR__.'/business-settings.php';
-    require __DIR__.'/business-locations.php';
-    require __DIR__.'/invoice-settings.php';
-    require __DIR__.'/tax-rates.php';
-    require __DIR__.'/payment-accounts.php';
+    // Settings and payment administration require the configured system permission.
+    Route::middleware('role.permission:system.settings')->group(function () {
+        require __DIR__.'/business-settings.php';
+        require __DIR__.'/business-locations.php';
+        require __DIR__.'/invoice-settings.php';
+        require __DIR__.'/tax-rates.php';
+        require __DIR__.'/payment-accounts.php';
+    });
 });

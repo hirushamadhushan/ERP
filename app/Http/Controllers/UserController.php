@@ -141,10 +141,10 @@ class UserController extends Controller
             'document' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
         ]);
         $file = $validated['document'];
-        $path = $file->store('user-documents/'.$user->id);
+        $path = $file->store('user-documents/'.$user->id, 'local');
         $document = $user->documents()->create([
             'name' => $file->getClientOriginalName(), 'path' => $path,
-            'mime_type' => $file->getClientMimeType(), 'size' => $file->getSize(),
+            'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(),
             'created_by' => $request->user()?->id,
         ]);
         $user->activities()->create([
@@ -169,8 +169,8 @@ class UserController extends Controller
         ]);
         foreach ($request->file('documents', []) as $file) {
             $user->documents()->create([
-                'name' => $file->getClientOriginalName(), 'path' => $file->store('user-documents/'.$user->id),
-                'mime_type' => $file->getClientMimeType(), 'size' => $file->getSize(), 'created_by' => $request->user()?->id,
+                'name' => $file->getClientOriginalName(), 'path' => $file->store('user-documents/'.$user->id, 'local'),
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(), 'created_by' => $request->user()?->id,
             ]);
         }
         $user->activities()->create([
@@ -182,9 +182,9 @@ class UserController extends Controller
 
     public function downloadDocument(UserDocument $document)
     {
-        abort_unless(Storage::exists($document->path), 404);
+        abort_unless(Storage::disk('local')->exists($document->path), 404);
 
-        return Storage::download($document->path, $document->name);
+        return Storage::disk('local')->download($document->path, $document->name);
     }
 
     /**

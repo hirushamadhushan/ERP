@@ -20,6 +20,24 @@ class UserRoleTest extends TestCase
         $this->get('/roles')->assertRedirect('/login');
     }
 
+    public function test_role_permissions_are_enforced_on_user_and_role_actions(): void
+    {
+        $role = Role::create(['name' => 'Viewer']);
+        $role->syncPermissions(['user.view', 'role.view']);
+        $this->actingAs(User::factory()->create(['role_id' => $role->id]));
+
+        $this->get('/users')->assertOk();
+        $this->get('/roles')->assertOk();
+        $this->get('/users/create')->assertForbidden();
+        $this->get('/business/settings')->assertForbidden();
+        $this->get('/payment-accounts')->assertForbidden();
+        $this->get('/contacts/import')->assertForbidden();
+        $this->postJson('/users', [])->assertForbidden();
+        $this->postJson('/roles', ['name' => 'New Role'])->assertForbidden();
+        $this->putJson('/roles/'.$role->id, ['name' => 'Changed'])->assertForbidden();
+        $this->deleteJson('/roles/'.$role->id)->assertForbidden();
+    }
+
     public function test_role_and_user_crud_work_with_database_roles(): void
     {
         $this->actingAs(User::factory()->create());

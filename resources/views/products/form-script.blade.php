@@ -32,8 +32,11 @@ window.addEventListener('beforeunload',event=>{if(productDirty&&!productSaving){
 // Protect unsaved product edits during in-app navigation as well.
 document.addEventListener('turbo:before-visit', event => { if(productDirty && !productSaving && !confirm('Discard unsaved product changes?')) event.preventDefault(); }, {signal: AppPage.signal});
 const locationChoices=Array.from(document.querySelectorAll('.location-choice'));
-const syncLocationRacks=()=>{const selected=new Set(locationChoices.filter(input=>input.checked).map(input=>input.value));document.querySelectorAll('.location-rack').forEach(card=>{const active=selected.has(card.dataset.location);card.hidden=!active;card.querySelectorAll('input').forEach(input=>input.disabled=!active);});};
+const syncLocationRacks=()=>{const checked=locationChoices.filter(input=>input.checked),selected=new Set(checked.map(input=>input.value));const label=byId('selected-location-label');if(label){const names=checked.map(input=>input.dataset.locationName);label.textContent=names.length>2?`${names.slice(0,2).join(', ')} +${names.length-2} more`:(names.join(', ')||'Select business locations');label.title=names.join(', ');}document.querySelectorAll('.location-rack').forEach(card=>{const active=selected.has(card.dataset.location);card.hidden=!active;card.querySelectorAll('input').forEach(input=>input.disabled=!active);});};
 locationChoices.forEach(input=>input.addEventListener('change',syncLocationRacks));syncLocationRacks();
+const lotTracking=byId('track_lots'),openingStockAction=byId('save-and-open-stock');
+const syncOpeningStockAction=()=>{if(openingStockAction)openingStockAction.textContent=lotTracking?.checked?'Save & Receive Initial Lot':'Save & Add Opening Stock';};
+lotTracking?.addEventListener('change',syncOpeningStockAction);syncOpeningStockAction();
 let scanBuffer='',lastScanAt=0;
 document.addEventListener('keydown',event=>{const target=document.activeElement?.tagName;if(event.ctrlKey||event.altKey||event.metaKey||['INPUT','TEXTAREA','SELECT'].includes(target))return;const now=Date.now();if(now-lastScanAt>80)scanBuffer='';lastScanAt=now;if(event.key==='Enter'){if(scanBuffer.length>=6){byId('sku').value=scanBuffer;byId('sku').dispatchEvent(new Event('input',{bubbles:true}));event.preventDefault();}scanBuffer='';}else if(event.key.length===1)scanBuffer+=event.key;}, {signal: AppPage.signal});
 productForm.addEventListener('submit',async event=>{

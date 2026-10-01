@@ -198,6 +198,9 @@
                     </div>
                     <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
                         @foreach([
+                            'delivery.view' => 'Delivery: View vehicles, drivers and stock',
+                            'delivery.manage' => 'Delivery: Manage vehicles, drivers and assignments',
+                            'delivery.transfer' => 'Delivery: Load and unload stock',
                             'system.settings'  => 'Access Settings',
                             'system.reports'   => 'View Reports',
                             'system.audit_log' => 'View Audit Log',

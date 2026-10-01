@@ -10,7 +10,7 @@ Route::controller(SerialNumberController::class)
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::get('/report', 'report')->name('report');
-        Route::post('/preview', 'preview')->name('preview');
+        Route::post('/preview', 'preview')->middleware('throttle:20,1')->name('preview');
         Route::post('/', 'store')->name('store');
         Route::delete('/', 'destroy')->name('destroy');
         Route::post('/references', 'reference')->name('reference');

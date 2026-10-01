@@ -2,6 +2,8 @@
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 new class extends Component
 {
@@ -18,18 +20,26 @@ new class extends Component
 
         $inputUsername = trim($this->username);
         $inputPassword = $this->password;
+        $throttleKey = Str::lower($inputUsername).'|'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $this->addError('username', 'Too many login attempts. Please try again in a minute.');
+            return;
+        }
 
         // Verify the supplied username or email against the stored password hash.
         $credentials = filter_var($inputUsername, FILTER_VALIDATE_EMAIL)
-            ? ['email' => $inputUsername, 'password' => $inputPassword]
-            : ['username' => $inputUsername, 'password' => $inputPassword];
+            ? ['email' => $inputUsername, 'password' => $inputPassword, 'status' => 'active', 'allow_login' => true]
+            : ['username' => $inputUsername, 'password' => $inputPassword, 'status' => 'active', 'allow_login' => true];
 
         if (Auth::attempt($credentials, $this->remember)) {
+            RateLimiter::clear($throttleKey);
             session()->regenerate();
 
             return redirect()->intended('/home');
         }
 
+        RateLimiter::hit($throttleKey, 60);
         $this->addError('username', 'The username or password you entered is incorrect.');
     }
 };
@@ -40,11 +50,11 @@ new class extends Component
     <!-- Header / Brand Logo -->
     <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-white shadow-lg shadow-purple-500/30 mb-4 transform hover:scale-105 transition-transform duration-200" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);">
-            <svg width="28" height="28" class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-            </svg>
+            <img src="{{ $businessSetting->logo_path ?: asset('images/codeza-logo.png') }}"
+                 alt="{{ $businessSetting->business_name ?? 'Codeza ERP' }} logo"
+                 class="w-full h-full rounded-2xl object-contain">
         </div>
-        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Codeza ERP</h1>
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ $businessSetting->business_name ?? 'Codeza ERP' }}</h1>
         <p class="text-xs text-slate-500 mt-1 font-medium">Welcome back! Sign in to access your dashboard</p>
     </div>
 

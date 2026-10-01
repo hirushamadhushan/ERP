@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [\App\Http\Middleware\AsyncFormResponse::class]);
+        $middleware->alias(['role.permission' => \App\Http\Middleware\RequireRolePermission::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'token', '_token', 'two_factor_secret', 'two_factor_recovery_codes']);

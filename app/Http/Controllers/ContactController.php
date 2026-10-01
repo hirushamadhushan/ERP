@@ -55,6 +55,8 @@ class ContactController extends Controller
     public function store(SaveContactRequest $request)
     {
         $data = $request->contactData();
+        $this->authorizeContactType($data['type']);
+        $this->assignOwnedContact($data);
         $this->normalizeCustomerGroup($data);
         $data['contact_id'] = $data['contact_id'] ?? 'C-'.Str::upper((string) Str::ulid());
         $contact = $this->databaseTransaction(
@@ -75,7 +77,10 @@ class ContactController extends Controller
 
     public function update(SaveContactRequest $request, Contact $contact)
     {
+        $this->ensureRecordVisible($contact);
         $data = $request->contactData();
+        $this->authorizeContactType($data['type']);
+        $this->assignOwnedContact($data);
         $this->normalizeCustomerGroup($data);
         $data['contact_id'] = $data['contact_id'] ?? $contact->contact_id;
         $this->databaseTransaction(
@@ -96,6 +101,7 @@ class ContactController extends Controller
 
     public function destroy(Contact $contact)
     {
+        $this->ensureRecordVisible($contact);
         $type = $contact->type === 'both' ? 'customer' : $contact->type;
         $this->databaseTransaction(
             fn () => $contact->delete(),
@@ -138,8 +144,40 @@ class ContactController extends Controller
     public function downloadDocument(CustomerDocument $document) { $this->customerOnly($document->customer); abort_unless(Storage::disk('local')->exists($document->path),404); return Storage::disk('local')->download($document->path,$document->name); }
     public function toggleStatus(Contact $contact) { $this->customerOnly($contact); $contact->update(['status'=>$contact->status==='active'?'inactive':'active']); return response()->json(['message'=>'Customer status updated.','status'=>$contact->status]); }
     public function toggleSupplierStatus(Contact $contact) { $this->supplierOnly($contact); $contact->update(['status'=>$contact->status==='active'?'inactive':'active']); return response()->json(['message'=>'Supplier status updated.','status'=>$contact->status]); }
-    private function customerOnly(Contact $contact): void { abort_unless(in_array($contact->type,['customer','both']),404); $this->ensureCustomerVisible($contact); }
+    private function customerOnly(Contact $contact): void { abort_unless(in_array($contact->type,['customer','both']),404); $this->ensureContactVisible($contact, 'customer'); }
     private function supplierOnly(Contact $contact): void { abort_unless(in_array($contact->type,['supplier','both']),404); $this->ensureContactVisible($contact, 'supplier'); }
+    private function ensureRecordVisible(Contact $contact): void
+    {
+        foreach (['customer', 'supplier'] as $type) {
+            if (in_array($contact->type, [$type, 'both'], true)) $this->ensureContactVisible($contact, $type);
+        }
+    }
+    private function authorizeContactType(string $type): void
+    {
+        $role = auth()->user()?->assignedRole;
+        if (! $role || strcasecmp($role->name, 'admin') === 0) return;
+
+        foreach (['customer', 'supplier'] as $contactType) {
+            if (! in_array($type, [$contactType, 'both'], true)) continue;
+            abort_unless(
+                in_array($contactType.'.view', $role->permissions, true)
+                || in_array($contactType.'.view_own', $role->permissions, true),
+                403
+            );
+        }
+    }
+    private function assignOwnedContact(array &$data): void
+    {
+        $role = auth()->user()?->assignedRole;
+        if (! $role || strcasecmp($role->name, 'admin') === 0) return;
+
+        foreach (['customer', 'supplier'] as $type) {
+            if (in_array($data['type'], [$type, 'both'], true)
+                && ! in_array($type.'.view', $role->permissions, true)) {
+                $data['assigned_to'] = auth()->id();
+            }
+        }
+    }
     private function applyContactVisibility($query, string $type): void
     {
         $user=auth()->user(); $role=$user?->assignedRole;

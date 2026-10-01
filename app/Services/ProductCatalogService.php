@@ -29,13 +29,22 @@ class ProductCatalogService
         $files = array_filter([$product->image_path, $product->variant_image_path, $product->brochure_path]);
         DB::transaction(function () use ($product) {
             $product = Product::lockForUpdate()->findOrFail($product->id);
+            if (DB::table('delivery_transfer_lines')->whereIn('stock_item_id', $product->stockItems()->select('id'))->exists()) {
+                throw ValidationException::withMessages(['product' => 'This product has delivery transfer history and cannot be deleted.']);
+            }
             if ($product->serialNumbers()->exists()) {
                 throw ValidationException::withMessages(['product' => 'This product has serial-number history and cannot be deleted.']);
+            }
+            if ($product->lots()->exists()) {
+                throw ValidationException::withMessages(['product' => 'This product has lot history and cannot be deleted.']);
             }
             // A featured-product assignment is presentation data owned by a
             // business location. It must not keep an otherwise deletable
             // product record alive.
             DB::table('location_featured_products')->where('product_id', $product->id)->delete();
+            $stockItemIds = $product->stockItems()->pluck('id');
+            DB::table('product_stock_item_variants')->whereIn('product_stock_item_id', $stockItemIds)->delete();
+            $product->stockItems()->delete();
             $product->delete();
         });
         $this->cleanupAttachments($files);
@@ -55,6 +64,10 @@ class ProductCatalogService
                 throw ValidationException::withMessages(['quantities' => 'Enter stock for the assigned locations only.']);
             }
             foreach ($quantities as $locationId => $quantity) {
+                if (DB::table('delivery_vehicle_stores')->where('location_id', $locationId)->exists()
+                    && bccomp((string) $quantity, (string) $product->locations()->where('locations.id', $locationId)->first()->pivot->opening_quantity, 4) !== 0) {
+                    throw ValidationException::withMessages(['quantities' => 'Use Delivery loading/unloading to change vehicle stock.']);
+                }
                 if (! $product->unit?->allow_decimal && (float) $quantity !== floor((float) $quantity)) {
                     throw ValidationException::withMessages(['quantities' => 'This unit requires whole-number stock.']);
                 }
@@ -82,6 +95,12 @@ class ProductCatalogService
                     throw ValidationException::withMessages(['quantities' => 'Enter stock for every assigned location.']);
                 }
                 foreach ($locationQuantities as $locationId => $quantity) {
+                    if (DB::table('delivery_vehicle_stores')->where('location_id', $locationId)->exists()) {
+                        $current = $product->variants->firstWhere('id', $variantId)->locationStocks()->where('location_id', $locationId)->value('opening_quantity') ?? 0;
+                        if (bccomp((string) $quantity, (string) $current, 4) !== 0) {
+                            throw ValidationException::withMessages(['quantities' => 'Use Delivery loading/unloading to change vehicle stock.']);
+                        }
+                    }
                     if (! $product->unit?->allow_decimal && (float) $quantity !== floor((float) $quantity)) {
                         throw ValidationException::withMessages(['quantities' => 'This unit requires whole-number stock.']);
                     }
@@ -187,6 +206,9 @@ class ProductCatalogService
         if ($data['product_type'] === 'combo' && $data['enable_serial']) {
             throw ValidationException::withMessages(['enable_serial' => 'Serial tracking belongs to the individual products inside a combo.']);
         }
+        if ($data['track_lots'] && (! $data['manage_stock'] || $data['enable_serial'] || $data['product_type'] === 'combo')) {
+            throw ValidationException::withMessages(['track_lots' => 'Lot tracking requires managed stock and cannot be combined with serial or combo tracking.']);
+        }
         if (! $unit->allow_decimal && isset($data['alert_quantity']) && (float) $data['alert_quantity'] !== floor((float) $data['alert_quantity'])) {
             throw ValidationException::withMessages(['alert_quantity' => 'This unit requires a whole-number alert quantity.']);
         }
@@ -262,11 +284,33 @@ class ProductCatalogService
         }
         Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
         $product->refresh();
+        if (DB::table('delivery_transfer_lines')->whereIn('stock_item_id', $product->stockItems()->select('id'))->exists()) {
+            foreach (['product_type', 'unit_id', 'manage_stock', 'enable_serial', 'track_lots'] as $field) {
+                if ($data[$field] != $product->$field) {
+                    throw ValidationException::withMessages([$field => 'The stock method and unit cannot change after delivery transfers.']);
+                }
+            }
+            $vehicleLocations = DB::table('delivery_vehicle_stores')->pluck('location_id')->all();
+            if ($product->locations()->whereIn('locations.id', $vehicleLocations)->whereNotIn('locations.id', $locations)->exists()) {
+                throw ValidationException::withMessages(['location_ids' => 'Keep vehicle store locations with delivery history assigned.']);
+            }
+        }
         if ($product->serialNumbers()->exists() && (! $data['enable_serial'] || ! $data['manage_stock'])) {
             throw ValidationException::withMessages(['enable_serial' => 'This product already has serials. Keep serial tracking and stock management enabled.']);
         }
         if ($product->serialNumbers()->whereNotIn('location_id', $locations)->exists()) {
             throw ValidationException::withMessages(['location_ids' => 'A removed location still has serial numbers for this product.']);
+        }
+        if ($product->lots()->exists() && $data['product_type'] !== $product->product_type) {
+            throw ValidationException::withMessages(['product_type' => 'A product with lot history cannot change its product type.']);
+        }
+        if ($product->track_lots !== (bool) $data['track_lots']) {
+            if ($product->lots()->exists()) {
+                throw ValidationException::withMessages(['track_lots' => 'Lot tracking cannot be changed after lots have been received.']);
+            }
+            if ($data['track_lots'] && ($product->locations()->wherePivot('opening_quantity', '>', 0)->exists() || $product->variants()->whereHas('locationStocks', fn ($query) => $query->where('opening_quantity', '>', 0))->exists())) {
+                throw ValidationException::withMessages(['track_lots' => 'Clear current opening stock before enabling lot tracking.']);
+            }
         }
         $hasStock = $product->locations()->wherePivot('opening_quantity', '>', 0)->exists();
         if ($hasStock && (! $data['manage_stock'] || $data['enable_serial'] != $product->enable_serial || $data['unit_id'] != $product->unit_id)) {
@@ -274,6 +318,9 @@ class ProductCatalogService
         }
         if ($product->locations()->whereNotIn('locations.id', $locations)->wherePivot('opening_quantity', '>', 0)->exists()) {
             throw ValidationException::withMessages(['location_ids' => 'A removed location still has opening stock.']);
+        }
+        if ($product->lots()->whereHas('movements', fn ($query) => $query->whereNotIn('location_id', $locations))->exists()) {
+            throw ValidationException::withMessages(['location_ids' => 'A location with lot stock history cannot be removed from this product.']);
         }
     }
 
@@ -335,13 +382,25 @@ class ProductCatalogService
                 ]);
                 $keptIds[]=$savedVariant->id;
                 foreach ($locations as $locationId) {
-                    $savedVariant->locationStocks()->updateOrCreate(['location_id' => $locationId], ['opening_quantity' => 0]);
+                    $savedVariant->locationStocks()->firstOrCreate(['location_id' => $locationId], ['opening_quantity' => 0]);
                 }
                 $savedVariant->locationStocks()->whereNotIn('location_id', $locations)->delete();
             }
         }
         if (\App\Models\ProductSerialNumber::whereIn('product_variant_id',$product->variants()->whereNotIn('id',$keptIds)->pluck('id'))->exists()) {
             throw ValidationException::withMessages(['variants'=>'A variant with serial-number history cannot be removed.']);
+        }
+        $removedVariantIds = $product->variants()->whereNotIn('id', $keptIds)->pluck('id');
+        if (\App\Models\ProductLot::whereHas('stockItem.variant', fn ($query) => $query->whereIn('product_variants.id', $removedVariantIds))->exists()) {
+            throw ValidationException::withMessages(['variants' => 'A variant with lot history cannot be removed.']);
+        }
+        $removedStockItems = \App\Models\ProductStockItem::whereHas('variant', fn ($query) => $query->whereIn('product_variants.id', $removedVariantIds))->get();
+        foreach ($removedStockItems as $stockItem) {
+            if (DB::table('delivery_transfer_lines')->where('stock_item_id', $stockItem->id)->exists()) {
+                throw ValidationException::withMessages(['variants' => 'A variation with delivery history cannot be removed.']);
+            }
+            $stockItem->variant()->detach();
+            $stockItem->delete();
         }
         $product->variants()->whereNotIn('id',$keptIds)->delete();
         foreach ($existingVariants as $oldVariant) {

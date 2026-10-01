@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Contact;
 use App\Models\CustomerGroup;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -178,6 +179,22 @@ class ContactsTest extends TestCase
         $this->assertDatabaseMissing('contacts', ['id' => $contact->id]);
         $this->assertDatabaseHas('contacts', ['id' => $other->id]);
         $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_assigned_only_role_cannot_modify_another_customers_record(): void
+    {
+        $user = $this->signIn();
+        $role = Role::create(['name' => 'Customer Clerk']);
+        $role->syncPermissions(['customer.view_own']);
+        $user->update(['role_id' => $role->id]);
+        $other = Contact::create($this->payload(['contact_id' => 'C-OTHER']));
+
+        $this->put(route('contacts.update', $other), $this->payload(['name' => 'Unauthorized change']))->assertForbidden();
+        $this->delete(route('contacts.destroy', $other))->assertForbidden();
+        $this->post('/contacts', $this->payload(['type' => 'supplier', 'contact_id' => 'S-NO']))->assertForbidden();
+        $this->post('/contacts', $this->payload(['contact_id' => 'C-OWN', 'assigned_to' => null]))->assertRedirect();
+        $this->assertDatabaseHas('contacts', ['contact_id' => 'C-OWN', 'assigned_to' => $user->id]);
+        $this->assertSame('Test contact', $other->fresh()->name);
     }
 
     public function test_filters_use_recorded_balances_assignment_group_and_sale_dates(): void
