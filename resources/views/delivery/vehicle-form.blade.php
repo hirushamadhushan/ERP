@@ -6,7 +6,7 @@
 <form method="POST" action="{{ $vehicle->exists ? route('delivery.vehicles.update',$vehicle) : route('delivery.vehicles.store') }}" class="serial-card">
 @csrf @if($vehicle->exists) @method('PUT') @endif
 <div class="serial-grid">
-@foreach(['number'=>['Vehicle number *','text',40],'name'=>['Vehicle name *','text',150],'make'=>['Make','text',100],'model'=>['Model','text',100],'year'=>['Year','number',4],'chassis_number'=>['Chassis number','text',100],'engine_number'=>['Engine number','text',100],'insurance_expires_at'=>['Insurance expiry','date',10],'revenue_license_expires_at'=>['Revenue license expiry','date',10]] as $field=>[$label,$type,$max])
+@foreach(['number'=>['Vehicle number *','text',40],'name'=>['Vehicle name *','text',150],'brand'=>['Brand','text',100],'model'=>['Model','text',100],'year'=>['Year','number',4],'chassis_number'=>['Chassis number','text',100],'engine_number'=>['Engine number','text',100],'insurance_expires_at'=>['Insurance expiry','date',10],'revenue_license_expires_at'=>['Revenue license expiry','date',10]] as $field=>[$label,$type,$max])
 <div><label for="{{ $field }}">{{ $label }}</label><input id="{{ $field }}" name="{{ $field }}" type="{{ $type }}" maxlength="{{ $max }}" value="{{ old($field,$vehicle->$field) }}" @required(in_array($field,['number','name'])) @if($field==='year') min="1900" max="2100" @endif></div>
 @endforeach
 <div><label for="fuel_type">Fuel type</label><select id="fuel_type" name="fuel_type"><option value="">Select fuel type</option>@foreach(['petrol','diesel','electric','hybrid','other'] as $fuel)<option value="{{ $fuel }}" @selected(old('fuel_type',$vehicle->fuel_type)===$fuel)>{{ ucfirst($fuel) }}</option>@endforeach</select></div>

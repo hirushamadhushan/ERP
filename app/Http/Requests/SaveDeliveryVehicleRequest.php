@@ -14,7 +14,7 @@ class SaveDeliveryVehicleRequest extends BaseFormRequest
         return [
             'number' => ['required', 'string', 'max:40', Rule::unique('delivery_vehicles')->ignore($this->route('vehicle')?->id)],
             'name' => ['required', 'string', 'max:150'],
-            'make' => ['nullable', 'string', 'max:100'], 'model' => ['nullable', 'string', 'max:100'],
+            'brand' => ['nullable', 'string', 'max:100'], 'model' => ['nullable', 'string', 'max:100'],
             'year' => ['nullable', 'integer', 'between:1900,2100'],
             'fuel_type' => ['nullable', Rule::in(['petrol', 'diesel', 'electric', 'hybrid', 'other'])],
             'chassis_number' => ['nullable', 'string', 'max:100'], 'engine_number' => ['nullable', 'string', 'max:100'],

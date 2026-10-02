@@ -25,7 +25,9 @@ class DeliveryController extends Controller
     {
         $search = $request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? '';
         $drivers = DeliveryDriver::with('vehicles')->when($search !== '', fn ($q) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$search.'%')->orWhere('license_number', 'like', '%'.$search.'%')->orWhere('phone', 'like', '%'.$search.'%')))->latest()->paginate(20)->withQueryString();
-        return view('delivery.drivers', compact('drivers'));
+        $vehicles = DeliveryVehicle::with('drivers')->orderBy('number')->get();
+
+        return view('delivery.drivers', compact('drivers', 'vehicles'));
     }
     public function driverForm(?DeliveryDriver $driver = null)
     {
