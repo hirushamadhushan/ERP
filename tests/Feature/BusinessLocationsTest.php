@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Location;
+use App\Models\DeliveryVehicle;
 use App\Models\User;
 use App\Models\InvoiceScheme;
 use App\Models\InvoiceLayout;
@@ -87,5 +88,21 @@ class BusinessLocationsTest extends TestCase
         $this->get('/products/create')->assertOk()
             ->assertSee('Active Warehouse')
             ->assertDontSee('Closed Warehouse');
+    }
+
+    public function test_vehicle_stock_locations_are_hidden_and_cannot_be_managed_as_business_locations(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $warehouse = Location::create(['name' => 'Main Warehouse', 'code' => 'MAIN']);
+        $vehicleStore = Location::create(['name' => 'Vehicle: WP-CAB-4587', 'code' => 'VEH-TEST']);
+        $vehicle = DeliveryVehicle::create(['number' => 'WP-CAB-4587', 'name' => 'Delivery Van']);
+        $vehicle->stores()->attach($vehicleStore->id);
+
+        $this->get('/business-locations')->assertOk()
+            ->assertSee($warehouse->name)
+            ->assertDontSee($vehicleStore->name);
+        $this->get('/business-locations/'.$vehicleStore->id.'/settings')->assertNotFound();
+        $this->patchJson('/business-locations/'.$vehicleStore->id.'/status')->assertNotFound();
+        $this->assertTrue($vehicleStore->fresh()->is_active);
     }
 }

@@ -28,7 +28,9 @@ class BusinessLocationController extends Controller
     public function index(): View
     {
         return view('business.locations', [
-            'locations' => Location::with(['invoiceScheme', 'invoiceLayoutPos', 'invoiceLayoutSale', 'contacts', 'customFieldValues', 'featuredProducts', 'paymentMethods'])->orderBy('name')->get(),
+            'locations' => Location::whereNotIn('id', DB::table('delivery_vehicle_stores')->select('location_id'))
+                ->with(['invoiceScheme', 'invoiceLayoutPos', 'invoiceLayoutSale', 'contacts', 'customFieldValues', 'featuredProducts', 'paymentMethods'])
+                ->orderBy('name')->get(),
             'invoiceSchemes' => InvoiceScheme::orderByDesc('is_default')->orderBy('name')->get(),
             'invoiceLayouts' => InvoiceLayout::orderByDesc('is_default')->orderBy('name')->get(),
             'products' => Product::orderBy('name')->get(['id', 'name', 'code']),
@@ -45,12 +47,14 @@ class BusinessLocationController extends Controller
 
     public function update(SaveBusinessLocationRequest $request, Location $location): RedirectResponse
     {
+        $this->ensureBusinessLocation($location);
         $this->saveLocation($location, $request->validated());
         return redirect()->route('business.locations.index')->with('status', 'Business location updated successfully.');
     }
 
     public function toggle(Location $location): JsonResponse
     {
+        $this->ensureBusinessLocation($location);
         $location->update(['is_active' => ! $location->is_active]);
         return response()->json(['ok' => true, 'is_active' => $location->is_active, 'message' => $location->is_active ? 'Business location activated.' : 'Business location deactivated.']);
     }
@@ -65,6 +69,7 @@ class BusinessLocationController extends Controller
 
     public function settings(Location $location): View
     {
+        $this->ensureBusinessLocation($location);
         return view('business.location-settings', [
             'location' => $location,
             'setting' => $location->receiptSetting ?? new \App\Models\LocationReceiptSetting(['auto_print_invoice' => true, 'printer_type' => 'browser', 'invoice_layout_id' => $location->invoice_layout_pos_id, 'invoice_scheme_id' => $location->invoice_scheme_id]),
@@ -76,6 +81,7 @@ class BusinessLocationController extends Controller
 
     public function updateSettings(SaveLocationReceiptSettingsRequest $request, Location $location): RedirectResponse
     {
+        $this->ensureBusinessLocation($location);
         $data = $request->validated();
         if ($data['printer_type'] === 'browser') $data['receipt_printer_id'] = null;
         $location->receiptSetting()->updateOrCreate([], $data);
@@ -111,5 +117,10 @@ class BusinessLocationController extends Controller
     {
         $number = (int) Location::lockForUpdate()->selectRaw("MAX(CAST(SUBSTRING(code, 3) AS UNSIGNED)) AS value")->value('value');
         return 'BL'.str_pad((string) ($number + 1), 4, '0', STR_PAD_LEFT);
+    }
+
+    private function ensureBusinessLocation(Location $location): void
+    {
+        abort_if(DB::table('delivery_vehicle_stores')->where('location_id', $location->id)->exists(), 404);
     }
 }
