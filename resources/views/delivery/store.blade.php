@@ -1,17 +1,143 @@
 @extends('layouts.app')
-@section('title','Vehicle Store')
+@section('title','Vehicle Store — Inventory & Transfers')
 @section('content')
 @include('serials.common')
-<section class="serial-card">
-<div class="flex flex-wrap justify-between gap-3 mb-5"><div><h1 class="text-xl font-bold">Vehicle Store</h1><p class="text-sm text-slate-500">Load from a warehouse. Unload remaining stock back to a warehouse.</p></div>@if(auth()->user()->canUseDelivery('delivery.transfer'))<div><a class="serial-btn" href="{{ route('delivery.transfers.create',['direction'=>'loading','vehicle_id'=>$vehicle?->id]) }}">↑ Loading</a> <a class="serial-btn serial-secondary" href="{{ route('delivery.transfers.create',['direction'=>'unloading','vehicle_id'=>$vehicle?->id]) }}">↓ Unloading</a></div>@endif</div>
-<form method="GET" class="serial-grid"><div><label for="vehicle_id">Vehicle</label><select name="vehicle_id" id="vehicle_id"><option value="">Select a vehicle to see stock</option>@foreach($vehicles as $item)<option value="{{ $item->id }}" @selected($vehicle?->id===$item->id)>{{ $item->number }} — {{ $item->name }}</option>@endforeach</select></div><div><label for="q">Product name / SKU</label><input id="q" name="q" value="{{ request('q') }}" maxlength="100" placeholder="Search all vehicle stock"></div><div class="flex items-end"><button class="serial-btn">Show Stock</button></div></form>
-@if($vehicle)
-<p class="my-4 text-sm">Driver: <strong>{{ $vehicle->drivers->first()?->name ?? 'Unassigned' }}</strong> · Store: {{ $vehicle->stores->first()?->name }}</p>
-<p class="mb-3 text-xs text-slate-500">Stock exports include the records visible on this server page.</p>
-<div class="overflow-x-auto"><table id="vehicle-stock-table" class="serial-table"><thead><tr><th>Product / SKU</th><th>Variation</th><th>On vehicle</th><th>Stock value</th></tr></thead><tbody>@foreach($balances as $row)<tr><td>{{ $row['product']->name }} / {{ $row['product']->code }}</td><td>{{ $row['variation'] }}</td><td>{{ number_format($row['stock'],4) }} {{ $row['product']->unit?->short_name }}</td><td>Rs {{ number_format($row['purchase_value'],2) }}</td></tr>@endforeach</tbody></table></div><div class="mt-4">{{ $products->links() }}</div>
-@endif
-</section>
-<section class="serial-card"><h2>Transfer history</h2><p class="mb-3 text-xs text-slate-500">Exports include the transfer records visible on this server page.</p><div class="overflow-x-auto"><table id="delivery-history-table" class="serial-table"><thead><tr><th>Transfer</th><th>Date</th><th>Operation</th><th>Vehicle</th><th>Warehouse</th><th>Driver</th><th>Reference</th></tr></thead><tbody>@foreach($transfers as $transfer)<tr><td><a class="text-purple-700 font-bold" href="{{ route('delivery.transfers.show',$transfer) }}">DLV-{{ $transfer->id }}</a></td><td>{{ $transfer->created_at->format('Y-m-d H:i') }}</td><td>{{ ucfirst($transfer->direction) }}</td><td>{{ $transfer->vehicle->number }}</td><td>{{ $transfer->warehouse->name }}</td><td>{{ $transfer->driver?->name ?? '—' }}</td><td>{{ $transfer->transaction->reference ?? '—' }}</td></tr>@endforeach</tbody></table></div><div class="mt-4">{{ $transfers->links() }}</div></section>
+@include('delivery.header', ['activeStep' => 2])
+
+<div class="mb-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+        <div>
+            <h2 class="text-lg font-extrabold text-slate-900">Vehicle Store Stock</h2>
+            <p class="text-xs text-slate-500">Load goods onto a vehicle from a warehouse or unload remaining stock back to a warehouse</p>
+        </div>
+        @if(auth()->user()->canUseDelivery('delivery.transfer'))
+            <div class="flex items-center gap-2">
+                @if($activeDelivery)
+                    <a class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition-all" href="{{ route('delivery.unloading', ['delivery_id' => $activeDelivery->id, 'vehicle_id' => $vehicle?->id]) }}">
+                        <i class="bi bi-arrow-right-circle"></i> Continue {{ $activeDelivery->number }}
+                    </a>
+                @else
+                    <a class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-all" href="{{ route('delivery.loading', ['vehicle_id' => $vehicle?->id]) }}">
+                        <i class="bi bi-box-arrow-up"></i> ↑ Loading
+                    </a>
+                    <a class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition-all" href="{{ route('delivery.unloading', ['vehicle_id' => $vehicle?->id]) }}">
+                        <i class="bi bi-box-arrow-down"></i> ↓ Unloading
+                    </a>
+                @endif
+            </div>
+        @endif
+    </div>
+
+    @if($activeDelivery)
+        <div class="mb-4 rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900">
+            <strong>{{ $activeDelivery->number }}</strong> for {{ $activeDelivery->customer->name }} is {{ str_replace('_', ' ', $activeDelivery->status) }}. Complete this delivery before loading or returning other stock on this vehicle.
+        </div>
+    @endif
+
+    <form method="GET" class="grid gap-4 sm:grid-cols-3 items-end mb-4">
+        <div>
+            <label for="vehicle_id" class="block text-xs font-bold text-slate-600 mb-1">Select Vehicle</label>
+            <select name="vehicle_id" id="vehicle_id" class="w-full rounded-xl border-slate-200 text-xs font-semibold text-slate-800 shadow-xs focus:border-purple-500 focus:ring-purple-500">
+                <option value="">Select a vehicle to inspect live stock</option>
+                @foreach($vehicles as $item)
+                    <option value="{{ $item->id }}" @selected($vehicle?->id===$item->id)>{{ $item->number }} — {{ $item->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label for="q" class="block text-xs font-bold text-slate-600 mb-1">Search Product / SKU</label>
+            <input id="q" name="q" value="{{ request('q') }}" maxlength="100" placeholder="Search stock by name or code..." class="w-full rounded-xl border-slate-200 text-xs shadow-xs focus:border-purple-500 focus:ring-purple-500">
+        </div>
+        <div>
+            <button class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-all">
+                <i class="bi bi-search"></i> Show Stock
+            </button>
+        </div>
+    </form>
+
+    @if($vehicle)
+        <div class="mb-4 flex flex-wrap items-center justify-between rounded-xl bg-purple-50/70 border border-purple-100 p-3 text-xs text-purple-900">
+            <div>
+                Driver: <strong class="font-bold">{{ $vehicle->drivers->first()?->name ?? 'Unassigned' }}</strong> · Vehicle Store Location: <strong class="font-bold">{{ $vehicle->stores->first()?->name }}</strong>
+            </div>
+            <span class="text-[11px] text-purple-600 font-semibold">Live inventory balance</span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table id="vehicle-stock-table" class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                        <th class="p-3">Product / SKU</th>
+                        <th class="p-3">Variation</th>
+                        <th class="p-3 text-center">On Vehicle</th>
+                        <th class="p-3 text-right">Stock Value</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    @forelse($balances as $row)
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-3 font-semibold text-slate-900">{{ $row['product']->name }} <span class="text-slate-400">({{ $row['product']->code }})</span></td>
+                            <td class="p-3 text-slate-500">{{ $row['variation'] }}</td>
+                            <td class="p-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">
+                                    {{ number_format($row['stock'], 4) }} {{ $row['product']->unit?->short_name }}
+                                </span>
+                            </td>
+                            <td class="p-3 text-right font-bold text-slate-800">Rs {{ number_format($row['purchase_value'], 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="p-6 text-center text-slate-400">No vehicle stock found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4">{{ $products->links() }}</div>
+    @endif
+</div>
+
+<div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <h3 class="text-base font-extrabold text-slate-900 mb-1">Transfer History</h3>
+    <p class="mb-4 text-xs text-slate-500">Historical warehouse loading and vehicle unloading operations</p>
+
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table id="delivery-history-table" class="w-full text-left text-xs border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                    <th class="p-3">Transfer</th>
+                    <th class="p-3">Date</th>
+                    <th class="p-3">Operation</th>
+                    <th class="p-3">Vehicle</th>
+                    <th class="p-3">Warehouse</th>
+                    <th class="p-3">Driver</th>
+                    <th class="p-3">Reference</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+                @foreach($transfers as $transfer)
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3 font-bold text-indigo-600">
+                            <a href="{{ route('delivery.transfers.show', $transfer) }}" class="hover:underline">DLV-{{ $transfer->id }}</a>
+                        </td>
+                        <td class="p-3 text-slate-500 whitespace-nowrap">{{ $transfer->created_at->format('Y-m-d H:i') }}</td>
+                        <td class="p-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold {{ $transfer->direction === 'loading' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800' }}">
+                                {{ ucfirst($transfer->direction) }}
+                            </span>
+                        </td>
+                        <td class="p-3 font-semibold text-slate-800">{{ $transfer->vehicle->number }}</td>
+                        <td class="p-3 text-slate-600">{{ $transfer->warehouse->name }}</td>
+                        <td class="p-3 text-slate-600">{{ $transfer->driver?->name ?? '—' }}</td>
+                        <td class="p-3 font-mono text-[11px] text-slate-500">{{ $transfer->transaction->reference ?? '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4">{{ $transfers->links() }}</div>
+</div>
+
 @php
 $deliveryTables = [['id'=>'delivery-history-table','title'=>'Delivery Transfer History','exportColumns'=>[0,1,2,3,4,5,6],'nonOrderable'=>[],'order'=>[[1,'desc']],'emptyTable'=>'No transfers recorded']];
 if($vehicle) array_unshift($deliveryTables, ['id'=>'vehicle-stock-table','title'=>'Vehicle Stock - '.$vehicle->number,'exportColumns'=>[0,1,2,3],'nonOrderable'=>[],'order'=>[[0,'asc']],'emptyTable'=>'No vehicle stock found']);

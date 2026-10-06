@@ -1,7 +1,7 @@
 <?php
 namespace App\Services;
 
-use App\Models\{DeliveryTransfer, DeliveryVehicle, InventoryMovement, InventoryTransaction, Location, Product, ProductLot, ProductSerialNumber, ProductStockItem};
+use App\Models\{DeliveryConsignment, DeliveryTransfer, DeliveryVehicle, InventoryMovement, InventoryTransaction, Location, Product, ProductLot, ProductSerialNumber, ProductStockItem};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -23,12 +23,20 @@ class DeliveryStockService
                 return $previous;
             }
             $loading = $data['direction'] === 'loading';
+            $hasActiveDelivery = DeliveryConsignment::active()
+                ->whereHas('loadingTransfer', fn ($query) => $query->where('vehicle_id', $vehicle->id))
+                ->exists();
+            if ($hasActiveDelivery) {
+                $this->fail($loading
+                    ? 'This vehicle has an active customer delivery. Complete it before loading more stock.'
+                    : 'This vehicle has an active customer delivery. Record its POD before unloading stock to a warehouse.');
+            }
             $warehouse = Location::findOrFail($data['warehouse_id']);
             if (! $warehouse->is_active || DB::table('delivery_vehicle_stores')->where('location_id', $warehouse->id)->exists()) $this->fail('Select an active warehouse or branch location.');
             $store = $vehicle->stores()->firstOrFail();
             $driver = $vehicle->drivers()->first();
-            if ($loading && (! $vehicle->is_active || ! $driver?->is_active)) $this->fail('Loading requires an active vehicle with an active assigned driver.');
-            if ($loading && $driver->license_expires_at && $driver->license_expires_at < now()->toDateString()) $this->fail('The assigned driver’s license has expired.');
+            if ($loading && (! $vehicle->is_active || ! $driver?->canDrive())) $this->fail('Loading requires an active vehicle and assigned driver with a valid license number.');
+            if ($loading && $vehicle->hasExpiredDocuments()) $this->fail('The vehicle has an expired insurance or revenue license document.');
             $source = $loading ? $warehouse->id : $store->id;
             $destination = $loading ? $store->id : $warehouse->id;
             $products = Product::with('unit')->whereIn('id', array_column($data['lines'], 'product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');

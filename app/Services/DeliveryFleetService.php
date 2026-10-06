@@ -44,8 +44,19 @@ class DeliveryFleetService
             }
             $current = DB::table('delivery_vehicle_assignments')->where('driver_id', $driver->id)->first();
             if ((string) ($current?->vehicle_id ?? '') !== (string) ($vehicleId ?? '')) {
+                // Current assignments stay compact; immutable events preserve the audit trail.
+                if ($current) DB::table('delivery_vehicle_assignment_history')->insert([
+                    'driver_id' => $driver->id, 'vehicle_id' => $current->vehicle_id,
+                    'action' => 'unassigned', 'changed_by' => $userId, 'created_at' => now(),
+                ]);
                 $driver->vehicles()->detach();
-                if ($vehicleId) $driver->vehicles()->attach($vehicleId, ['assigned_by' => $userId, 'assigned_at' => now()]);
+                if ($vehicleId) {
+                    $driver->vehicles()->attach($vehicleId, ['assigned_by' => $userId, 'assigned_at' => now()]);
+                    DB::table('delivery_vehicle_assignment_history')->insert([
+                        'driver_id' => $driver->id, 'vehicle_id' => $vehicleId,
+                        'action' => 'assigned', 'changed_by' => $userId, 'created_at' => now(),
+                    ]);
+                }
             }
             return $driver;
         }, 3);

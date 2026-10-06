@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 class DeliveryDriver extends Model
 {
     protected $fillable = ['name', 'phone', 'email', 'identity_number', 'license_number', 'license_expires_at', 'address', 'emergency_contact', 'notes', 'is_active'];
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'license_expires_at' => 'date'];
     public function vehicles() { return $this->belongsToMany(DeliveryVehicle::class, 'delivery_vehicle_assignments', 'driver_id', 'vehicle_id'); }
+    public function canDrive(): bool
+    {
+        return $this->is_active && filled($this->license_number)
+            && ! ($this->license_expires_at?->isBefore(today()) ?? false);
+    }
 }

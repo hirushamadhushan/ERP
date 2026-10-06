@@ -9,6 +9,7 @@ class ProductSerialNumber extends Model
     public const AVAILABLE = 'available';
     public const SOLD = 'sold';
     public const DAMAGED = 'damaged';
+    public const MISSING = 'missing';
     protected static function booted(): void
     {
         static::saving(function ($record) {
@@ -48,7 +49,7 @@ class ProductSerialNumber extends Model
         if ($this->status !== self::AVAILABLE) {
             throw \Illuminate\Validation\ValidationException::withMessages(['serial' => 'Only an available serial number can be sold.']);
         }
-        $this->update(['status' => self::SOLD, 'sold_transaction_id' => $transactionId, 'sold_sell_line_id' => $sellLineId, 'sold_at' => $soldAt ?? now()]);
+        $this->forceFill(['status' => self::SOLD, 'sold_transaction_id' => $transactionId, 'sold_sell_line_id' => $sellLineId, 'sold_at' => $soldAt ?? now()])->save();
     }
 
     public function markDamaged(): void
@@ -56,6 +57,14 @@ class ProductSerialNumber extends Model
         if ($this->status !== self::AVAILABLE) {
             throw \Illuminate\Validation\ValidationException::withMessages(['serial' => 'Only an available serial number can be marked damaged.']);
         }
-        $this->update(['status' => self::DAMAGED]);
+        $this->forceFill(['status' => self::DAMAGED])->save();
+    }
+
+    public function markMissing(): void
+    {
+        if ($this->status !== self::AVAILABLE) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['serial' => 'Only an available serial number can be marked missing.']);
+        }
+        $this->forceFill(['status' => self::MISSING])->save();
     }
 }

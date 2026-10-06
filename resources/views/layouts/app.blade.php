@@ -154,7 +154,7 @@
                 </a>
 
                 @if(auth()->user()->canUseDelivery())
-                <a href="{{ route('delivery.vehicles.index') }}" class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('delivery.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                <a href="{{ route('delivery.consignments.index') }}" class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('delivery.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-truck text-base" aria-hidden="true"></i>Delivery
                 </a>
                 @endif
