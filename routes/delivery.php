@@ -22,11 +22,11 @@ Route::prefix('delivery')->name('delivery.')->middleware('role.permission:delive
     });
     Route::middleware('role.permission:delivery.transfer')->group(function () {
         Route::get('/loading', 'loadingForm')->name('loading');
-        Route::get('/unloading', 'unloadingForm')->name('unloading');
         Route::get('/transfer', 'transferForm')->name('transfers.create');
         Route::get('/stock-options', 'options')->name('options');
         Route::post('/transfer', 'transfer')->middleware('throttle:30,1')->name('transfers.store');
     });
+    Route::get('/unloading', 'unloadingForm')->middleware('role.permission:delivery.transfer,delivery.unload')->name('unloading');
 });
 
 Route::prefix('delivery')->name('delivery.consignments.')->middleware('role.permission:delivery.view')->controller(DeliveryConsignmentController::class)->group(function () {
@@ -38,7 +38,6 @@ Route::prefix('delivery')->name('delivery.consignments.')->middleware('role.perm
         Route::post('/consignments', 'store')->middleware('throttle:30,1')->name('store');
         Route::post('/consignments/{consignment}/depart', 'depart')->middleware('throttle:30,1')->name('depart');
         Route::post('/consignments/{consignment}/arrive', 'arrive')->middleware('throttle:30,1')->name('arrive');
-        Route::post('/consignments/{consignment}/return', 'completeReturn')->middleware('throttle:30,1')->name('return.complete');
         Route::post('/consignments/{consignment}/complete', 'complete')->middleware('throttle:30,1')->name('complete');
         Route::post('/consignments/{consignment}/proofs', 'uploadProof')->middleware('throttle:30,1')->name('proofs.store');
     });

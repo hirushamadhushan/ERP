@@ -21,6 +21,5 @@ class DeliveryConsignment extends Model
     public function lines() { return $this->hasMany(DeliveryConsignmentLine::class, 'consignment_id'); }
     public function events() { return $this->hasMany(DeliveryConsignmentEvent::class, 'consignment_id'); }
     public function proofs() { return $this->hasMany(DeliveryConsignmentProof::class, 'consignment_id'); }
-    public function returnNote() { return $this->hasOne(DeliveryReturn::class, 'consignment_id'); }
     public function scopeActive($query) { return $query->whereIn('status', self::ACTIVE_STATUSES); }
 }

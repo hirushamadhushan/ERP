@@ -2,23 +2,45 @@
 @section('title', $consignment->number)
 @section('content')
 @include('serials.common')
+@php
+    $companyLocation = $consignment->loadingTransfer->warehouse;
+    $companyAddress = collect([$companyLocation->landmark, $companyLocation->city, $companyLocation->state, $companyLocation->zip_code, $companyLocation->country])->filter()->join(', ');
+    $companyLogo = $businessSetting->logo_path ?? asset('images/codeza-logo.png');
+    $signatureProof = $consignment->proofs->firstWhere('kind', 'signature');
+    $photoProofs = $consignment->proofs->where('kind', 'photo');
+    $hasOutcome = in_array($consignment->status, ['delivered', 'partial', 'failed'], true);
+@endphp
+
+{{-- Formal document identity shown only on paper/PDF. --}}
+<div class="delivery-print-header print-only">
+    <div class="delivery-print-brand">
+        <img src="{{ $companyLogo }}" alt="{{ $businessSetting->business_name ?? 'Codeza ERP' }} logo">
+        <div>
+            <h1>{{ $businessSetting->business_name ?? 'Codeza ERP' }}</h1>
+            <p>{{ $companyLocation->name }}{{ $companyLocation->code ? ' · '.$companyLocation->code : '' }}</p>
+            @if($companyAddress)<p>{{ $companyAddress }}</p>@endif
+        </div>
+    </div>
+    <div class="delivery-print-document">
+        <span>Delivery Receipt & Proof of Delivery</span>
+        <strong>{{ $consignment->number }}</strong>
+        <p>Printed {{ now()->format('Y-m-d H:i') }}</p>
+    </div>
+</div>
 
 {{-- Hero Header Banner --}}
-<div class="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5 text-white shadow-md" style="background: linear-gradient(110deg, #6d28d9, #4f46e5);">
+<div class="no-print mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5 text-white shadow-md" style="background: linear-gradient(110deg, #6d28d9, #4f46e5);">
     <div class="flex items-center gap-4">
         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-black shadow-inner" style="background:rgba(255,255,255,0.22)">
             3
         </span>
         <div>
-            <h1 class="text-2xl font-extrabold tracking-tight">Unloading</h1>
-            <p class="text-sm text-white/90">Confirm delivery, record discrepancies and capture POD</p>
+            <h1 class="text-2xl font-extrabold tracking-tight">Customer Delivery</h1>
+            <p class="text-sm text-white/90">Confirm delivery, record discrepancies and capture proof of delivery</p>
         </div>
     </div>
     <div class="no-print flex gap-2">
-        <a class="rounded-xl bg-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/30 transition-all" href="{{ route('delivery.unloading') }}">Unloading</a>
-        @if(auth()->user()->canUseDelivery('delivery.transfer'))
-            <a class="rounded-xl bg-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/30 transition-all" href="{{ route('delivery.transfers.create', ['direction' => 'unloading', 'vehicle_id' => $consignment->loadingTransfer->vehicle_id]) }}"><i class="bi bi-box-arrow-down"></i> Unload to warehouse</a>
-        @endif
+        <a class="rounded-xl bg-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/30 transition-all" href="{{ route('delivery.consignments.index') }}">Delivery Dashboard</a>
         <button type="button" onclick="window.print()" class="rounded-xl bg-white px-4 py-2 text-xs font-bold text-violet-700 shadow-sm hover:bg-violet-50 transition-all">
             <i class="bi bi-printer"></i> Print
         </button>
@@ -26,23 +48,23 @@
 </div>
 
 @if($consignment->status === 'loaded' && auth()->user()->canUseDelivery('delivery.transfer'))
-<form class="mb-5" method="POST" action="{{ route('delivery.consignments.depart', $consignment) }}">@csrf<button class="serial-btn">Mark in transit</button></form>
+<form class="no-print mb-5" method="POST" action="{{ route('delivery.consignments.depart', $consignment) }}">@csrf<button class="serial-btn">Mark in transit</button></form>
 @elseif($consignment->status === 'in_transit' && ! $consignment->arrived_at && auth()->user()->canUseDelivery('delivery.transfer'))
-<form class="mb-5 rounded-xl border border-violet-200 bg-violet-50 p-4" method="POST" action="{{ route('delivery.consignments.arrive', $consignment) }}">@csrf
+<form class="no-print mb-5 rounded-xl border border-violet-200 bg-violet-50 p-4" method="POST" action="{{ route('delivery.consignments.arrive', $consignment) }}">@csrf
 <p class="mb-2 text-sm text-violet-900">Record arrival at the customer before confirming receipt.</p><button class="serial-btn">Mark arrived at customer</button></form>
 @endif
 
 {{-- Form wrapper for complete delivery & proof of delivery --}}
-<form id="unloading-pod-form" method="POST" enctype="multipart/form-data" action="{{ route('delivery.consignments.complete', $consignment) }}">
+<form id="unloading-pod-form" class="{{ $hasOutcome ? 'pod-has-outcome' : 'pod-pending' }}" method="POST" enctype="multipart/form-data" action="{{ route('delivery.consignments.complete', $consignment) }}">
     @csrf
 
     {{-- Section 1: Unloading & Proof of Delivery Details Card --}}
     <section class="serial-card mb-6 shadow-sm border border-slate-200/80 rounded-2xl bg-white p-5">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
-                <h2 class="text-lg font-bold text-slate-800 !mb-0">Unloading & Proof of Delivery</h2>
+                <h2 class="text-lg font-bold text-slate-800 !mb-0">Delivery Receipt & Proof</h2>
                 <p class="text-xs font-medium text-slate-400">
-                    Delivery / Unloading / <span class="font-bold text-slate-600">{{ $consignment->number }}</span>
+                    Delivery / Customer receipt / <span class="font-bold text-slate-600">{{ $consignment->number }}</span>
                 </p>
             </div>
             <span class="rounded-full px-3.5 py-1 text-xs font-bold bg-purple-100 text-purple-800">
@@ -130,7 +152,7 @@
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
                 <h2 class="text-lg font-bold text-slate-800 !mb-0">Received Items</h2>
-                <p class="text-xs text-slate-400">Record received, missing (short), damaged and returned quantities.</p>
+                <p class="text-xs text-slate-400">Record received, missing (short) and damaged quantities.</p>
             </div>
             <span class="rounded-full bg-purple-100 px-3.5 py-1 text-xs font-bold text-purple-800">{{ $consignment->lines->count() }} line items</span>
         </div>
@@ -142,11 +164,10 @@
                     <tr class="bg-slate-50 text-slate-700 border-b border-slate-200">
                         <th class="py-3 px-3 font-bold">Product</th>
                         <th class="py-3 px-3 font-bold text-center">Loaded Qty</th>
-                        <th class="py-3 px-3 font-bold text-center bg-blue-50 text-blue-900 border-x border-blue-100">Received Qty</th>
-                        <th class="py-3 px-3 font-bold text-center">Short Qty</th>
-                        <th class="py-3 px-3 font-bold text-center">Damaged Qty</th>
-                        <th class="py-3 px-3 font-bold text-center">Return Qty</th>
-                        <th class="py-3 px-3 font-bold">Remarks</th>
+                        <th class="pod-outcome-column py-3 px-3 font-bold text-center bg-blue-50 text-blue-900 border-x border-blue-100">Received Qty</th>
+                        <th class="pod-outcome-column py-3 px-3 font-bold text-center">Short Qty</th>
+                        <th class="pod-outcome-column py-3 px-3 font-bold text-center">Damaged Qty</th>
+                        <th class="pod-outcome-column py-3 px-3 font-bold">Remarks</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">
@@ -175,7 +196,7 @@
                             </td>
 
                             {{-- Received Qty (Delivered) --}}
-                            <td class="py-2 px-3 text-center bg-blue-50/50 border-x border-blue-100">
+                            <td class="pod-outcome-column py-2 px-3 text-center bg-blue-50/50 border-x border-blue-100">
                                 @if($isEditable)
                                     <input type="hidden" name="lines[{{ $index }}][id]" value="{{ $line->id }}">
                                     <input type="number" name="lines[{{ $index }}][delivered]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.delivered', $line->delivered_quantity ?? $loaded) }}" class="w-20 text-center rounded-lg bg-blue-100 border border-blue-300 font-extrabold text-blue-900 py-1 text-xs focus:ring-2 focus:ring-blue-500 qty-input input-delivered">
@@ -185,7 +206,7 @@
                             </td>
 
                             {{-- Short Qty (Missing) --}}
-                            <td class="py-2 px-3 text-center">
+                            <td class="pod-outcome-column py-2 px-3 text-center">
                                 @if($isEditable)
                                     <input type="number" name="lines[{{ $index }}][missing]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.missing', $line->missing_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-rose-500 qty-input input-missing">
                                 @else
@@ -196,7 +217,7 @@
                             </td>
 
                             {{-- Damaged Qty --}}
-                            <td class="py-2 px-3 text-center">
+                            <td class="pod-outcome-column py-2 px-3 text-center">
                                 @if($isEditable)
                                     <input type="number" name="lines[{{ $index }}][damaged]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.damaged', $line->damaged_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-rose-500 qty-input input-damaged">
                                 @else
@@ -206,19 +227,8 @@
                                 @endif
                             </td>
 
-                            {{-- Return Qty --}}
-                            <td class="py-2 px-3 text-center">
-                                @if($isEditable)
-                                    <input type="number" name="lines[{{ $index }}][return]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.return', $line->return_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-amber-500 qty-input input-return">
-                                @else
-                                    <span class="{{ $line->return_quantity > 0 ? 'text-amber-600 font-extrabold' : 'text-slate-600 font-bold' }}">
-                                        {{ $line->return_quantity }}
-                                    </span>
-                                @endif
-                            </td>
-
                             {{-- Remarks --}}
-                            <td class="py-2 px-3">
+                            <td class="pod-outcome-column py-2 px-3">
                                 @if($isEditable)
                                     <input type="text" name="lines[{{ $index }}][remarks]" placeholder="e.g. 5 ctn wet" maxlength="500" value="{{ old('lines.'.$index.'.remarks', $line->remarks) }}" class="w-full rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-700">
                                 @else
@@ -240,9 +250,6 @@
             <button type="button" id="btn-record-damage" class="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-all">
                 <i class="bi bi-exclamation-triangle-fill text-sm text-amber-600"></i> Record Damage
             </button>
-            <button type="button" id="btn-create-return" class="inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-800 hover:bg-rose-100 transition-all">
-                <i class="bi bi-box-arrow-down-left text-sm text-rose-600"></i> Create Return
-            </button>
             <button type="button" id="btn-capture-photo" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-all">
                 <i class="bi bi-camera-fill text-sm text-slate-500"></i> Capture Photo
             </button>
@@ -251,19 +258,18 @@
     </section>
 
     {{-- Section 3: Signature & Proof of Delivery Photos Cards --}}
-    <div class="mb-6 grid gap-5 lg:grid-cols-2">
+    <div class="pod-proof-grid {{ ! $signatureProof && $photoProofs->isEmpty() ? 'pod-empty-proof' : '' }} mb-6 grid gap-5 lg:grid-cols-2">
         {{-- Receiver Signature Card --}}
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm flex flex-col justify-between">
+        <div class="pod-signature-card {{ $signatureProof ? '' : 'pod-empty-proof' }} rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm flex flex-col justify-between">
             <div>
                 <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                     <h3 class="text-sm font-bold text-slate-800">Receiver Signature</h3>
                     <button type="button" id="clear-sig-btn" class="text-xs font-bold text-blue-600 hover:underline">Clear</button>
                 </div>
 
-                @php($existingSig = $consignment->proofs->firstWhere('kind', 'signature'))
-                @if($existingSig)
+                @if($signatureProof)
                     <div class="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-2 flex items-center justify-center">
-                        <img src="{{ route('delivery.consignments.proofs.show', [$consignment, $existingSig]) }}" alt="Receiver Signature" class="max-h-32 object-contain">
+                        <img src="{{ route('delivery.consignments.proofs.show', [$consignment, $signatureProof]) }}" alt="Receiver Signature" class="max-h-32 object-contain">
                     </div>
                 @else
                     <div class="relative rounded-xl border border-slate-300 bg-slate-50/50 p-1 mb-2">
@@ -280,14 +286,14 @@
         </div>
 
         {{-- Proof of Delivery Photos Card --}}
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div class="pod-photo-card {{ $photoProofs->isEmpty() ? 'pod-empty-proof' : '' }} rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                 <h3 class="text-sm font-bold text-slate-800">Proof of Delivery Photos</h3>
-                <span class="text-xs text-slate-400 font-semibold">{{ $consignment->proofs->where('kind', 'photo')->count() }} attached</span>
+                <span class="text-xs text-slate-400 font-semibold">{{ $photoProofs->count() }} attached</span>
             </div>
 
             <div class="grid grid-cols-3 gap-3" id="photo-thumbnails-container">
-                @foreach($consignment->proofs->where('kind', 'photo') as $photoProof)
+                @foreach($photoProofs as $photoProof)
                     <a href="{{ route('delivery.consignments.proofs.show', [$consignment, $photoProof]) }}" target="_blank" class="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                         <img src="{{ route('delivery.consignments.proofs.show', [$consignment, $photoProof]) }}" alt="Proof Photo" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200">
                     </a>
@@ -306,7 +312,7 @@
     </div>
 
     {{-- Section 4: Notes --}}
-    <div class="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+    <div class="pod-notes {{ filled($consignment->proof_notes) ? '' : 'pod-empty-proof' }} mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
         <label for="proof_notes" class="text-xs font-semibold text-slate-600 mb-1 block">Proof / Discrepancy Notes</label>
         @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
             <textarea id="proof_notes" name="proof_notes" rows="2" maxlength="2000" placeholder="Add optional delivery notes or discrepancy details..." class="w-full rounded-xl border border-slate-300 p-3 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500">{{ old('proof_notes', $consignment->proof_notes) }}</textarea>
@@ -316,7 +322,7 @@
     </div>
 
     {{-- Section 5: Delivery Summary Cards & Submit POD Bar --}}
-    <div class="mb-6 grid gap-4 lg:grid-cols-12">
+    <div class="pod-summary {{ $hasOutcome ? '' : 'pod-empty-proof' }} mb-6 grid gap-4 lg:grid-cols-12">
         {{-- Stat Summary Cards (4 Cards) --}}
         <div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {{-- Delivered --}}
@@ -355,21 +361,10 @@
                 </div>
             </div>
 
-            {{-- Returned --}}
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm flex items-center gap-3">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
-                    <i class="bi bi-box-arrow-down-left text-lg"></i>
-                </div>
-                <div>
-                    <span class="text-[11px] font-semibold text-slate-400 block">Returned</span>
-                    <strong id="stat-returned" class="text-base font-black text-slate-800">0</strong>
-                    <span class="text-[10px] text-slate-400 block">units</span>
-                </div>
-            </div>
         </div>
 
         {{-- Submit POD Main Action Button --}}
-        <div class="lg:col-span-4 flex items-stretch">
+        <div class="no-print lg:col-span-4 flex items-stretch">
             @if($consignment->status === 'arrived' && $consignment->arrived_at && auth()->user()->canUseDelivery('delivery.transfer'))
                 <button type="submit" id="submit-pod-btn" class="w-full flex items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-4 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition-all">
                     <i class="bi bi-send-fill text-lg"></i>
@@ -385,19 +380,29 @@
     </div>
 </form>
 
-@if($consignment->returnNote)
-<section class="serial-card mb-6 border border-rose-200 bg-rose-50">
-<h2>Return note {{ $consignment->returnNote->number }} · {{ ucfirst($consignment->returnNote->status) }}</h2>
-<p class="text-sm text-slate-700">{{ $consignment->returnNote->lines->count() }} returned item(s). @if($consignment->returnNote->status === 'pending')These remain on the vehicle until you unload them and link the matching warehouse transfer below.@else Warehouse unloading recorded. @endif</p>
-@if($consignment->returnNote->status === 'pending' && auth()->user()->canUseDelivery('delivery.transfer'))
-    <a class="serial-btn mt-3" href="{{ route('delivery.transfers.create', ['return_id' => $consignment->returnNote->id]) }}">Unload returned stock</a>
-    <p class="mt-2 text-xs text-slate-500">The return lines will be filled and locked automatically. Choose the receiving warehouse and confirm.</p>
-@endif
+<section class="delivery-print-signatures print-only" aria-label="Delivery receipt signatures">
+    <div class="delivery-signature-box">
+        <span class="delivery-signature-line"></span>
+        <strong>Receiver Signature</strong>
+        <small>Name: {{ $consignment->receiver_name ?: '________________________' }}</small>
+        <small>Date: ________________________</small>
+    </div>
+    <div class="delivery-signature-box">
+        <span class="delivery-signature-line"></span>
+        <strong>Driver / Delivery Officer</strong>
+        <small>Name: {{ $consignment->loadingTransfer->driver?->name ?: '________________________' }}</small>
+        <small>Date: ________________________</small>
+    </div>
+    <div class="delivery-signature-box">
+        <span class="delivery-signature-line"></span>
+        <strong>Authorized Officer</strong>
+        <small>Name: ________________________</small>
+        <small>Date: ________________________</small>
+    </div>
 </section>
-@endif
 
 {{-- Timeline --}}
-<section class="serial-card shadow-sm border border-slate-200/80 rounded-2xl bg-white p-5">
+<section class="delivery-timeline no-print serial-card shadow-sm border border-slate-200/80 rounded-2xl bg-white p-5">
     <h3 class="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Delivery Timeline</h3>
     <ol class="text-xs space-y-2 font-medium text-slate-600">
         @foreach($consignment->events->sortBy('created_at') as $event)
@@ -412,6 +417,18 @@
 @endsection
 
 @push('scripts')
+<style>
+.print-only{display:none}
+@media print{
+    @page{size:A4 portrait;margin:10mm}
+    .delivery-print-header{display:flex!important;align-items:flex-start;justify-content:space-between;gap:24px;border-top:6px solid #6d28d9;border-bottom:1px solid #cbd5e1;margin-bottom:18px;padding:15px 4px 16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .delivery-print-brand{display:flex;align-items:center;gap:12px;min-width:0}.delivery-print-brand img{width:58px;height:50px;border:1px solid #e2e8f0;border-radius:9px;object-fit:contain;padding:3px}.delivery-print-brand h1{margin:0;color:#0f172a;font-size:18px;font-weight:800}.delivery-print-brand p{margin:2px 0 0;color:#64748b;font-size:9px;line-height:1.35}
+    .delivery-print-document{text-align:right}.delivery-print-document span{display:block;color:#6d28d9;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.delivery-print-document strong{display:block;margin-top:4px;color:#0f172a;font-size:17px}.delivery-print-document p{margin-top:3px;color:#94a3b8;font-size:8px}
+    .delivery-print-signatures{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;break-inside:avoid;margin-top:34px;padding:0 4px}.delivery-signature-box{display:flex;flex-direction:column;color:#64748b;font-size:9px}.delivery-signature-line{display:block;height:34px;border-bottom:1px solid #64748b;margin-bottom:6px}.delivery-signature-box strong{color:#334155;font-size:9px;text-align:center}.delivery-signature-box small{margin-top:4px;font-size:8px;white-space:nowrap}
+    body>.flex>.flex-1>footer,#async-request-loader{display:none!important}html,body,body>.flex,body>.flex>.flex-1,main,#unloading-pod-form,.overflow-x-auto{height:auto!important;max-height:none!important;overflow:visible!important}body>.flex>.flex-1{margin-left:0!important}.serial-card{break-inside:auto!important}.serial-table tr{break-inside:avoid}.serial-table{overflow:visible!important}
+    .pod-empty-proof,.pod-pending .pod-outcome-column{display:none!important}.pod-proof-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.pod-signature-card,.pod-photo-card{break-inside:avoid;padding:12px!important}.line-row td:first-child span{display:inline!important;margin-right:2px}.line-row td:first-child span::after{content:", "}.line-row td:first-child span:last-child::after{content:""}.serial-table th,.serial-table td{padding:6px 7px!important;font-size:9px!important}.serial-card{margin-bottom:10px!important;padding:12px!important}.serial-card>div:first-child{margin-bottom:8px!important;padding-bottom:7px!important}
+}
+</style>
 <script>
 AppPage.ready(() => {
     const form = document.getElementById('unloading-pod-form');
@@ -432,30 +449,25 @@ AppPage.ready(() => {
         let totalDelivered = 0;
         let totalDamaged = 0;
         let totalMissing = 0;
-        let totalReturned = 0;
 
         rows.forEach(row => {
             const loaded = parseFloat(row.dataset.loaded || '0') || 0;
             const delInput = row.querySelector('.input-delivered');
             const damInput = row.querySelector('.input-damaged');
             const misInput = row.querySelector('.input-missing');
-            const retInput = row.querySelector('.input-return');
 
             const del = parseFloat(delInput?.value || '0') || 0;
             const dam = parseFloat(damInput?.value || '0') || 0;
             const mis = parseFloat(misInput?.value || '0') || 0;
-            const ret = parseFloat(retInput?.value || '0') || 0;
 
             totalDelivered += del;
             totalDamaged += dam;
             totalMissing += mis;
-            totalReturned += ret;
         });
 
         document.getElementById('stat-delivered').textContent = totalDelivered;
         document.getElementById('stat-partial').textContent = totalMissing;
         document.getElementById('stat-damaged').textContent = totalDamaged;
-        document.getElementById('stat-returned').textContent = totalReturned;
     }
 
     form.querySelectorAll('.qty-input').forEach(input => {
@@ -470,11 +482,9 @@ AppPage.ready(() => {
             const del = row.querySelector('.input-delivered');
             const dam = row.querySelector('.input-damaged');
             const mis = row.querySelector('.input-missing');
-            const ret = row.querySelector('.input-return');
             if (del) del.value = loaded;
             if (dam) dam.value = 0;
             if (mis) mis.value = 0;
-            if (ret) ret.value = 0;
         });
         recalculateTotals();
     });
@@ -487,18 +497,6 @@ AppPage.ready(() => {
             if (damInput) {
                 damInput.focus();
                 damInput.select();
-            }
-        }
-    });
-
-    // Create Return Quick Button
-    document.getElementById('btn-create-return')?.addEventListener('click', () => {
-        const firstRow = rows[0];
-        if (firstRow) {
-            const retInput = firstRow.querySelector('.input-return');
-            if (retInput) {
-                retInput.focus();
-                retInput.select();
             }
         }
     });
@@ -595,9 +593,7 @@ AppPage.ready(() => {
             const del = parseFloat(row.querySelector('.input-delivered')?.value || '0') || 0;
             const dam = parseFloat(row.querySelector('.input-damaged')?.value || '0') || 0;
             const mis = parseFloat(row.querySelector('.input-missing')?.value || '0') || 0;
-            const ret = parseFloat(row.querySelector('.input-return')?.value || '0') || 0;
-
-            const sum = del + dam + mis + ret;
+            const sum = del + dam + mis;
             if (Math.abs(sum - loaded) > 0.0001) {
                 valid = false;
                 row.classList.add('bg-rose-50');
@@ -608,7 +604,7 @@ AppPage.ready(() => {
 
         if (!valid) {
             e.preventDefault();
-            alert('For every item row, Delivered + Damaged + Short + Return must equal Loaded quantity.');
+            alert('For every item row, Delivered + Damaged + Short must equal Loaded quantity.');
         } else {
             document.getElementById('submit-pod-btn').disabled = true;
         }

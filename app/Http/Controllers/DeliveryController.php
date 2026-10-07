@@ -2,8 +2,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\{SaveDeliveryDriverRequest, SaveDeliveryVehicleRequest, StoreDeliveryTransferRequest};
-use App\Models\{DeliveryConsignment, DeliveryDriver, DeliveryReturn, DeliveryTransfer, DeliveryVehicle, Location};
-use App\Services\{DeliveryConsignmentService, DeliveryFleetService, DeliveryInventory, DeliveryStockService};
+use App\Models\{DeliveryConsignment, DeliveryDriver, DeliveryTransfer, DeliveryVehicle, Location};
+use App\Services\{DeliveryFleetService, DeliveryInventory, DeliveryStockService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -52,36 +52,12 @@ class DeliveryController extends Controller
     }
     public function transferForm(Request $request)
     {
+        if ($request->input('direction') === DeliveryTransfer::DIRECTION_UNLOADING) {
+            $this->authorizeTransferDirection($request, DeliveryTransfer::DIRECTION_UNLOADING);
+        }
         $warehouses = Location::where('is_active', true)->whereNotIn('id', DB::table('delivery_vehicle_stores')->select('location_id'))
             ->when(! $request->user()->all_locations, fn ($q) => $q->whereIn('id', $request->user()->locations()->pluck('locations.id')))->orderBy('name')->get();
-        $returnNote = null;
-        $returnItems = [];
-        if ($request->filled('return_id')) {
-            $returnNote = DeliveryReturn::with(['consignment.loadingTransfer', 'lines.consignmentLine.transferLine.stockItem.product.unit', 'lines.consignmentLine.transferLine.stockItem.variant', 'lines.consignmentLine.transferLine.lots', 'lines.consignmentLine.transferLine.serials'])
-                ->findOrFail($request->integer('return_id'));
-            $this->authorizeWarehouse($request, $returnNote->consignment->loadingTransfer->warehouse_id);
-            abort_unless($returnNote->status === 'pending', 422, 'This return note is already completed.');
-            $request->merge(['direction' => 'unloading', 'vehicle_id' => $returnNote->consignment->loadingTransfer->vehicle_id, 'reference' => $returnNote->number]);
-            foreach ($returnNote->lines as $returnLine) {
-                $source = $returnLine->consignmentLine->transferLine;
-                $variant = $source->stockItem->variant->first();
-                $returnItems[] = [
-                    'product_id' => $source->stockItem->product_id,
-                    'variant_id' => $variant?->id,
-                    'lot_id' => $source->lots->first()?->id,
-                    'lot_number' => $source->lots->first()?->lot_number,
-                    'serial_ids' => $source->serials->pluck('id')->values()->all(),
-                    'serial_number' => $source->serials->pluck('serial_number')->implode(', '),
-                    'product_name' => $source->stockItem->product->name,
-                    'sku' => $variant?->sku ?: $source->stockItem->product->code,
-                    'unit' => $source->stockItem->product->unit?->short_name,
-                    'decimal' => (bool) $source->stockItem->product->unit?->allow_decimal,
-                    'available' => $returnLine->quantity,
-                    'quantity' => $returnLine->quantity,
-                ];
-            }
-        }
-        return view('delivery.transfer-form', ['vehicles' => DeliveryVehicle::with('drivers')->orderBy('number')->get(), 'warehouses' => $warehouses, 'returnNote' => $returnNote, 'returnItems' => $returnItems]);
+        return view('delivery.transfer-form', ['vehicles' => DeliveryVehicle::with('drivers')->orderBy('number')->get(), 'warehouses' => $warehouses]);
     }
     public function loadingForm(Request $request)
     {
@@ -90,53 +66,51 @@ class DeliveryController extends Controller
     }
     public function unloadingForm(Request $request)
     {
-        $data = $request->validate(['vehicle_id' => ['nullable', 'integer', 'exists:delivery_vehicles,id'], 'delivery_id' => ['nullable', 'integer', 'exists:delivery_consignments,id']]);
-        if (isset($data['delivery_id'])) {
-            $consignment = DeliveryConsignment::findOrFail($data['delivery_id']);
-            return app(DeliveryConsignmentController::class)->show($request, $consignment);
-        }
-        $query = DeliveryConsignment::with(['customer', 'loadingTransfer.vehicle'])
-            ->whereIn('status', DeliveryConsignment::ACTIVE_STATUSES)
-            ->whereHas('loadingTransfer', fn ($query) => $query
-                ->when(isset($data['vehicle_id']), fn ($query) => $query->where('vehicle_id', $data['vehicle_id']))
-                ->when(! $request->user()->all_locations, fn ($query) => $query->whereIn('warehouse_id', $request->user()->locations()->pluck('locations.id'))))
-            ->latest();
-        $available = (clone $query)->limit(2)->get();
-        if ($available->count() === 1) {
-            return app(DeliveryConsignmentController::class)->show($request, $available->first());
-        }
-        $consignments = $query->paginate(20);
-        return view('delivery.unloading', compact('consignments'));
+        // Unloading is one stock-transfer screen: vehicle stock goes directly to a warehouse.
+        $request->merge(['direction' => 'unloading']);
+        return $this->transferForm($request);
     }
     public function options(Request $request, DeliveryInventory $inventory)
     {
-        $data = $request->validate(['vehicle_id' => ['required', 'integer', 'exists:delivery_vehicles,id'], 'warehouse_id' => ['required', 'integer', 'exists:locations,id'], 'direction' => ['required', 'in:loading,unloading'], 'q' => ['nullable', 'string', 'max:100']]);
-        $this->authorizeWarehouse($request, (int) $data['warehouse_id']);
-        abort_if(DB::table('delivery_vehicle_stores')->where('location_id', $data['warehouse_id'])->exists(), 422, 'Choose a warehouse.');
+        $data = $request->validate([
+            'vehicle_id' => ['required', 'integer', 'exists:delivery_vehicles,id'],
+            'warehouse_id' => ['nullable', 'required_if:direction,loading', 'integer', 'exists:locations,id'],
+            'direction' => ['required', 'in:loading,unloading'],
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
+        $this->authorizeTransferDirection($request, $data['direction']);
+        if (! empty($data['warehouse_id'])) {
+            $this->authorizeWarehouse($request, (int) $data['warehouse_id']);
+            abort_if(DB::table('delivery_vehicle_stores')->where('location_id', $data['warehouse_id'])->exists(), 422, 'Choose a warehouse.');
+        }
         $source = $data['direction'] === 'loading' ? $data['warehouse_id'] : DeliveryVehicle::findOrFail($data['vehicle_id'])->stores()->firstOrFail()->id;
         return response()->json($inventory->options($source, $data['q'] ?? '', $data['direction'] === 'loading'));
     }
-    public function transfer(StoreDeliveryTransferRequest $request, DeliveryStockService $service, DeliveryConsignmentService $consignmentService)
+    public function transfer(StoreDeliveryTransferRequest $request, DeliveryStockService $service)
     {
         $data = $request->validated();
+        $this->authorizeTransferDirection($request, $data['direction']);
         $this->authorizeWarehouse($request, (int) $data['warehouse_id']);
-        $returnNote = ! empty($data['return_id']) ? DeliveryReturn::with('consignment.loadingTransfer')->findOrFail($data['return_id']) : null;
-        if ($returnNote) $this->authorizeWarehouse($request, $returnNote->consignment->loadingTransfer->warehouse_id);
-        $transfer = DB::transaction(function () use ($data, $request, $service, $consignmentService, $returnNote) {
-            $transfer = $service->transfer($data, $request->user()->id);
-            if ($returnNote) $consignmentService->completeReturn($returnNote, $transfer, $request->user()->id);
-            return $transfer;
-        });
+        $transfer = $service->transfer($data, $request->user()->id);
         return redirect()->route('delivery.transfers.show', $transfer)->with('success', 'Stock transfer completed.');
     }
     public function receipt(Request $request, DeliveryTransfer $transfer)
     {
         $this->authorizeWarehouse($request, $transfer->warehouse_id);
-        $transfer->load(['vehicle', 'driver', 'warehouse', 'transaction', 'consignment', 'lines.stockItem.product.unit', 'lines.stockItem.variant', 'lines.lots', 'lines.serials']);
+        $transfer->load(['vehicle', 'driver', 'warehouse', 'transaction.creator', 'consignment', 'lines.stockItem.product.unit', 'lines.stockItem.variant', 'lines.lots', 'lines.serials']);
         return view('delivery.receipt', compact('transfer'));
     }
     private function authorizeWarehouse(Request $request, int $id): void
     {
         abort_unless($request->user()->all_locations || $request->user()->locations()->where('locations.id', $id)->exists(), 403);
+    }
+
+    /** Unloading reverses vehicle custody and therefore needs explicit authority. */
+    private function authorizeTransferDirection(Request $request, string $direction): void
+    {
+        $permission = $direction === DeliveryTransfer::DIRECTION_UNLOADING
+            ? 'delivery.unload'
+            : 'delivery.transfer';
+        abort_unless($request->user()->canUseDelivery($permission), 403);
     }
 }

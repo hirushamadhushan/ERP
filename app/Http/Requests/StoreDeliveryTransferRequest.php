@@ -10,7 +10,6 @@ class StoreDeliveryTransferRequest extends BaseFormRequest
         return [
             'request_key' => ['required', 'uuid'], 'vehicle_id' => ['required', 'integer', 'exists:delivery_vehicles,id'],
             'warehouse_id' => ['required', 'integer', 'exists:locations,id'], 'direction' => ['required', Rule::in(['loading', 'unloading'])],
-            'return_id' => ['nullable', 'integer', 'exists:delivery_returns,id'],
             'reference' => ['nullable', 'string', 'max:100'], 'notes' => ['nullable', 'string', 'max:2000'],
             'lines' => ['required', 'array', 'min:1', 'max:100'],
             'lines.*.product_id' => ['required', 'integer', 'exists:products,id'],

@@ -25,7 +25,7 @@
                 3 => ['Loading', 'Warehouse to vehicle', 'bi-truck-front-fill', 'amber'],
                 4 => ['In Transit', 'Departure recorded', 'bi-geo-alt-fill', 'cyan'],
                 5 => ['Customer Receipt', 'Record outcomes', 'bi-building-fill-check', 'purple'],
-                6 => ['Proof / Returns', 'Photos and stock return', 'bi-check-circle-fill', 'rose'],
+                6 => ['Proof of Delivery', 'Signature and photos', 'bi-check-circle-fill', 'rose'],
             ];
         @endphp
 

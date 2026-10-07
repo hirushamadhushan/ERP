@@ -66,6 +66,7 @@ class DeliveryTest extends TestCase
     {
         [$user,$warehouse,$product,$vehicle,$data]=$this->fixtures(true);
         $lot=app(ProductLotService::class)->receive($product,['location_id'=>$warehouse->id,'quantity'=>20,'unit_cost'=>10,'selling_price'=>15],$user->id);
+        $this->assertMatchesRegularExpression('/^LOT-\d{8}-\d{6}$/', $lot->lot_number);
         $this->get('/delivery/stock-options?vehicle_id='.$vehicle->id.'&warehouse_id='.$warehouse->id.'&direction=loading&q='.$lot->lot_number)
             ->assertOk()->assertJsonFragment(['lot_id' => $lot->id, 'lot_number' => $lot->lot_number]);
         $data['lines'][0]['lot_id']=$lot->id;
@@ -73,6 +74,9 @@ class DeliveryTest extends TestCase
         $this->assertEquals(20,$lot->movements()->sum('quantity_delta'));
         $this->assertEquals(15,$lot->movements()->where('location_id',$warehouse->id)->sum('quantity_delta'));
         $this->assertEquals(5,$lot->movements()->where('location_id',$vehicle->stores()->first()->id)->sum('quantity_delta'));
+        $nextLot=app(ProductLotService::class)->receive($product,['location_id'=>$warehouse->id,'quantity'=>1,'unit_cost'=>11,'selling_price'=>16],$user->id);
+        $this->assertSame($lot->id + 1, $nextLot->id);
+        $this->assertStringEndsWith(str_pad((string) $nextLot->id, 6, '0', STR_PAD_LEFT), $nextLot->lot_number);
     }
     public function test_permissions_and_required_vehicle_fields(): void
     {
@@ -84,6 +88,26 @@ class DeliveryTest extends TestCase
         $this->post('/delivery/vehicles',[])->assertForbidden();
         $this->post('/delivery/transfer',[])->assertForbidden();
         $this->post('/delivery/consignments',[])->assertForbidden();
+    }
+
+    public function test_vehicle_unloading_requires_its_own_permission(): void
+    {
+        [$user, $warehouse, $product, $vehicle, $data] = $this->fixtures();
+        $role = Role::create(['name' => 'Loading operator']);
+        $role->syncPermissions(['delivery.view', 'delivery.transfer']);
+        $user->update(['role_id' => $role->id]);
+        $user->unsetRelation('assignedRole');
+
+        $this->get('/delivery/loading?vehicle_id='.$vehicle->id)->assertOk();
+        $this->get('/delivery/unloading?vehicle_id='.$vehicle->id)->assertForbidden();
+        $this->get('/delivery/transfer?direction=unloading&vehicle_id='.$vehicle->id)->assertForbidden();
+        $this->get('/delivery/stock-options?direction=unloading&vehicle_id='.$vehicle->id)->assertForbidden();
+        $data['direction'] = 'unloading';
+        $this->post('/delivery/transfer', $data)->assertForbidden();
+
+        $role->syncPermissions(['delivery.view', 'delivery.transfer', 'delivery.unload']);
+        $user->unsetRelation('assignedRole');
+        $this->get('/delivery/unloading?vehicle_id='.$vehicle->id)->assertOk();
     }
 
     public function test_serial_transfer_moves_only_selected_serial_and_cannot_repeat_it(): void
@@ -101,6 +125,32 @@ class DeliveryTest extends TestCase
         $this->assertDatabaseCount('delivery_transfers',1);
     }
 
+    public function test_unloaded_serial_loading_record_cannot_create_a_delivery(): void
+    {
+        [$user, $warehouse, $product, $vehicle, $data] = $this->fixtures();
+        $product->update(['enable_serial' => true]);
+        $serial = \App\Models\ProductSerialNumber::create([
+            'product_id' => $product->id, 'location_id' => $warehouse->id,
+            'serial_number' => 'SER-STALE-001',
+        ]);
+        $data['lines'][0] = ['product_id' => $product->id, 'quantity' => 1, 'serial_ids' => [$serial->id]];
+        $stockService = app(DeliveryStockService::class);
+        $loading = $stockService->transfer($data, $user->id);
+
+        $data['request_key'] = (string) Str::uuid();
+        $data['direction'] = 'unloading';
+        $stockService->transfer($data, $user->id);
+
+        $customer = Contact::create(['type' => 'customer', 'contact_id' => 'C-STALE', 'name' => 'Stale Customer', 'mobile' => '0770000000']);
+        $this->assertFalse($loading->fresh()->hasStockAvailableForConsignment());
+        $this->get('/delivery/consignments')->assertOk()->assertDontSee('SER-STALE-001');
+        $this->expectException(ValidationException::class);
+        app(DeliveryConsignmentService::class)->create([
+            'loading_transfer_id' => $loading->id, 'customer_id' => $customer->id,
+            'delivery_address' => 'Test Address',
+        ], $user->id);
+    }
+
     public function test_assignment_conflicts_and_inactive_loading_are_rejected(): void
     {
         [$user,$warehouse,$product,$vehicle,$data]=$this->fixtures();
@@ -114,7 +164,26 @@ class DeliveryTest extends TestCase
         $this->post('/delivery/transfer',$data)->assertForbidden();
     }
 
-    public function test_delivery_outcome_consumes_vehicle_stock_and_keeps_returns_for_unloading(): void
+    public function test_departure_requires_a_valid_driver_license_and_vehicle_documents(): void
+    {
+        [$user, $warehouse, $product, $vehicle, $data] = $this->fixtures();
+        $transfer = app(DeliveryStockService::class)->transfer($data, $user->id);
+        $customer = Contact::create(['type' => 'customer', 'contact_id' => 'C-COMPLY', 'name' => 'Compliance Customer', 'mobile' => '0770000000']);
+        $delivery = app(DeliveryConsignmentService::class)->create([
+            'loading_transfer_id' => $transfer->id,
+            'customer_id' => $customer->id,
+            'delivery_address' => 'Compliance Address',
+        ], $user->id);
+
+        $transfer->driver->update(['license_expires_at' => now()->subDay()->toDateString()]);
+
+        $this->post('/delivery/consignments/'.$delivery->id.'/depart')
+            ->assertSessionHasErrors('status');
+        $this->assertSame('loaded', $delivery->fresh()->status);
+        $this->assertNull($delivery->fresh()->departed_at);
+    }
+
+    public function test_delivery_outcome_consumes_vehicle_stock(): void
     {
         [$user,$warehouse,$product,$vehicle,$data]=$this->fixtures();
         $transfer=app(DeliveryStockService::class)->transfer($data,$user->id);
@@ -122,41 +191,29 @@ class DeliveryTest extends TestCase
         $service=app(DeliveryConsignmentService::class);
         $delivery=$service->create(['loading_transfer_id'=>$transfer->id,'customer_id'=>$customer->id,'delivery_address'=>'Test Address'],$user->id);
         $this->assertDatabaseCount('delivery_consignments',1);
-        $this->get('/delivery/unloading')->assertOk()->assertSee('Unloading & Proof of Delivery', false)->assertSee('Mark in transit');
+        $this->get('/delivery/consignments/'.$delivery->id)->assertOk()->assertSee('Delivery Receipt & Proof', false)->assertSee('Mark in transit');
         $this->get('/delivery/consignments')->assertOk();
         $this->get('/delivery/consignments/create')->assertOk();
         $this->get('/delivery/consignments/'.$delivery->id)->assertOk();
         $service->depart($delivery,$user->id);
-        $this->get('/delivery/unloading?delivery_id='.$delivery->id)->assertOk()->assertSee('Unloading & Proof of Delivery', false)->assertSee('Mark arrived at customer');
+        $this->get('/delivery/consignments/'.$delivery->id)->assertOk()->assertSee('Delivery Receipt & Proof', false)->assertSee('Mark arrived at customer');
         $this->post('/delivery/consignments/'.$delivery->id.'/arrive')->assertRedirect()->assertSessionHasNoErrors();
         $this->assertNotNull($delivery->fresh()->arrived_at);
-        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>3,'damaged'=>1,'missing'=>0,'return'=>1,'remarks'=>'One damaged; one returned']]],$user->id);
+        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>3,'damaged'=>1,'missing'=>1,'remarks'=>'One damaged; one missing']]],$user->id);
         $this->assertSame('partial',$delivery->fresh()->status);
-        $this->assertEquals(1,$product->locations()->find($vehicle->stores()->first()->id)->pivot->opening_quantity);
+        $this->assertEquals(0,$product->locations()->find($vehicle->stores()->first()->id)->pivot->opening_quantity);
         $this->assertEquals(15,$product->locations()->find($warehouse->id)->pivot->opening_quantity);
-        $this->assertDatabaseHas('delivery_consignment_lines',['consignment_id'=>$delivery->id,'delivered_quantity'=>3,'return_quantity'=>1,'remarks'=>'One damaged; one returned']);
-        $this->assertDatabaseHas('delivery_return_lines',['consignment_line_id'=>$delivery->lines->first()->id,'quantity'=>1]);
-        $this->get('/delivery/consignments/'.$delivery->id)->assertOk()->assertSee('One damaged; one returned')->assertSee('Return note');
-        $this->assertDatabaseCount('delivery_consignment_events',5);
-        $this->assertDatabaseHas('delivery_returns',['consignment_id'=>$delivery->id,'number'=>'RET-'.str_pad((string)$delivery->id,6,'0',STR_PAD_LEFT)]);
+        $this->assertDatabaseHas('delivery_consignment_lines',['consignment_id'=>$delivery->id,'delivered_quantity'=>3,'missing_quantity'=>1,'remarks'=>'One damaged; one missing']);
+        $this->get('/delivery/consignments/'.$delivery->id)->assertOk()->assertSee('One damaged; one missing')->assertSee('Damaged Qty');
+        $this->assertDatabaseCount('delivery_consignment_events',4);
         Storage::fake('local');
         $png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==';
         $this->post('/delivery/consignments/'.$delivery->id.'/proofs',['kind'=>'signature','signature_data'=>'data:image/png;base64,'.$png])->assertSessionHasNoErrors()->assertRedirect();
         $proof=$delivery->proofs()->firstOrFail();
         Storage::disk('local')->assertExists($proof->path);
         $this->get('/delivery/consignments/'.$delivery->id.'/proofs/'.$proof->id)->assertOk();
-        $returnNote=$delivery->returnNote()->firstOrFail();
-        $this->get('/delivery/transfer?return_id='.$returnNote->id)->assertOk()->assertSee($returnNote->number)->assertSee('locked to its recorded returned products');
-        $this->post('/delivery/transfer',[
-            'request_key' => (string) Str::uuid(), 'return_id'=>$returnNote->id, 'vehicle_id' => $vehicle->id,
-            'warehouse_id' => $warehouse->id, 'direction' => 'unloading',
-            'reference'=>$returnNote->number, 'lines' => [['product_id' => $product->id, 'quantity' => 1]],
-        ])->assertSessionHasNoErrors()->assertRedirect();
-        $returnTransfer=DeliveryTransfer::where('direction','unloading')->latest('id')->firstOrFail();
-        $this->assertDatabaseHas('delivery_returns', ['consignment_id' => $delivery->id, 'status' => 'completed', 'unloading_transfer_id' => $returnTransfer->id]);
-        $this->assertEquals(16, $product->locations()->find($warehouse->id)->pivot->opening_quantity);
         $this->expectException(ValidationException::class);
-        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>5,'damaged'=>0,'missing'=>0,'return'=>0]]],$user->id);
+        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>5,'damaged'=>0,'missing'=>0]]],$user->id);
     }
 
     public function test_invalid_delivery_quantities_do_not_change_vehicle_stock(): void
@@ -169,7 +226,7 @@ class DeliveryTest extends TestCase
         $service->depart($delivery,$user->id);
         $service->arrive($delivery,$user->id);
         try {
-            $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>6,'damaged'=>0,'missing'=>0,'return'=>0]]],$user->id);
+            $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>6,'damaged'=>0,'missing'=>0]]],$user->id);
             $this->fail('Expected quantity validation');
         } catch (ValidationException $e) {}
         $this->assertSame('arrived',$delivery->fresh()->status);
@@ -204,10 +261,13 @@ class DeliveryTest extends TestCase
     {
         [$user,$warehouse,$product,$vehicle,$data]=$this->fixtures();
         $this->get('/delivery/consignments')->assertOk()->assertSee('Delivery Dashboard')->assertSee('Ready to create')->assertDontSee('RT001');
-        $this->get('/delivery/loading?vehicle_id='.$vehicle->id)->assertOk()->assertSee('Loading Operation')->assertSee('Scan Item')->assertSee('Add Manually')->assertSee('Confirm Loading')->assertDontSee('Save Draft')->assertDontSee('Total Weight')->assertDontSee('Mineral Water 500ml');
+        $this->get('/delivery/loading?vehicle_id='.$vehicle->id)->assertOk()->assertSee('Loading Operation')->assertSee('Scan Item')->assertSee('Add Item')->assertSee('Confirm Loading')->assertDontSee('Save Draft')->assertDontSee('Total Weight')->assertDontSee('Mineral Water 500ml');
         $this->get('/delivery/stock-options?vehicle_id='.$vehicle->id.'&warehouse_id='.$warehouse->id.'&direction=loading&q=STOCK')
             ->assertOk()->assertJsonFragment(['sku' => 'STOCK', 'scan_codes' => ['STOCK']]);
-        $this->get('/delivery/unloading?vehicle_id='.$vehicle->id)->assertOk()->assertSee('Unloading UI')->assertSee('Unload vehicle to warehouse')->assertSee('Received Items')->assertSee('Receiver Signature')->assertSee('Submit POD')->assertDontSee('At warehouse: unload vehicle stock');
+        app(DeliveryStockService::class)->transfer($data, $user->id);
+        $this->get('/delivery/unloading?vehicle_id='.$vehicle->id)->assertOk()->assertSee('Unloading Operation')->assertSee('Select Vehicle Stock')->assertSee('Scan Item')->assertSee('Add Item')->assertSee('Confirm Unloading')->assertDontSee('Receiver Signature')->assertDontSee('Submit POD');
+        $this->get('/delivery/stock-options?vehicle_id='.$vehicle->id.'&direction=unloading&q=STOCK')
+            ->assertOk()->assertJsonFragment(['sku' => 'STOCK']);
         $this->get('/delivery/transfer?direction=unloading&vehicle_id='.$vehicle->id)->assertOk()->assertSee('Unloading Operation')->assertSee('Confirm Unloading');
         $this->get('/delivery/consignments?date_from=2026-01-01&date_to=2026-12-31&vehicle_id='.$vehicle->id)->assertOk();
     }
@@ -223,8 +283,8 @@ class DeliveryTest extends TestCase
         $delivery=$service->create(['loading_transfer_id'=>$transfer->id,'customer_id'=>$customer->id,'delivery_address'=>'Test Address'],$user->id);
         $service->depart($delivery,$user->id);
         $service->arrive($delivery,$user->id);
-        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>3,'damaged'=>0,'missing'=>0,'return'=>2]]],$user->id);
-        $this->assertEquals(2,$lot->movements()->where('location_id',$vehicle->stores()->first()->id)->sum('quantity_delta'));
+        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>3,'damaged'=>0,'missing'=>2]]],$user->id);
+        $this->assertEquals(0,$lot->movements()->where('location_id',$vehicle->stores()->first()->id)->sum('quantity_delta'));
         $this->assertEquals(15,$lot->movements()->where('location_id',$warehouse->id)->sum('quantity_delta'));
     }
 
@@ -241,7 +301,7 @@ class DeliveryTest extends TestCase
         $delivery=$service->create(['loading_transfer_id'=>$transfer->id,'customer_id'=>$customer->id,'delivery_address'=>'Test Address'],$user->id);
         $service->depart($delivery,$user->id);
         $service->arrive($delivery,$user->id);
-        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>1,'damaged'=>0,'missing'=>0,'return'=>0]]],$user->id);
+        $service->complete($delivery,['receiver_name'=>'Receiver','lines'=>[['id'=>$delivery->lines->first()->id,'delivered'=>1,'damaged'=>0,'missing'=>0]]],$user->id);
         $this->assertSame('sold',$serial->fresh()->status);
         $this->assertSame('delivered',$delivery->fresh()->status);
         $this->assertEmpty(app(\App\Services\DeliveryInventory::class)->options($vehicle->stores()->first()->id,'SER-DLV-001'));

@@ -4,21 +4,35 @@
 @include('serials.common')
 @include('delivery.header', ['activeStep' => 1])
 
-<div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+<div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
     @foreach([
-        ['Ready to create', $pendingCount, 'bi-box-seam', 'text-blue-700'],
-        ['Loaded', $counts['loaded'] ?? 0, 'bi-box-arrow-in-right', 'text-emerald-700'],
-        ['In transit', $counts['in_transit'] ?? 0, 'bi-truck', 'text-indigo-700'],
-        ['At customer', $counts['arrived'] ?? 0, 'bi-geo-alt', 'text-fuchsia-700'],
-        ['Completed', ($counts['delivered'] ?? 0) + ($counts['partial'] ?? 0), 'bi-check-circle', 'text-violet-700'],
-        ['Pending returns', $pendingReturns, 'bi-arrow-return-left', 'text-amber-700'],
-        ['Failed', $counts['failed'] ?? 0, 'bi-exclamation-triangle', 'text-rose-700']
-    ] as [$label,$count,$icon,$color])
-        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        ['Ready to create', $pendingCount, 'bi-box-seam', 'text-blue-700', '#next-actions'],
+        ['Loaded', $counts['loaded'] ?? 0, 'bi-box-arrow-in-right', 'text-emerald-700', route('delivery.consignments.index', ['status'=>'loaded']).'#delivery-list'],
+        ['In transit', $counts['in_transit'] ?? 0, 'bi-truck', 'text-indigo-700', route('delivery.consignments.index', ['status'=>'in_transit']).'#delivery-list'],
+        ['At customer', $counts['arrived'] ?? 0, 'bi-geo-alt', 'text-fuchsia-700', route('delivery.consignments.index', ['status'=>'arrived']).'#delivery-list'],
+        ['Completed', ($counts['delivered'] ?? 0) + ($counts['partial'] ?? 0), 'bi-check-circle', 'text-violet-700', '#delivery-list'],
+        ['Failed', $counts['failed'] ?? 0, 'bi-exclamation-triangle', 'text-rose-700', route('delivery.consignments.index', ['status'=>'failed']).'#delivery-list']
+    ] as [$label,$count,$icon,$color,$url])
+        <a href="{{ $url }}" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md" title="View {{ strtolower($label) }} records">
             <i class="bi {{ $icon }} {{ $color }}"></i><p class="mt-2 text-xs text-slate-500">{{ $label }}</p><strong class="text-2xl {{ $color }}">{{ number_format($count) }}</strong>
-        </div>
+        </a>
     @endforeach
 </div>
+
+@if($activeDeliveries->isNotEmpty())
+<section class="serial-card border-violet-200 bg-violet-50/40">
+    <div class="mb-3"><h2 class="!mb-0">Deliveries requiring action</h2><p class="text-sm text-slate-500">Open the current delivery step directly from here.</p></div>
+    <div class="grid gap-3 lg:grid-cols-2">
+        @foreach($activeDeliveries as $delivery)
+            @php($action = match($delivery->status) {'loaded'=>'Start delivery','in_transit'=>'Mark arrived','arrived'=>'Record receipt & POD',default=>'Open delivery'})
+            <a href="{{ route('delivery.consignments.show', $delivery) }}" class="group flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-violet-200 bg-white p-3 shadow-sm transition hover:border-violet-500 hover:bg-violet-50 hover:shadow-md" aria-label="{{ $action }} for {{ $delivery->number }}">
+                <div class="min-w-0"><div class="flex items-center gap-2"><strong class="text-sm text-slate-900">{{ $delivery->number }}</strong><span class="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">{{ ucwords(str_replace('_',' ',$delivery->status)) }}</span></div><p class="mt-1 truncate text-xs text-slate-500">{{ $delivery->customer->name }} · {{ $delivery->loadingTransfer->vehicle->number }} · {{ $delivery->loadingTransfer->driver?->name ?: 'Unassigned driver' }}</p></div>
+                <span class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white group-hover:bg-violet-700">{{ $action }} <i class="bi bi-arrow-right"></i></span>
+            </a>
+        @endforeach
+    </div>
+</section>
+@endif
 
 @if($fleetAlerts)
     <div class="mb-5 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -27,7 +41,7 @@
     </div>
 @endif
 
-<section class="serial-card">
+<section class="serial-card" id="next-actions">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div><h2 class="!mb-0">Next actions</h2><p class="text-sm text-slate-500">Turn completed vehicle loading records into customer deliveries.</p></div>
         @if(auth()->user()->canUseDelivery('delivery.transfer'))<a class="serial-btn" href="{{ route('delivery.consignments.create') }}">Create customer delivery</a>@endif
@@ -68,7 +82,7 @@
             <td><a class="font-bold text-indigo-700" href="{{ route('delivery.consignments.show',$item) }}">{{ $item->number }}</a></td>
             <td>{{ $item->sales_order_reference ?: 'Manual delivery' }}</td><td>{{ $item->customer->name }}</td><td>{{ $item->loadingTransfer->driver?->name ?: 'Unassigned' }}</td><td>{{ $item->loadingTransfer->vehicle->number }}</td><td>{{ $item->created_at->format('Y-m-d H:i') }}</td>
             <td><span class="rounded-full px-2 py-1 text-xs font-bold {{ $statusStyles[$item->status] ?? 'bg-slate-100 text-slate-700' }}">{{ ucwords(str_replace('_',' ',$item->status)) }}</span></td>
-            <td><a class="font-bold text-indigo-700 underline" href="{{ route('delivery.consignments.show',$item) }}">{{ $item->status === 'loaded' ? 'Start delivery' : (in_array($item->status, ['in_transit','arrived'], true) ? 'Open unloading' : 'View POD') }}</a></td>
+            <td><a class="font-bold text-indigo-700 underline" href="{{ route('delivery.consignments.show',$item) }}">{{ match($item->status) {'loaded'=>'Start delivery','in_transit'=>'Mark arrived','arrived'=>'Record receipt & POD',default=>'View POD'} }}</a></td>
         </tr>
     @empty
         <tr><td colspan="8" class="text-center text-slate-500">No deliveries match these filters.</td></tr>

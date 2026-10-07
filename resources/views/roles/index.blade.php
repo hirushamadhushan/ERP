@@ -200,7 +200,8 @@
                         @foreach([
                             'delivery.view' => 'Delivery: View vehicles, drivers and stock',
                             'delivery.manage' => 'Delivery: Manage vehicles, drivers and assignments',
-                            'delivery.transfer' => 'Delivery: Load and unload stock',
+                            'delivery.transfer' => 'Delivery: Load stock and process customer deliveries',
+                            'delivery.unload' => 'Delivery: Authorize vehicle stock unloading to a warehouse',
                             'system.settings'  => 'Access Settings',
                             'system.reports'   => 'View Reports',
                             'system.audit_log' => 'View Audit Log',

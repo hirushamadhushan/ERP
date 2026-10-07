@@ -49,7 +49,10 @@ class ProductLotService
             if (! $lot) {
                 $lot = ProductLot::create([
                     'product_stock_item_id' => $stockItem->id,
-                    'lot_number' => 'LOT-'.Str::ulid(),
+                    // A temporary unique value lets the database allocate the primary key.
+                    // The final human-readable lot code is derived from that monotonic ID,
+                    // making allocation concurrency-safe without a separate counter table.
+                    'lot_number' => 'PENDING-'.Str::ulid(),
                     'supplier_lot_code' => $data['supplier_lot_code'] ?? null,
                     'manufactured_at' => $data['manufactured_at'] ?? null,
                     'expires_at' => $data['expires_at'] ?? null,
@@ -57,6 +60,7 @@ class ProductLotService
                     'selling_price' => $data['selling_price'] ?? null,
                     'created_by' => $userId,
                 ]);
+                $lot->update(['lot_number' => $this->lotNumber($lot)]);
             }
 
             $transaction = InventoryTransaction::create([
@@ -76,6 +80,11 @@ class ProductLotService
 
             return $lot;
         });
+    }
+
+    private function lotNumber(ProductLot $lot): string
+    {
+        return sprintf('LOT-%s-%06d', $lot->created_at->format('Ymd'), $lot->id);
     }
 
     public function stockByProductAndLocation(iterable $productIds): array

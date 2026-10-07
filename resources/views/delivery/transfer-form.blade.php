@@ -11,14 +11,24 @@
     </span>
     <div>
         <h1 id="transfer-title" class="text-2xl font-extrabold tracking-tight">{{ $unloading ? 'Unloading' : 'Loading' }}</h1>
-        <p id="transfer-subtitle" class="text-sm text-white/90">{{ $unloading ? 'Move remaining vehicle stock back to a warehouse.' : 'Scan, verify and load goods to vehicle' }}</p>
+        <p id="transfer-subtitle" class="text-sm text-white/90">{{ $unloading ? 'Select vehicle stock, then move it safely to a warehouse.' : 'Scan, verify and load goods to vehicle' }}</p>
     </div>
 </div>
+
+@if($unloading && request()->routeIs('delivery.unloading'))
+    <div class="mb-5 grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-sm text-slate-700 sm:grid-cols-4">
+        @foreach([['1','Choose vehicle'],['2','Choose warehouse'],['3','Scan or add stock'],['4','Confirm unloading']] as [$step, $label])
+            <div class="flex items-center gap-2">
+                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-violet-600 text-xs font-black text-white">{{ $step }}</span>
+                <span class="text-xs font-bold">{{ $label }}</span>
+            </div>
+        @endforeach
+    </div>
+@endif
 
 <form method="POST" id="delivery-transfer" action="{{ route('delivery.transfers.store') }}">
     @csrf
     <input type="hidden" name="request_key" value="{{ old('request_key', (string) Illuminate\Support\Str::uuid()) }}">
-    @if($returnNote)<input type="hidden" name="return_id" value="{{ $returnNote->id }}">@endif
 
     {{-- Section 1: Loading Operation Details --}}
     <section class="serial-card mb-6 shadow-sm border border-slate-200/80 rounded-2xl bg-white p-5">
@@ -26,7 +36,7 @@
             <div>
                 <h2 id="operation-title" class="text-lg font-bold text-slate-800 !mb-0">{{ $unloading ? 'Unloading Operation' : 'Loading Operation' }}</h2>
                 <p id="operation-subtitle" class="text-xs font-medium text-slate-400">
-                    Delivery / Loading / <span id="ref-preview" class="font-bold text-slate-600">{{ old('reference', request('reference', 'DN-'.date('Ymd').'-001')) }}</span>
+                    Vehicle Store / {{ $unloading ? 'Unloading' : 'Loading' }} / <span id="ref-preview" class="font-bold text-slate-600">{{ old('reference', request('reference', 'DN-'.date('Ymd').'-001')) }}</span>
                 </p>
             </div>
             <span id="operation-badge" class="rounded-full px-3 py-1 text-xs font-bold shadow-xs transition-colors" style="background:{{ $unloading ? '#f3e8ff;color:#6b21a8' : '#d1fae5;color:#065f46' }}">
@@ -38,8 +48,7 @@
             {{-- Direction Select --}}
             <div id="direction-container">
                 <label for="direction" class="text-xs font-semibold text-slate-600 mb-1 block">Operation *</label>
-                @if($returnNote)<input type="hidden" name="direction" value="unloading">@endif
-                <select id="direction" name="direction" required @disabled($returnNote) class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-emerald-500">
+                <select id="direction" name="direction" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-emerald-500">
                     <option value="loading" @selected(old('direction', request('direction')) === 'loading')>Loading: Warehouse → Vehicle</option>
                     <option value="unloading" @selected(old('direction', request('direction')) === 'unloading')>Unloading: Vehicle → Warehouse</option>
                 </select>
@@ -47,31 +56,31 @@
 
             {{-- Delivery Note No / Reference --}}
             <div>
-                <label for="reference" class="text-xs font-semibold text-slate-600 mb-1 block">Delivery Note No. / Reference</label>
-                <input id="reference" name="reference" maxlength="100" value="{{ old('reference', request('reference', 'DN-'.date('Ymd').'-001')) }}" @readonly($returnNote) placeholder="DN-20250417-001" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500">
+                <label for="reference" class="text-xs font-semibold text-slate-600 mb-1 block">{{ $unloading ? 'Reference (optional)' : 'Delivery Note No. / Reference' }}</label>
+                <input id="reference" name="reference" maxlength="100" value="{{ old('reference', request('reference', 'DN-'.date('Ymd').'-001')) }}" data-auto-reference="{{ 'DN-'.date('Ymd').'-001' }}" placeholder="Type a reference or leave empty" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500">
             </div>
 
             {{-- Warehouse --}}
             <div>
-                <label for="warehouse_id" class="text-xs font-semibold text-slate-600 mb-1 block">Warehouse *</label>
-                <select id="warehouse_id" name="warehouse_id" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-emerald-500">
+                <label for="warehouse_id" class="text-xs font-semibold text-slate-600 mb-1 block">{{ $unloading ? 'Destination Warehouse *' : 'Warehouse *' }}</label>
+                <select id="warehouse_id" name="warehouse_id" required data-searchable-select="Search warehouse by name or code" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-emerald-500">
                     <option value="">Select Warehouse</option>
                     @foreach($warehouses as $warehouse)
-                        <option value="{{ $warehouse->id }}" @selected(old('warehouse_id') == $warehouse->id)>{{ $warehouse->name }}</option>
+                        <option value="{{ $warehouse->id }}" data-search="{{ $warehouse->name }} {{ $warehouse->code }}" @selected(old('warehouse_id') == $warehouse->id)>{{ $warehouse->name }}{{ $warehouse->code ? ' — '.$warehouse->code : '' }}</option>
                     @endforeach
                 </select>
             </div>
 
             {{-- Vehicle No --}}
             <div>
-                <label for="vehicle_id" class="text-xs font-semibold text-slate-600 mb-1 block">Vehicle No. *</label>
-                @if($returnNote)<input type="hidden" name="vehicle_id" value="{{ request('vehicle_id') }}">@endif
-                <select id="vehicle_id" name="vehicle_id" required @disabled($returnNote) class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-emerald-500">
+                <label for="vehicle_id" class="text-xs font-semibold text-slate-600 mb-1 block">{{ $unloading ? 'Vehicle to Unload *' : 'Vehicle No. *' }}</label>
+                <select id="vehicle_id" name="vehicle_id" required data-searchable-select="Search vehicle number or name" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-emerald-500">
                     <option value="">Select Vehicle</option>
                     @foreach($vehicles as $vehicle)
                         <option value="{{ $vehicle->id }}"
                                 data-driver="{{ $vehicle->drivers->first()?->name ?? 'Unassigned' }}"
                                 data-phone="{{ $vehicle->drivers->first()?->phone ?? '' }}"
+                                data-search="{{ $vehicle->number }} {{ $vehicle->name }} {{ $vehicle->brand }} {{ $vehicle->model }}"
                                 @selected(old('vehicle_id', request('vehicle_id')) == $vehicle->id)>
                             {{ $vehicle->number }} — {{ $vehicle->name }}
                         </option>
@@ -103,10 +112,27 @@
         </div>
     </section>
 
-    @if($returnNote)
-        <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <strong>{{ $returnNote->number }}</strong> is locked to its recorded returned products, quantities, lots and serials. Select the receiving warehouse and confirm unloading.
+    @if($unloading)
+    <section id="vehicle-stock-summary" class="serial-card mb-6 hidden rounded-2xl border border-violet-100 bg-white p-5 shadow-sm" aria-live="polite">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800 !mb-0">Stock currently on this vehicle</h2>
+                <p id="vehicle-stock-caption" class="text-xs text-slate-500">Select a vehicle to see its live stock balance.</p>
+            </div>
+            <div class="flex gap-2">
+                <span id="vehicle-product-count" class="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-800">0 stock lines</span>
+                <span id="vehicle-unit-count" class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">0 total units</span>
+            </div>
         </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full min-w-[720px] text-left text-xs">
+                <thead><tr class="border-b border-slate-200 bg-slate-50 text-slate-600">
+                    <th class="p-3">Product / SKU</th><th class="p-3">Tracking details</th><th class="p-3 text-center">Available on vehicle</th><th class="p-3">Unit</th>
+                </tr></thead>
+                <tbody id="vehicle-stock-summary-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+    </section>
     @endif
 
     {{-- Section 2: Scan & Load Items Card --}}
@@ -114,13 +140,13 @@
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
                 <h2 id="stock-section-title" class="text-lg font-bold text-slate-800 !mb-0">{{ $unloading ? 'Select Vehicle Stock' : 'Scan & Load Items' }}</h2>
-                <p class="text-xs text-slate-400">Scan barcode, SKU, batch or serial to verify and load items.</p>
+                <p class="text-xs text-slate-400">{{ $unloading ? 'Scan a barcode or search by product, SKU, lot or serial. Add only the quantity going back to the warehouse.' : 'Scan barcode, SKU, batch or serial to verify and load items.' }}</p>
             </div>
             <span id="line-count" class="rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800">0 items selected</span>
         </div>
 
         {{-- Barcode Scan Toolbar --}}
-        <div class="mb-4 flex flex-wrap items-center gap-3 {{ $returnNote ? 'hidden' : '' }}">
+        <div class="mb-4 flex flex-wrap items-center gap-3">
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 border border-slate-200">
                 <i class="bi bi-barcode text-2xl"></i>
             </div>
@@ -139,10 +165,6 @@
                 Scan Item
             </button>
 
-            <button type="button" id="add-manually" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-all">
-                <i class="bi bi-plus-square text-sm"></i>
-                Add Manually
-            </button>
         </div>
 
         {{-- Manual Stock Picker Row --}}
@@ -216,7 +238,7 @@
     </div>
 </form>
 
-<script type="application/json" id="previous-transfer-lines">@json(old('lines', $returnItems))</script>
+<script type="application/json" id="previous-transfer-lines">@json(old('lines', []))</script>
 @endsection
 
 @push('scripts')
@@ -229,14 +251,18 @@
 .stock-result-name{min-width:0;font-weight:600;font-size:12px}
 .stock-result-stock{flex:none;color:#64748b;font-size:12px}
 .stock-result-empty{padding:14px;color:#64748b;font-size:13px}
+.stock-serial-group{background:#fafafa;font-weight:700}
+.stock-serial-group .stock-result-stock{color:#6d28d9}
+.searchable-native-select{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+.searchable-select{position:relative}.searchable-select-input{width:100%;border:1px solid #cbd5e1;border-radius:12px;background:#fff;padding:10px 36px 10px 12px;color:#1e293b;font-size:12px;font-weight:600;outline:none}.searchable-select-input:focus{border-color:#10b981;box-shadow:0 0 0 2px rgb(16 185 129 / .2)}
+.searchable-select-arrow{pointer-events:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#64748b;font-size:11px}.searchable-select-list{position:absolute;z-index:80;top:calc(100% + 5px);left:0;right:0;max-height:240px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:12px;background:#fff;padding:5px;box-shadow:0 16px 35px rgb(15 23 42 / .18)}.searchable-select-option{display:block;width:100%;border-radius:8px;padding:9px 10px;text-align:left;color:#334155;font-size:12px;font-weight:600}.searchable-select-option:hover,.searchable-select-option.active{background:#ecfdf5;color:#047857}.searchable-select-option.selected{background:#f3e8ff;color:#6d28d9}.searchable-select-empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px}
 </style>
 <script>
 AppPage.ready(() => {
     const form = document.getElementById('delivery-transfer');
     if (!form) return;
-    const lockedReturn = @json((bool) $returnNote);
 
-    if (@json(request()->routeIs('delivery.loading'))) {
+    if (@json(request()->routeIs('delivery.loading') || request()->routeIs('delivery.unloading'))) {
         const dirContainer = document.getElementById('direction-container');
         if (dirContainer) dirContainer.hidden = true;
     }
@@ -245,11 +271,74 @@ AppPage.ready(() => {
     const search = document.getElementById('stock-search'), selected = document.getElementById('stock-option');
     const results = document.getElementById('stock-results'), toggle = document.getElementById('stock-toggle');
     const available = document.getElementById('stock-available'), quantity = document.getElementById('stock-quantity'), addButton = document.getElementById('add-stock');
+    const manualPickerRow = document.getElementById('manual-picker-container');
     const body = document.getElementById('transfer-lines'), message = document.getElementById('stock-message');
     const refInput = document.getElementById('reference'), refPreview = document.getElementById('ref-preview');
     const vehicleSelect = document.getElementById('vehicle_id'), driverName = document.getElementById('driver-name'), driverPhoneBtn = document.getElementById('driver-phone-btn');
+    const unloadingPage = document.getElementById('direction').value === 'unloading';
+    const stockSummary = document.getElementById('vehicle-stock-summary'), stockSummaryBody = document.getElementById('vehicle-stock-summary-body');
 
-    let entries = [], counter = 0, controller, timer, activeIndex = -1, sourceValues = sourceFields.map(input => input.value);
+    let entries = [], selectedSerialGroup = null, counter = 0, controller, timer, activeIndex = -1, sourceValues = sourceFields.map(input => input.value);
+
+    function makeSearchableSelect(select) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'searchable-select';
+        const input = document.createElement('input');
+        input.type = 'text'; input.autocomplete = 'off'; input.spellcheck = false;
+        input.className = 'searchable-select-input';
+        input.placeholder = select.dataset.searchableSelect || 'Search and select';
+        input.setAttribute('role', 'combobox'); input.setAttribute('aria-expanded', 'false');
+        const arrow = document.createElement('i'); arrow.className = 'bi bi-chevron-down searchable-select-arrow';
+        const list = document.createElement('div');
+        list.className = 'searchable-select-list'; list.hidden = true; list.setAttribute('role', 'listbox');
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.append(input, arrow, list, select);
+        select.classList.add('searchable-native-select');
+        const options = [...select.options];
+        let visible = [], active = -1;
+
+        const sync = () => {
+            const option = options.find(item => item.value === select.value);
+            input.value = option?.value ? option.textContent.trim() : '';
+        };
+        const close = () => { list.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; };
+        const choose = option => {
+            select.value = option.value; sync(); close();
+            select.dispatchEvent(new Event('change', {bubbles: true}));
+        };
+        const render = query => {
+            const term = query.trim().toLocaleLowerCase();
+            visible = options.filter(option => option.value && (!term || (option.dataset.search || option.textContent).toLocaleLowerCase().includes(term)));
+            list.replaceChildren(); active = -1;
+            if (!visible.length) {
+                const empty = document.createElement('div'); empty.className = 'searchable-select-empty'; empty.textContent = 'No matching records found.'; list.append(empty);
+            } else visible.forEach(option => {
+                const button = document.createElement('button'); button.type = 'button'; button.className = 'searchable-select-option';
+                if (option.value === select.value) button.classList.add('selected');
+                button.textContent = option.textContent.trim(); button.setAttribute('role', 'option');
+                button.addEventListener('mousedown', event => { event.preventDefault(); choose(option); }); list.append(button);
+            });
+            list.hidden = false; input.setAttribute('aria-expanded', 'true');
+        };
+        input.addEventListener('focus', () => { input.select(); render(''); });
+        input.addEventListener('click', () => render(input.value === select.selectedOptions[0]?.textContent.trim() ? '' : input.value));
+        input.addEventListener('input', () => render(input.value));
+        input.addEventListener('keydown', event => {
+            const buttons = [...list.querySelectorAll('.searchable-select-option')];
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault(); if (list.hidden) render(input.value);
+                active = event.key === 'ArrowDown' ? Math.min(active + 1, buttons.length - 1) : Math.max(active - 1, 0);
+                buttons.forEach((button, index) => button.classList.toggle('active', index === active)); buttons[active]?.scrollIntoView({block: 'nearest'});
+            } else if (event.key === 'Enter' && (active >= 0 || visible.length === 1)) { event.preventDefault(); choose(visible[active >= 0 ? active : 0]); }
+            else if (event.key === 'Escape') { close(); sync(); }
+        });
+        input.addEventListener('blur', () => { setTimeout(() => { close(); sync(); }, 100); });
+        select.addEventListener('invalid', event => { event.preventDefault(); input.focus(); render(input.value); });
+        select.addEventListener('searchable:sync', sync); select.addEventListener('change', sync);
+        sync();
+    }
+
+    document.querySelectorAll('[data-searchable-select]').forEach(makeSearchableSelect);
 
     // Update Driver Info when Vehicle changes
     function updateDriverInfo() {
@@ -276,9 +365,89 @@ AppPage.ready(() => {
 
     // Update Reference Preview
     if (refInput && refPreview) {
+        refInput.addEventListener('focus', () => {
+            if (refInput.value === refInput.dataset.autoReference) {
+                refInput.value = '';
+                refPreview.textContent = 'No reference';
+            }
+        }, { once: true });
         refInput.addEventListener('input', () => {
-            refPreview.textContent = refInput.value.trim() || 'DN-001';
+            refPreview.textContent = refInput.value.trim() || 'No reference';
         });
+    }
+
+    function sourceReady() {
+        return unloadingPage
+            ? Boolean(document.getElementById('direction').value && vehicleSelect.value)
+            : sourceFields.every(input => input.value);
+    }
+
+    function renderVehicleStockSummary(stockEntries) {
+        if (!stockSummary || !stockSummaryBody) return;
+        stockSummary.classList.remove('hidden');
+        stockSummaryBody.replaceChildren();
+        const groups = new Map();
+        stockEntries.forEach(entry => {
+            const key = [entry.product_id, entry.variant_id || '', entry.lot_id || '', entry.serial_id ? 'serials' : 'stock'].join('|');
+            const group = groups.get(key) || {...entry, available: 0, serials: []};
+            group.available += Number(entry.available || 0);
+            if (entry.serial_number) group.serials.push(entry.serial_number);
+            groups.set(key, group);
+        });
+        const rows = [...groups.values()];
+        document.getElementById('vehicle-product-count').textContent = `${rows.length} stock line${rows.length === 1 ? '' : 's'}`;
+        const total = rows.reduce((sum, row) => sum + Number(row.available || 0), 0);
+        document.getElementById('vehicle-unit-count').textContent = `${total.toLocaleString(undefined, {maximumFractionDigits: 4})} total units`;
+        const selectedVehicle = vehicleSelect.options[vehicleSelect.selectedIndex];
+        document.getElementById('vehicle-stock-caption').textContent = rows.length
+            ? `Live available stock inside ${selectedVehicle?.textContent.trim() || 'the selected vehicle'}.`
+            : 'This vehicle currently has no available stock.';
+        if (!rows.length) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="4" class="p-6 text-center text-slate-400">No available stock is currently stored on this vehicle.</td>';
+            stockSummaryBody.append(row);
+            return;
+        }
+        rows.forEach(entry => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-violet-50/40';
+            const tracking = entry.serials.length
+                ? `${entry.serials.length} serials: ${entry.serials.join(', ')}`
+                : (entry.lot_number ? `Lot: ${entry.lot_number}` : 'Standard stock');
+            const cells = [
+                `${entry.product_name} (${entry.sku || 'No SKU'})`,
+                tracking,
+                Number(entry.available).toLocaleString(undefined, {maximumFractionDigits: 4}),
+                entry.unit || 'Unit',
+            ];
+            cells.forEach((value, index) => {
+                const cell = document.createElement('td');
+                cell.className = `p-3 ${index === 0 ? 'font-bold text-slate-800' : 'text-slate-600'} ${index === 2 ? 'text-center font-extrabold text-emerald-700' : ''}`;
+                cell.textContent = value;
+                row.append(cell);
+            });
+            stockSummaryBody.append(row);
+        });
+    }
+
+    async function loadVehicleStockSummary() {
+        if (!unloadingPage || !vehicleSelect.value) {
+            stockSummary?.classList.add('hidden');
+            return;
+        }
+        const params = new URLSearchParams({direction: 'unloading', vehicle_id: vehicleSelect.value, q: ''});
+        if (document.getElementById('warehouse_id').value) params.set('warehouse_id', document.getElementById('warehouse_id').value);
+        document.getElementById('vehicle-stock-caption').textContent = 'Loading live vehicle stock...';
+        stockSummary.classList.remove('hidden');
+        try {
+            const response = await fetch(@json(route('delivery.options')) + '?' + params, {headers: {Accept: 'application/json'}});
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to load vehicle stock.');
+            renderVehicleStockSummary(data);
+        } catch (error) {
+            stockSummaryBody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-rose-600"></td></tr>';
+            stockSummaryBody.querySelector('td').textContent = error.message;
+        }
     }
 
     // Refresh the selected-line count and quantity styling using real entered values.
@@ -302,7 +471,7 @@ AppPage.ready(() => {
     const updateDirection = () => {
         const unloading = document.getElementById('direction').value === 'unloading';
         document.getElementById('transfer-title').textContent = unloading ? 'Unloading' : 'Loading';
-        document.getElementById('transfer-subtitle').textContent = unloading ? 'Move remaining vehicle stock back to a warehouse.' : 'Scan, verify and load goods to vehicle';
+        document.getElementById('transfer-subtitle').textContent = unloading ? 'Select vehicle stock, then move it safely to a warehouse.' : 'Scan, verify and load goods to vehicle';
         document.getElementById('stock-section-title').textContent = unloading ? 'Select Vehicle Stock' : 'Scan & Load Items';
         document.getElementById('operation-title').textContent = unloading ? 'Unloading Operation' : 'Loading Operation';
         document.getElementById('save-transfer').innerHTML = unloading ? '<i class="bi bi-check2-circle text-sm"></i> Confirm Unloading' : '<i class="bi bi-check2-circle text-sm"></i> Confirm Loading';
@@ -321,8 +490,6 @@ AppPage.ready(() => {
 
         const availableQty = entry.available != null ? Number(entry.available) : 100;
         row.dataset.availableQty = String(availableQty);
-
-        if (entry.serial_id) row.dataset.serialId = String(entry.serial_id);
 
         const prefix = `lines[${counter++}]`;
 
@@ -352,6 +519,7 @@ AppPage.ready(() => {
             const input = document.createElement('input'); input.type = 'hidden'; input.name = `${prefix}[${key}]`; input.value = entry[key]; nameCell.append(input);
         }
         const serialIds = entry.serial_ids || (entry.serial_id ? [entry.serial_id] : []);
+        if (serialIds.length) row.dataset.serialIds = serialIds.join(',');
         for (const id of serialIds) {
             const input = document.createElement('input'); input.type='hidden'; input.name=`${prefix}[serial_ids][]`; input.value=id; nameCell.append(input);
         }
@@ -359,7 +527,9 @@ AppPage.ready(() => {
         // Batch / Lot Cell
         const batchCell = document.createElement('td');
         batchCell.className = 'py-3 px-3 font-medium text-slate-600';
-        batchCell.textContent = entry.serial_number ? `Serial ${entry.serial_number}` : (entry.lot_number ? entry.lot_number : (entry.batch || `B240${10 + counter}`));
+        batchCell.textContent = serialIds.length > 1
+            ? `${serialIds.length} serials selected`
+            : (entry.serial_number ? `Serial ${entry.serial_number}` : (entry.lot_number ? entry.lot_number : 'Not lot tracked'));
 
         // Available quantity is a source-stock fact returned by the backend.
         const availableCell = document.createElement('td');
@@ -378,7 +548,7 @@ AppPage.ready(() => {
         qtyInput.step = entry.decimal ? '0.0001' : '1';
         qtyInput.value = entry.quantity || (serialIds.length ? serialIds.length : '');
         qtyInput.className = 'w-20 text-center rounded-lg bg-emerald-100 border border-emerald-300 font-extrabold text-emerald-900 py-1 text-xs focus:ring-2 focus:ring-emerald-500';
-        if (serialIds.length || lockedReturn) qtyInput.readOnly = true;
+        if (serialIds.length) qtyInput.readOnly = true;
         qtyInput.addEventListener('input', updateMetrics);
         loadedCell.append(qtyInput);
 
@@ -398,8 +568,7 @@ AppPage.ready(() => {
             row.remove();
             updateMetrics();
         });
-        if (!lockedReturn) actionCell.append(removeBtn);
-        else actionCell.textContent = 'Return';
+        actionCell.append(removeBtn);
 
         row.append(checkCell, skuCell, nameCell, batchCell, availableCell, loadedCell, unitCell, actionCell);
         body.append(row);
@@ -416,7 +585,7 @@ AppPage.ready(() => {
     for (const entry of Object.values(JSON.parse(document.getElementById('previous-transfer-lines').textContent))) addRow(entry);
 
     const closeResults = () => { results.hidden = true; search.setAttribute('aria-expanded','false'); activeIndex = -1; };
-    const openResults = () => { if(sourceFields.every(input => input.value)) { results.hidden = false; search.setAttribute('aria-expanded','true'); } };
+    const openResults = () => { if(sourceReady()) { results.hidden = false; search.setAttribute('aria-expanded','true'); } };
 
     function renderResults() {
         selected.value = ''; activeIndex = -1; results.replaceChildren();
@@ -428,7 +597,7 @@ AppPage.ready(() => {
             openResults();
             return;
         }
-        entries.forEach((entry, index) => {
+        const appendOption = (entry, index, container = results) => {
             const option = document.createElement('button');
             option.type = 'button';
             option.className = 'stock-result';
@@ -441,13 +610,46 @@ AppPage.ready(() => {
             stock.className = 'stock-result-stock';
             stock.textContent = `Available: ${entry.available} ${entry.unit || ''}`;
             option.append(name, stock);
-            results.append(option);
+            container.append(option);
+        };
+        const serialGroupKey = entry => [entry.product_id, entry.variant_id || '', entry.lot_id || ''].join('|');
+        const serialGroups = new Map();
+        entries.forEach((entry, index) => {
+            if (!entry.serial_id) return;
+            const key = serialGroupKey(entry);
+            const group = serialGroups.get(key) || { entry, records: [] };
+            group.records.push({ entry, index });
+            serialGroups.set(key, group);
+        });
+        const renderedSerialGroups = new Set();
+        entries.forEach((entry, index) => {
+            if (!entry.serial_id) {
+                appendOption(entry, index);
+                return;
+            }
+            const key = serialGroupKey(entry);
+            if (renderedSerialGroups.has(key)) return;
+            renderedSerialGroups.add(key);
+            const { records } = serialGroups.get(key);
+            const groupButton = document.createElement('button');
+            groupButton.type = 'button';
+            groupButton.className = 'stock-result stock-serial-group';
+            groupButton.dataset.serialGroup = key;
+            const name = document.createElement('span');
+            name.className = 'stock-result-name';
+            name.textContent = `${entry.product_name || entry.label} — click to add one`;
+            const count = document.createElement('span');
+            count.className = 'stock-result-stock';
+            count.textContent = `${records.length} serial${records.length === 1 ? '' : 's'} available`;
+            groupButton.append(name, count);
+            results.append(groupButton);
         });
         openResults();
     }
 
     function resetSelection() {
-        selected.value = ''; available.textContent = '—'; quantity.value = ''; quantity.disabled = true; quantity.readOnly = false; quantity.step = '0.0001'; quantity.max = '999999999'; addButton.disabled = true;
+        selected.value = ''; selectedSerialGroup = null; available.textContent = '—'; quantity.value = ''; quantity.disabled = true; quantity.readOnly = false; quantity.step = '0.0001'; quantity.max = '999999999'; addButton.disabled = true;
+        manualPickerRow?.classList.add('hidden');
     }
 
     function choose(index) {
@@ -462,17 +664,61 @@ AppPage.ready(() => {
         quantity.max = String(entry.available);
         quantity.value = entry.serial_id ? '1' : '';
         addButton.disabled = false;
+        manualPickerRow?.classList.remove('hidden');
         message.textContent = `Selected: ${entry.label}. Adjust quantity and click + Add Item.`;
         closeResults();
         if(!entry.serial_id) quantity.focus();
     }
 
+    function addSerial(index) {
+        const entry = entries[index];
+        if (!entry?.serial_id) return;
+        if (selectedSerialIds().has(String(entry.serial_id))) {
+            message.textContent = 'This serial is already in the selected items.';
+            return;
+        }
+        addRow({...entry, quantity: 1});
+        message.textContent = `Added serial ${entry.serial_number}.`;
+        search.value = '';
+        resetSelection();
+        closeResults();
+    }
+
+    function selectedSerialIds() {
+        return new Set([...body.querySelectorAll('[data-serial-ids]')]
+            .flatMap(row => row.dataset.serialIds.split(',').filter(Boolean)));
+    }
+
+    function chooseSerialGroup(groupKey) {
+        const selectedIds = selectedSerialIds();
+        const availableSerials = entries.filter(candidate => candidate.serial_id
+            && [candidate.product_id, candidate.variant_id || '', candidate.lot_id || ''].join('|') === groupKey
+            && !selectedIds.has(String(candidate.serial_id)));
+        if (!availableSerials.length) {
+            message.textContent = 'Every available serial for this product is already in the selected items.';
+            return;
+        }
+        selected.value = '';
+        selectedSerialGroup = groupKey;
+        search.value = availableSerials[0].product_name || availableSerials[0].label;
+        available.textContent = `${availableSerials.length} serial${availableSerials.length === 1 ? '' : 's'} available`;
+        quantity.disabled = false;
+        quantity.readOnly = false;
+        quantity.step = '1';
+        quantity.max = String(availableSerials.length);
+        quantity.value = '1';
+        addButton.disabled = false;
+        manualPickerRow?.classList.remove('hidden');
+        message.textContent = `Enter how many serials to add, up to ${availableSerials.length}.`;
+        closeResults();
+    }
+
     async function load() {
         controller?.abort(); controller = new AbortController(); entries = []; resetSelection();
-        if(sourceFields.some(input => !input.value)) {
-            results.replaceChildren(); closeResults(); message.textContent = 'Select operation, vehicle and warehouse first.'; return;
+        if(!sourceReady()) {
+            results.replaceChildren(); closeResults(); message.textContent = unloadingPage ? 'Select a vehicle first.' : 'Select operation, vehicle and warehouse first.'; return;
         }
-        const params = new URLSearchParams(sourceFields.map(input => [input.name, input.value]));
+        const params = new URLSearchParams(sourceFields.filter(input => input.value).map(input => [input.name, input.value]));
         params.set('q', search.value);
         message.textContent = 'Loading available stock…';
         try {
@@ -489,7 +735,7 @@ AppPage.ready(() => {
 
     sourceFields.forEach(input => input.addEventListener('change', () => {
         if(body.children.length && !confirm('Changing the source clears selected items. Continue?')) {
-            sourceFields.forEach((field, index) => field.value = sourceValues[index]); return;
+            sourceFields.forEach((field, index) => { field.value = sourceValues[index]; field.dispatchEvent(new Event('searchable:sync')); }); return;
         }
         sourceValues = sourceFields.map(field => field.value);
         body.replaceChildren();
@@ -498,8 +744,11 @@ AppPage.ready(() => {
         search.value = '';
         resetSelection();
         closeResults();
+        if (input === vehicleSelect) loadVehicleStockSummary();
         load();
     }));
+
+    if (unloadingPage && vehicleSelect.value) loadVehicleStockSummary();
 
     search.addEventListener('focus', () => { if(entries.length) openResults(); else load(); });
     search.addEventListener('input', () => { resetSelection(); clearTimeout(timer); timer = setTimeout(load, 250); });
@@ -516,7 +765,7 @@ AppPage.ready(() => {
             return;
         }
         const entry = matches[0];
-        if (entry.serial_id && body.querySelector(`tr[data-serial-id="${entry.serial_id}"]`)) {
+        if (entry.serial_id && selectedSerialIds().has(String(entry.serial_id))) {
             message.textContent = 'This serial is already selected.'; return;
         }
         if (Number(entry.available) < 1) {
@@ -528,7 +777,7 @@ AppPage.ready(() => {
     }
 
     search.addEventListener('keydown', event => {
-        const options = [...results.querySelectorAll('.stock-result')];
+        const options = [...results.querySelectorAll('[data-index]')];
         if(event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault(); openResults();
             activeIndex = event.key === 'ArrowDown' ? Math.min(activeIndex + 1, options.length - 1) : Math.max(activeIndex - 1, 0);
@@ -536,8 +785,11 @@ AppPage.ready(() => {
             options[activeIndex]?.scrollIntoView({block:'nearest'});
         } else if(event.key === 'Enter') {
             event.preventDefault();
-            if(document.getElementById('direction').value === 'loading' && activeIndex < 0) { scanCode(); }
-            else if(activeIndex >= 0) choose(activeIndex);
+            if(activeIndex < 0) { scanCode(); }
+            else if(activeIndex >= 0) {
+                const index = Number(options[activeIndex]?.dataset.index);
+                entries[index]?.serial_id ? addSerial(index) : choose(index);
+            }
             else if(entries.length === 1) choose(0);
             else if(entries.length > 1) openResults();
         } else if(event.key === 'Escape') closeResults();
@@ -549,16 +801,17 @@ AppPage.ready(() => {
         else message.textContent = 'Scanner ready. Point barcode scanner to search field.';
     });
 
-    const manualPickerRow = document.getElementById('manual-picker-container');
-    document.getElementById('add-manually')?.addEventListener('click', () => {
-        if (manualPickerRow) manualPickerRow.classList.toggle('hidden');
-        search.focus();
-        if(entries.length) openResults(); else load();
-    });
-
     results.addEventListener('click', event => {
-        const option = event.target.closest('.stock-result');
-        if(option) choose(Number(option.dataset.index));
+        const group = event.target.closest('.stock-serial-group');
+        if (group) {
+            chooseSerialGroup(group.dataset.serialGroup);
+            return;
+        }
+        const option = event.target.closest('[data-index]');
+        if(option) {
+            const index = Number(option.dataset.index);
+            entries[index]?.serial_id ? addSerial(index) : choose(index);
+        }
     });
 
     toggle.addEventListener('click', () => {
@@ -571,8 +824,26 @@ AppPage.ready(() => {
     }, {signal: AppPage.signal});
 
     addButton.addEventListener('click', () => {
+        const amount = Number(quantity.value);
+        if (selectedSerialGroup) {
+            const selectedIds = selectedSerialIds();
+            const serials = entries.filter(candidate => candidate.serial_id
+                && [candidate.product_id, candidate.variant_id || '', candidate.lot_id || ''].join('|') === selectedSerialGroup
+                && !selectedIds.has(String(candidate.serial_id)));
+            if (!Number.isInteger(amount) || amount < 1 || amount > serials.length) {
+                message.textContent = `Enter a whole number from 1 to ${serials.length}.`;
+                quantity.focus();
+                return;
+            }
+            const chosen = serials.slice(0, amount);
+            addRow({...chosen[0], serial_id: null, serial_ids: chosen.map(item => item.serial_id), serial_number: chosen.map(item => item.serial_number).join(', '), quantity: amount});
+            search.value = '';
+            resetSelection();
+            load();
+            return;
+        }
         if(selected.value === '') { message.textContent = 'Select an available stock item from the dropdown first.'; openResults(); return; }
-        const entry = entries[Number(selected.value)], amount = Number(quantity.value);
+        const entry = entries[Number(selected.value)];
         if(!entry) return;
         if(!Number.isFinite(amount) || amount <= 0) { message.textContent = 'Enter a quantity greater than zero.'; quantity.focus(); return; }
         if(amount > Number(entry.available)) { message.textContent = `Only ${entry.available} ${entry.unit || ''} is available.`; quantity.focus(); return; }
