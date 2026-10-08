@@ -47,11 +47,35 @@
     </div>
 </div>
 
-@if($consignment->status === 'loaded' && auth()->user()->canUseDelivery('delivery.transfer'))
+@if($consignment->status === 'loaded' && auth()->user()->canUseDelivery('delivery.dispatch'))
 <form class="no-print mb-5" method="POST" action="{{ route('delivery.consignments.depart', $consignment) }}">@csrf<button class="serial-btn">Mark in transit</button></form>
-@elseif($consignment->status === 'in_transit' && ! $consignment->arrived_at && auth()->user()->canUseDelivery('delivery.transfer'))
+@elseif($consignment->status === 'in_transit' && ! $consignment->arrived_at && auth()->user()->canUseDelivery('delivery.arrive'))
 <form class="no-print mb-5 rounded-xl border border-violet-200 bg-violet-50 p-4" method="POST" action="{{ route('delivery.consignments.arrive', $consignment) }}">@csrf
 <p class="mb-2 text-sm text-violet-900">Record arrival at the customer before confirming receipt.</p><button class="serial-btn">Mark arrived at customer</button></form>
+@endif
+
+@if($consignment->status === 'loaded' && auth()->user()->canUseDelivery('delivery.dispatch'))
+<details class="no-print mb-4 rounded-xl border border-slate-200 bg-white p-4">
+    <summary class="cursor-pointer text-xs font-bold text-slate-700">Reschedule delivery</summary>
+    <form method="POST" action="{{ route('delivery.consignments.reschedule', $consignment) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf
+        <input type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at', $consignment->scheduled_at?->format('Y-m-d\TH:i')) }}" required>
+        <input name="reason" minlength="5" maxlength="500" placeholder="Reason for rescheduling" required>
+        <button class="serial-btn">Save new schedule</button>
+    </form>
+</details>
+@endif
+@if(in_array($consignment->status, \App\Models\DeliveryConsignment::ACTIVE_STATUSES, true) && auth()->user()->canUseDelivery('delivery.correct'))
+<details class="no-print mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4">
+    <summary class="cursor-pointer text-xs font-bold text-rose-800">Cancel this delivery</summary>
+<p class="mt-2 text-xs text-rose-700">Stock remains on the vehicle until an authorized unloading or a corrected delivery is recorded.</p>
+    <form method="POST" action="{{ route('delivery.consignments.cancel', $consignment) }}" class="mt-3 flex flex-wrap gap-3">@csrf
+        <input class="min-w-[280px] flex-1" name="cancel_reason" minlength="5" maxlength="500" placeholder="Mandatory cancellation reason" required>
+        <button class="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white">Cancel delivery</button>
+    </form>
+</details>
+@endif
+@if($consignment->status === 'cancelled')
+<div class="mb-5 rounded-xl border border-slate-300 bg-slate-100 p-4 text-xs text-slate-700"><strong>Cancelled:</strong> {{ $consignment->cancel_reason }} · {{ $consignment->cancelled_at?->format('d M Y h:i A') }} · {{ $consignment->cancelledBy?->name }}</div>
 @endif
 
 {{-- Form wrapper for complete delivery & proof of delivery --}}
@@ -79,14 +103,6 @@
                 <strong class="text-sm font-extrabold text-slate-800">{{ $consignment->number }}</strong>
             </div>
 
-            {{-- Sales Order --}}
-            <div>
-                <span class="text-xs font-semibold text-slate-400 block mb-1">Order reference</span>
-                <strong class="text-sm font-extrabold text-blue-600">
-                    {{ $consignment->sales_order_reference ?: 'Not provided' }}
-                </strong>
-            </div>
-
             {{-- Customer --}}
             <div>
                 <span class="text-xs font-semibold text-slate-400 block mb-1">Customer</span>
@@ -111,7 +127,7 @@
             {{-- Receiver Name --}}
             <div>
                 <label for="receiver_name" class="text-xs font-semibold text-slate-600 block mb-1">Receiver Name *</label>
-                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
+                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))
                     <input id="receiver_name" name="receiver_name" required maxlength="150" value="{{ old('receiver_name', $consignment->receiver_name) }}" placeholder="Receiver name" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
                 @else
                     <strong class="text-xs font-bold text-slate-800 block p-2 bg-slate-50 rounded-xl border border-slate-200">{{ $consignment->receiver_name ?: '—' }}</strong>
@@ -121,7 +137,7 @@
             {{-- Contact No --}}
             <div>
                 <label for="receiver_phone" class="text-xs font-semibold text-slate-600 block mb-1">Contact No.</label>
-                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
+                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))
                     <div class="flex items-center gap-2">
                         <input id="receiver_phone" name="receiver_phone" maxlength="40" value="{{ old('receiver_phone', $consignment->receiver_phone) }}" placeholder="Receiver phone" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
                     </div>
@@ -143,6 +159,12 @@
                 <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
                     <i class="bi bi-check-lg"></i> {{ $consignment->status === 'arrived' ? 'Receiving' : ucwords(str_replace('_', ' ', $consignment->status)) }}
                 </span>
+            </div>
+            <div><label for="receiver_id_reference" class="text-xs font-semibold text-slate-600 block mb-1">Receiver ID / Reference</label>
+                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))<input id="receiver_id_reference" name="receiver_id_reference" maxlength="100" value="{{ old('receiver_id_reference') }}" placeholder="NIC, staff ID or reference" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs">@else<strong class="block rounded-xl border bg-slate-50 p-2 text-xs">{{ $consignment->receiver_id_reference ?: '—' }}</strong>@endif
+            </div>
+            <div><span class="text-xs font-semibold text-slate-600 block mb-1">Delivery GPS</span>
+                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))<input type="hidden" id="receiver_latitude" name="receiver_latitude" value="{{ old('receiver_latitude') }}"><input type="hidden" id="receiver_longitude" name="receiver_longitude" value="{{ old('receiver_longitude') }}"><button type="button" id="capture-gps" class="rounded-lg border px-3 py-2 text-xs font-bold"><i class="bi bi-geo-alt"></i> Capture current location</button><small id="gps-status" class="ml-2 text-slate-500"></small>@else<strong class="block rounded-xl border bg-slate-50 p-2 text-xs">{{ $consignment->receiver_latitude && $consignment->receiver_longitude ? $consignment->receiver_latitude.', '.$consignment->receiver_longitude : 'Not captured' }}</strong>@endif
             </div>
         </div>
     </section>
@@ -175,7 +197,7 @@
                         @php($source = $line->transferLine)
                         @php($unit = $source->stockItem->product->unit?->short_name ?? 'Ctn')
                         @php($loaded = $source->quantity)
-                        @php($isEditable = $consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
+                        @php($isEditable = $consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))
 
                         <tr class="hover:bg-slate-50 transition-colors line-row" data-loaded="{{ $loaded }}">
                             <td class="py-3 px-3 font-bold text-slate-800">
@@ -186,8 +208,19 @@
                                 @foreach($source->lots as $lot)
                                     <span class="block text-[11px] font-normal text-slate-400">Lot: {{ $lot->lot_number }}</span>
                                 @endforeach
-                                @foreach($source->serials as $serial)
-                                    <span class="block text-[11px] font-normal text-slate-400">Serial: {{ $serial->serial_number }}</span>
+                                @foreach($source->serials as $serialIndex => $serial)
+                                    @php($savedOutcome = $line->serialOutcomes->firstWhere('serial_id', $serial->id))
+                                    <div class="mt-1 flex min-w-[290px] items-center gap-2 rounded-lg bg-slate-50 px-2 py-1 text-[11px] font-normal">
+                                        <span class="min-w-0 flex-1 font-mono text-slate-600">{{ $serial->serial_number }}</span>
+                                        @if($isEditable)
+                                            <input type="hidden" name="lines[{{ $index }}][serial_outcomes][{{ $serialIndex }}][serial_id]" value="{{ $serial->id }}">
+                                            <select name="lines[{{ $index }}][serial_outcomes][{{ $serialIndex }}][outcome]" class="serial-outcome rounded-md border-slate-300 py-1 text-[10px]" required>
+                                                @foreach(['delivered'=>'Delivered','damaged'=>'Damaged','missing'=>'Short'] as $value=>$label)<option value="{{ $value }}" @selected(old('lines.'.$index.'.serial_outcomes.'.$serialIndex.'.outcome', 'delivered')===$value)>{{ $label }}</option>@endforeach
+                                            </select>
+                                        @else
+                                            <strong class="text-slate-700">{{ ucfirst($savedOutcome?->outcome ?? 'pending') }}</strong>
+                                        @endif
+                                    </div>
                                 @endforeach
                             </td>
 
@@ -199,7 +232,7 @@
                             <td class="pod-outcome-column py-2 px-3 text-center bg-blue-50/50 border-x border-blue-100">
                                 @if($isEditable)
                                     <input type="hidden" name="lines[{{ $index }}][id]" value="{{ $line->id }}">
-                                    <input type="number" name="lines[{{ $index }}][delivered]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.delivered', $line->delivered_quantity ?? $loaded) }}" class="w-20 text-center rounded-lg bg-blue-100 border border-blue-300 font-extrabold text-blue-900 py-1 text-xs focus:ring-2 focus:ring-blue-500 qty-input input-delivered">
+                                    <input type="{{ $source->serials->isNotEmpty() ? 'hidden' : 'number' }}" name="lines[{{ $index }}][delivered]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.delivered', $line->delivered_quantity ?: $loaded) }}" class="w-20 text-center rounded-lg bg-blue-100 border border-blue-300 font-extrabold text-blue-900 py-1 text-xs focus:ring-2 focus:ring-blue-500 qty-input input-delivered"><span class="serial-total-label {{ $source->serials->isEmpty() ? 'hidden' : '' }}">{{ $loaded }}</span>
                                 @else
                                     <strong class="font-extrabold text-blue-800">{{ $line->delivered_quantity }}</strong>
                                 @endif
@@ -208,7 +241,7 @@
                             {{-- Short Qty (Missing) --}}
                             <td class="pod-outcome-column py-2 px-3 text-center">
                                 @if($isEditable)
-                                    <input type="number" name="lines[{{ $index }}][missing]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.missing', $line->missing_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-rose-500 qty-input input-missing">
+                                    <input type="{{ $source->serials->isNotEmpty() ? 'hidden' : 'number' }}" name="lines[{{ $index }}][missing]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.missing', $line->missing_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-rose-500 qty-input input-missing"><span class="serial-total-label {{ $source->serials->isEmpty() ? 'hidden' : '' }}">0</span>
                                 @else
                                     <span class="{{ $line->missing_quantity > 0 ? 'text-rose-600 font-extrabold' : 'text-slate-600 font-bold' }}">
                                         {{ $line->missing_quantity }}
@@ -219,18 +252,19 @@
                             {{-- Damaged Qty --}}
                             <td class="pod-outcome-column py-2 px-3 text-center">
                                 @if($isEditable)
-                                    <input type="number" name="lines[{{ $index }}][damaged]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.damaged', $line->damaged_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-rose-500 qty-input input-damaged">
+                                    <input type="{{ $source->serials->isNotEmpty() ? 'hidden' : 'number' }}" name="lines[{{ $index }}][damaged]" required min="0" max="{{ $loaded }}" step="{{ $source->stockItem->product->unit?->allow_decimal ? '0.0001' : '1' }}" value="{{ old('lines.'.$index.'.damaged', $line->damaged_quantity ?? 0) }}" class="w-16 text-center rounded-lg border border-slate-300 font-bold text-slate-800 py-1 text-xs focus:ring-2 focus:ring-rose-500 qty-input input-damaged"><span class="serial-total-label {{ $source->serials->isEmpty() ? 'hidden' : '' }}">0</span>
                                 @else
                                     <span class="{{ $line->damaged_quantity > 0 ? 'text-rose-600 font-extrabold bg-rose-50 px-2 py-0.5 rounded-md' : 'text-slate-600 font-bold' }}">
                                         {{ $line->damaged_quantity }}
                                     </span>
+                                    @if($line->damageDisposition)<small class="mt-1 block text-[9px] font-bold text-amber-700">Quarantine: {{ $line->damageDisposition->location->name }}</small>@endif
                                 @endif
                             </td>
 
                             {{-- Remarks --}}
                             <td class="pod-outcome-column py-2 px-3">
                                 @if($isEditable)
-                                    <input type="text" name="lines[{{ $index }}][remarks]" placeholder="e.g. 5 ctn wet" maxlength="500" value="{{ old('lines.'.$index.'.remarks', $line->remarks) }}" class="w-full rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-700">
+                                    <input type="text" name="lines[{{ $index }}][remarks]" placeholder="Required for damaged/short" maxlength="500" value="{{ old('lines.'.$index.'.remarks', $line->remarks) }}" class="w-full rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-700 input-remarks">
                                 @else
 <span class="text-slate-500 font-medium text-[11px]">{{ $line->remarks ?: "-" }}</span>
                                 @endif
@@ -242,7 +276,7 @@
         </div>
 
         {{-- Discrepancy Action Buttons Toolbar --}}
-        @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
+        @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))
         <div class="mt-4 flex flex-wrap items-center gap-2.5 border-t border-slate-100 pt-3">
             <button type="button" id="btn-all-received" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-all">
                 <i class="bi bi-check-circle-fill text-sm"></i> Confirm Received
@@ -283,6 +317,7 @@
                 Signed by: <strong id="sig-signed-by" class="text-slate-800 font-bold">{{ $consignment->receiver_name }}</strong>
                 <span class="block text-slate-400">{{ $consignment->completed_at?->format('d M Y h:i A') ?: 'Not submitted' }}</span>
             </div>
+            @if(! $signatureProof)<p class="mt-2 text-[10px] text-slate-400">A signature or at least one photo is required to submit POD.</p>@endif
         </div>
 
         {{-- Proof of Delivery Photos Card --}}
@@ -294,13 +329,13 @@
 
             <div class="grid grid-cols-3 gap-3" id="photo-thumbnails-container">
                 @foreach($photoProofs as $photoProof)
-                    <a href="{{ route('delivery.consignments.proofs.show', [$consignment, $photoProof]) }}" target="_blank" class="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                    <div><a href="{{ route('delivery.consignments.proofs.show', [$consignment, $photoProof]) }}" target="_blank" class="group relative block aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                         <img src="{{ route('delivery.consignments.proofs.show', [$consignment, $photoProof]) }}" alt="Proof Photo" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200">
-                    </a>
+                    </a><p class="mt-1 truncate text-[10px] font-bold">{{ $photoProof->caption ?: 'Delivery proof' }}</p><p class="text-[9px] text-slate-400">{{ $photoProof->uploader?->name }} · {{ $photoProof->created_at?->format('d M Y H:i') }}</p>@if(auth()->user()->canUseDelivery('delivery.proof.manage'))<button type="submit" form="delete-proof-{{ $photoProof->id }}" class="text-[10px] font-bold text-rose-600">Remove incorrect photo</button>@endif</div>
                 @endforeach
 
                 {{-- Add Photo Button Box --}}
-                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
+                @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))
                 <label for="photos-input" class="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 hover:bg-slate-100 hover:border-blue-400 cursor-pointer transition-all">
                     <i class="bi bi-plus-lg text-2xl text-slate-400"></i>
                     <span class="mt-1 text-xs font-bold text-slate-600">Add Photo</span>
@@ -308,13 +343,14 @@
                 </label>
                 @endif
             </div>
+            @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))<input name="photo_caption" maxlength="250" placeholder="Caption for selected photos (optional)" class="mt-3 w-full rounded-xl border-slate-300 text-xs">@endif
         </div>
     </div>
 
     {{-- Section 4: Notes --}}
     <div class="pod-notes {{ filled($consignment->proof_notes) ? '' : 'pod-empty-proof' }} mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
         <label for="proof_notes" class="text-xs font-semibold text-slate-600 mb-1 block">Proof / Discrepancy Notes</label>
-        @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.transfer'))
+        @if($consignment->status === 'arrived' && auth()->user()->canUseDelivery('delivery.pod'))
             <textarea id="proof_notes" name="proof_notes" rows="2" maxlength="2000" placeholder="Add optional delivery notes or discrepancy details..." class="w-full rounded-xl border border-slate-300 p-3 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500">{{ old('proof_notes', $consignment->proof_notes) }}</textarea>
         @else
             <p class="text-xs text-slate-700 font-medium p-2 bg-slate-50 rounded-xl border border-slate-200">{{ $consignment->proof_notes ?: 'No discrepancy notes.' }}</p>
@@ -365,7 +401,7 @@
 
         {{-- Submit POD Main Action Button --}}
         <div class="no-print lg:col-span-4 flex items-stretch">
-            @if($consignment->status === 'arrived' && $consignment->arrived_at && auth()->user()->canUseDelivery('delivery.transfer'))
+            @if($consignment->status === 'arrived' && $consignment->arrived_at && auth()->user()->canUseDelivery('delivery.pod'))
                 <button type="submit" id="submit-pod-btn" class="w-full flex items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-4 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition-all">
                     <i class="bi bi-send-fill text-lg"></i>
                     Submit POD
@@ -379,6 +415,11 @@
         </div>
     </div>
 </form>
+@foreach($photoProofs as $photoProof)@if(auth()->user()->canUseDelivery('delivery.proof.manage'))<form id="delete-proof-{{ $photoProof->id }}" method="POST" action="{{ route('delivery.consignments.proofs.destroy',[$consignment,$photoProof]) }}" class="hidden">@csrf @method('DELETE')</form>@endif @endforeach
+@if(in_array($consignment->status,['delivered','partial','failed'],true) && auth()->user()->canUseDelivery('delivery.pod'))
+<section class="serial-card no-print"><h3 class="font-bold">POD correction</h3><p class="mb-3 text-xs text-slate-500">Request a controlled correction. A different supervisor must approve it; approval records a stock reversal and reopens this receipt.</p>
+@if($consignment->corrections->where('status','pending')->isEmpty())<form method="POST" action="{{ route('delivery.consignments.corrections.store',$consignment) }}" class="flex flex-wrap gap-2">@csrf<input name="reason" required minlength="10" maxlength="500" placeholder="Explain why this POD must be corrected" class="min-w-[280px] flex-1 rounded-xl border-slate-300"><button class="serial-btn">Request correction</button></form>@else @php($pendingCorrection=$consignment->corrections->firstWhere('status','pending'))<div class="rounded-xl bg-amber-50 p-3 text-sm"><b>Awaiting supervisor:</b> {{ $pendingCorrection->reason }} @if(auth()->user()->canUseDelivery('delivery.correct'))<form method="POST" action="{{ route('delivery.consignments.corrections.approve',$pendingCorrection) }}" class="mt-2">@csrf<button class="serial-btn">Approve and reopen POD</button></form>@endif</div>@endif</section>
+@endif
 
 <section class="delivery-print-signatures print-only" aria-label="Delivery receipt signatures">
     <div class="delivery-signature-box">
@@ -431,6 +472,7 @@
 </style>
 <script>
 AppPage.ready(() => {
+    document.getElementById('capture-gps')?.addEventListener('click',()=>{const status=document.getElementById('gps-status');if(!navigator.geolocation){status.textContent='GPS is unavailable';return;}status.textContent='Locating…';navigator.geolocation.getCurrentPosition(p=>{document.getElementById('receiver_latitude').value=p.coords.latitude.toFixed(7);document.getElementById('receiver_longitude').value=p.coords.longitude.toFixed(7);status.textContent='Location captured';},()=>status.textContent='Could not capture location',{enableHighAccuracy:true,timeout:10000});});
     const form = document.getElementById('unloading-pod-form');
     if (!form) return;
 
@@ -451,6 +493,18 @@ AppPage.ready(() => {
         let totalMissing = 0;
 
         rows.forEach(row => {
+            const serialSelectors = [...row.querySelectorAll('.serial-outcome')];
+            if (serialSelectors.length) {
+                const counts = {delivered: 0, damaged: 0, missing: 0};
+                serialSelectors.forEach(select => counts[select.value]++);
+                row.querySelector('.input-delivered').value = counts.delivered;
+                row.querySelector('.input-damaged').value = counts.damaged;
+                row.querySelector('.input-missing').value = counts.missing;
+                ['delivered', 'missing', 'damaged'].forEach(type => {
+                    const input = row.querySelector('.input-' + type);
+                    input?.parentElement.querySelector('.serial-total-label')?.replaceChildren(document.createTextNode(input.value));
+                });
+            }
             const loaded = parseFloat(row.dataset.loaded || '0') || 0;
             const delInput = row.querySelector('.input-delivered');
             const damInput = row.querySelector('.input-damaged');
@@ -473,6 +527,7 @@ AppPage.ready(() => {
     form.querySelectorAll('.qty-input').forEach(input => {
         input.addEventListener('input', recalculateTotals);
     });
+    form.querySelectorAll('.serial-outcome').forEach(select => select.addEventListener('change', recalculateTotals));
     recalculateTotals();
 
     // Confirm Received Quick Button
@@ -485,6 +540,7 @@ AppPage.ready(() => {
             if (del) del.value = loaded;
             if (dam) dam.value = 0;
             if (mis) mis.value = 0;
+            row.querySelectorAll('.serial-outcome').forEach(select => select.value = 'delivered');
         });
         recalculateTotals();
     });
@@ -588,6 +644,7 @@ AppPage.ready(() => {
     // Form submit validation
     form.addEventListener('submit', (e) => {
         let valid = true;
+        let discrepancyReasonMissing = false;
         rows.forEach(row => {
             const loaded = parseFloat(row.dataset.loaded || '0') || 0;
             const del = parseFloat(row.querySelector('.input-delivered')?.value || '0') || 0;
@@ -600,11 +657,25 @@ AppPage.ready(() => {
             } else {
                 row.classList.remove('bg-rose-50');
             }
+            if ((dam > 0 || mis > 0) && !row.querySelector('.input-remarks')?.value.trim()) {
+                valid = false;
+                discrepancyReasonMissing = true;
+                row.classList.add('bg-rose-50');
+            }
         });
+
+        const hasSignature = Boolean(document.getElementById('signature_data')?.value);
+        const hasPhoto = Boolean(photosInput?.files?.length);
+        const proofMissing = !hasSignature && !hasPhoto;
 
         if (!valid) {
             e.preventDefault();
-            alert('For every item row, Delivered + Damaged + Short must equal Loaded quantity.');
+            alert(discrepancyReasonMissing
+                ? 'Add a remark for every damaged or short quantity.'
+                : 'For every item row, Delivered + Damaged + Short must equal Loaded quantity.');
+        } else if (proofMissing) {
+            e.preventDefault();
+            alert('Add a receiver signature or at least one proof photo before submitting POD.');
         } else {
             document.getElementById('submit-pod-btn').disabled = true;
         }

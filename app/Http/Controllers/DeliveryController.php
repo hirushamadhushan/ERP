@@ -48,7 +48,9 @@ class DeliveryController extends Controller
         $transfers = DeliveryTransfer::with(['vehicle', 'driver', 'warehouse', 'transaction'])->when($vehicle, fn ($q) => $q->where('vehicle_id', $vehicle->id))->latest()->paginate(20, ['*'], 'history_page')->withQueryString();
         $activeDelivery = $vehicle ? DeliveryConsignment::active()->with('customer')
             ->whereHas('loadingTransfer', fn ($query) => $query->where('vehicle_id', $vehicle->id))->latest()->first() : null;
-        return view('delivery.store', compact('vehicles', 'vehicle', 'products', 'balances', 'transfers', 'activeDelivery'));
+        $vehicleDeparted = $vehicle ? DeliveryConsignment::whereIn('status',[DeliveryConsignment::STATUS_IN_TRANSIT,DeliveryConsignment::STATUS_ARRIVED])
+            ->whereHas('loadingTransfer',fn($query)=>$query->where('vehicle_id',$vehicle->id))->exists() : false;
+        return view('delivery.store', compact('vehicles', 'vehicle', 'products', 'balances', 'transfers', 'activeDelivery', 'vehicleDeparted'));
     }
     public function transferForm(Request $request)
     {

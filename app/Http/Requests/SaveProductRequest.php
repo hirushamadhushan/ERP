@@ -9,7 +9,16 @@ class SaveProductRequest extends BaseFormRequest
 {
     protected function prepareForValidation(): void
     {
-        $this->merge(['track_lots' => $this->boolean('track_lots')]);
+        $rawMaterial = $this->boolean('is_raw_material');
+        $product = $this->route('product');
+
+        // Manufacturing setup is derived from the product's role. Users only
+        // decide whether it is a raw material; output lot tracking is automatic.
+        $this->merge([
+            'is_raw_material' => $rawMaterial,
+            'is_manufacturable' => $rawMaterial ? false : (bool) ($product?->is_manufacturable ?? false),
+            'track_lots' => (bool) ($product?->track_lots ?? false),
+        ]);
     }
 
     public function after(): array
@@ -37,6 +46,8 @@ class SaveProductRequest extends BaseFormRequest
                     $validator->errors()->add($field, 'Choose the primary unit or one of its direct sub-units.');
                 }
             }
+            if ($this->boolean('is_raw_material') && ! $this->boolean('manage_stock')) $validator->errors()->add('is_raw_material','A raw material must use stock management.');
+            if ($this->boolean('is_manufacturable') && (!$this->boolean('manage_stock') || !$this->boolean('track_lots'))) $validator->errors()->add('is_manufacturable','A manufactured product must manage stock and track production lots.');
         }];
     }
 
@@ -65,6 +76,8 @@ class SaveProductRequest extends BaseFormRequest
             'manage_stock' => ['required', 'boolean'],
             'enable_serial' => ['required', 'boolean'],
             'track_lots' => ['required', 'boolean'],
+            'is_raw_material' => ['required','boolean'],
+            'is_manufacturable' => ['required','boolean'],
             'not_for_selling' => ['required', 'boolean'],
             'alert_quantity' => ['nullable', 'numeric', 'min:0', 'max:999999999', 'decimal:0,4'],
             'description' => ['nullable', 'string', 'max:20000'],

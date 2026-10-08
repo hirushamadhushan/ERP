@@ -75,6 +75,6 @@
         </div>
     </article>
 
-    @if($loading && ! $transfer->consignment && $transfer->hasStockAvailableForConsignment() && auth()->user()->canUseDelivery('delivery.transfer'))<div class="no-print mt-4 flex justify-end"><a class="rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700" href="{{ route('delivery.consignments.create', ['loading_transfer_id' => $transfer->id]) }}">Create customer delivery</a></div>@endif
+    @if($loading && (! $transfer->consignment || $transfer->consignment->status === 'cancelled') && $transfer->hasStockAvailableForConsignment() && auth()->user()->canUseDelivery('delivery.create'))<div class="no-print mt-4 flex justify-end"><a class="rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700" href="{{ route('delivery.consignments.create', ['loading_transfer_id' => $transfer->id]) }}">Create customer delivery</a></div>@endif
 </div>
 @endsection

@@ -59,17 +59,17 @@ class DeliveryInventory
                     'scan_codes' => array_values(array_filter([$product->code, $variant?->sku])), 'unit' => $product->unit?->short_name, 'decimal' => (bool) $product->unit?->allow_decimal];
                 $label = $product->name.' / '.$product->code.($variant ? ' / '.$variant->value : '');
                 $variantMatches = $productMatches || $matches($variant?->value, $variant?->sku);
-                if ($product->track_lots) {
+                if ($product->enable_serial) {
+                    foreach (ProductSerialNumber::forProduct($product->id)->where('product_variant_id', $variant?->id)->where('location_id', $locationId)->where('status', 'available')->with('productLot')->orderBy('id')->limit(100)->get() as $serial) {
+                        if ($variantMatches || $matches($serial->serial_number, $serial->productLot?->lot_number)) $rows[] = array_merge($base, ['label' => $label.' / Serial '.$serial->serial_number.($serial->productLot ? ' / '.$serial->productLot->lot_number : ''), 'available' => 1, 'serial_id' => $serial->id, 'serial_number' => $serial->serial_number, 'lot_id' => $serial->product_lot_id, 'lot_number' => $serial->productLot?->lot_number, 'scan_codes' => array_values(array_filter([$product->code, $variant?->sku, $serial->serial_number, $serial->productLot?->lot_number]))]);
+                    }
+                } elseif ($product->track_lots) {
                     $lots = $product->lots()->whereHas('stockItem', fn ($q) => $variant ? $q->whereHas('variant', fn ($v) => $v->whereKey($variant->id)) : $q->whereDoesntHave('variant'))
                         ->withSum(['movements as available' => fn ($q) => $q->where('location_id', $locationId)], 'quantity_delta')
                         ->whereHas('movements', fn ($q) => $q->where('location_id', $locationId))
                         ->when($loading, fn ($query) => $query->where(fn ($query) => $query->whereNull('expires_at')->orWhereDate('expires_at', '>=', today())))
                         ->orderBy('expires_at')->limit(100)->get();
                     foreach ($lots as $lot) if ($lot->available > 0 && ($variantMatches || $matches($lot->lot_number, $lot->supplier_lot_code))) $rows[] = array_merge($base, ['label' => $label.' / '.$lot->lot_number.' / expiry '.($lot->expires_at?->format('Y-m-d') ?? 'none'), 'available' => $lot->available, 'lot_id' => $lot->id, 'lot_number' => $lot->lot_number, 'scan_codes' => array_values(array_filter([$product->code, $variant?->sku, $lot->lot_number, $lot->supplier_lot_code]))]);
-                } elseif ($product->enable_serial) {
-                    foreach (ProductSerialNumber::forProduct($product->id)->where('product_variant_id', $variant?->id)->where('location_id', $locationId)->where('status', 'available')->orderBy('id')->limit(100)->get() as $serial) {
-                        if ($variantMatches || $matches($serial->serial_number)) $rows[] = array_merge($base, ['label' => $label.' / Serial '.$serial->serial_number, 'available' => 1, 'serial_id' => $serial->id, 'serial_number' => $serial->serial_number, 'scan_codes' => array_values(array_filter([$product->code, $variant?->sku, $serial->serial_number]))]);
-                    }
                 } else {
                     if (! $variantMatches) continue;
                     $quantity = $variant ? ($variant->locationStocks->firstWhere('location_id', $locationId)?->opening_quantity ?? 0) : $product->locations->first()->pivot->opening_quantity;

@@ -23,7 +23,7 @@ class ProductSerialNumber extends Model
         });
     }
 
-    protected $fillable = ['product_id', 'location_id', 'product_variant_id', 'serial_number'];
+    protected $fillable = ['product_id', 'location_id', 'product_variant_id', 'serial_number', 'manufacturing_order_id', 'product_lot_id'];
     protected $appends = ['variation'];
     protected $with = ['variant'];
 
@@ -41,6 +41,8 @@ class ProductSerialNumber extends Model
     {
         return $this->belongsTo(Location::class);
     }
+    public function manufacturingOrder() { return $this->belongsTo(ManufacturingOrder::class); }
+    public function productLot() { return $this->belongsTo(ProductLot::class); }
     public function variant() { return $this->belongsTo(ProductVariant::class, 'product_variant_id'); }
     public function getVariationAttribute(): string { return $this->variant?->value ?? 'Default'; }
 

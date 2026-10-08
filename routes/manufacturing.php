@@ -1,0 +1,7 @@
+<?php
+use App\Http\Controllers\{BillOfMaterialController,ManufacturingController};
+use Illuminate\Support\Facades\Route;
+Route::prefix('manufacturing')->name('manufacturing.')->middleware('role.permission:manufacturing.view')->group(function(){
+ Route::controller(ManufacturingController::class)->group(function(){Route::get('/','index')->name('index');Route::get('/orders/{order}','show')->whereNumber('order')->name('show');Route::middleware('role.permission:manufacturing.process')->group(function(){Route::get('/create','create')->name('create');Route::post('/','store')->middleware('throttle:20,1')->name('store');Route::post('/orders/{order}/confirm','confirm')->whereNumber('order')->name('confirm');Route::post('/orders/{order}/start','start')->whereNumber('order')->name('start');Route::post('/orders/{order}/complete','complete')->whereNumber('order')->middleware('throttle:20,1')->name('complete');Route::post('/orders/{order}/cancel','cancel')->whereNumber('order')->middleware('throttle:20,1')->name('cancel');});});
+ Route::controller(BillOfMaterialController::class)->prefix('boms')->name('boms.')->group(function(){Route::get('/','index')->name('index');Route::middleware('role.permission:manufacturing.process')->group(function(){Route::get('/create','create')->name('create');Route::post('/','store')->name('store');Route::get('/{bom}/edit','edit')->whereNumber('bom')->name('edit');Route::put('/{bom}','update')->whereNumber('bom')->name('update');});});
+});

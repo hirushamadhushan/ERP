@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/serial-numbers.php';
     require __DIR__.'/products.php';
     require __DIR__.'/delivery.php';
+    require __DIR__.'/manufacturing.php';
     require __DIR__.'/units.php';
     require __DIR__.'/categories.php';
     require __DIR__.'/brands.php';

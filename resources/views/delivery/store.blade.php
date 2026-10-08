@@ -16,21 +16,22 @@
                     <a class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition-all" href="{{ route('delivery.consignments.show', $activeDelivery) }}">
                         <i class="bi bi-arrow-right-circle"></i> Continue {{ $activeDelivery->number }}
                     </a>
-                @else
+                @endif
+                @if(!$vehicleDeparted)
                     <a class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-all" href="{{ route('delivery.loading', ['vehicle_id' => $vehicle?->id]) }}">
                         <i class="bi bi-box-arrow-up"></i> ↑ Loading
                     </a>
-                    @if(auth()->user()->canUseDelivery('delivery.unload'))<a class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition-all" href="{{ route('delivery.unloading', ['vehicle_id' => $vehicle?->id]) }}">
+                @endif
+                    @if(!$activeDelivery && auth()->user()->canUseDelivery('delivery.unload'))<a class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition-all" href="{{ route('delivery.unloading', ['vehicle_id' => $vehicle?->id]) }}">
                         <i class="bi bi-box-arrow-down"></i> ↓ Unloading
                     </a>@endif
-                @endif
             </div>
         @endif
     </div>
 
     @if($activeDelivery)
         <div class="mb-4 rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900">
-            <strong>{{ $activeDelivery->number }}</strong> for {{ $activeDelivery->customer->name }} is {{ str_replace('_', ' ', $activeDelivery->status) }}. Complete this delivery before moving other stock on this vehicle.
+            <strong>{{ $activeDelivery->number }}</strong> for {{ $activeDelivery->customer->name }} is {{ str_replace('_', ' ', $activeDelivery->status) }}. {{ $vehicleDeparted ? 'Complete the route before moving stock.' : 'You may load another customer allocation before departure; warehouse unloading remains locked.' }}
         </div>
     @endif
 

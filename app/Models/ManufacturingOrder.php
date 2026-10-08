@@ -1,0 +1,8 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+class ManufacturingOrder extends Model {
+ protected $fillable=['number','product_id','bill_of_material_id','location_id','output_lot_id','inventory_transaction_id','quantity','material_cost','expense_cost','total_cost','unit_cost','selling_price','manufactured_at','expires_at','status','notes','cancellation_reason','created_by','confirmed_by','started_by','completed_by','cancelled_by','confirmed_at','started_at','completed_at','cancelled_at'];
+ protected function casts():array{return ['manufactured_at'=>'date','expires_at'=>'date','confirmed_at'=>'datetime','started_at'=>'datetime','completed_at'=>'datetime','cancelled_at'=>'datetime'];}
+ public function product(){return $this->belongsTo(Product::class);} public function billOfMaterial(){return $this->belongsTo(BillOfMaterial::class);} public function location(){return $this->belongsTo(Location::class);} public function outputLot(){return $this->belongsTo(ProductLot::class,'output_lot_id');} public function outputSerials(){return $this->hasMany(ProductSerialNumber::class);} public function components(){return $this->hasMany(ManufacturingOrderComponent::class);} public function expenses(){return $this->hasMany(ManufacturingOrderExpense::class);} public function creator(){return $this->belongsTo(User::class,'created_by');} public function confirmer(){return $this->belongsTo(User::class,'confirmed_by');} public function starter(){return $this->belongsTo(User::class,'started_by');} public function completer(){return $this->belongsTo(User::class,'completed_by');} public function canceller(){return $this->belongsTo(User::class,'cancelled_by');}
+}

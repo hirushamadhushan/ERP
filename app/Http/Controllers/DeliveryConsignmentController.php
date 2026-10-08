@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\{CompleteDeliveryConsignmentRequest, StoreDeliveryConsignmentRequest};
-use App\Models\{Contact, DeliveryConsignment, DeliveryDriver, DeliveryTransfer, DeliveryVehicle};
+use App\Models\{Contact, DeliveryConsignment, DeliveryDriver, DeliveryPodCorrection, DeliveryTransfer, DeliveryVehicle};
 use App\Services\DeliveryConsignmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +17,7 @@ class DeliveryConsignmentController extends Controller
     public function index(Request $request)
     {
         $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:100'], 'status' => ['nullable', Rule::in(['loaded', 'in_transit', 'arrived', 'delivered', 'partial', 'failed'])],
+            'q' => ['nullable', 'string', 'max:100'], 'status' => ['nullable', Rule::in(['loaded', 'in_transit', 'arrived', 'delivered', 'partial', 'failed', 'cancelled'])],
             'vehicle_id' => ['nullable', 'integer', 'exists:delivery_vehicles,id'], 'driver_id' => ['nullable', 'integer', 'exists:delivery_drivers,id'],
             'date_from' => ['nullable', 'date'], 'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
         ]);
@@ -30,7 +30,7 @@ class DeliveryConsignmentController extends Controller
         if (! empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
         if (! empty($filters['q'])) {
             $search = '%'.$filters['q'].'%';
-            $query->where(fn ($q) => $q->where('number', 'like', $search)->orWhere('sales_order_reference', 'like', $search)
+            $query->where(fn ($q) => $q->where('number', 'like', $search)
                 ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', $search)));
         }
         $pendingTransfers = DeliveryTransfer::with(['vehicle.stores', 'warehouse', 'transaction', 'lines.stockItem.variant', 'lines.lots', 'lines.serials'])
@@ -78,7 +78,7 @@ class DeliveryConsignmentController extends Controller
 
     public function show(Request $request, DeliveryConsignment $consignment)
     {
-        $consignment->load(['customer', 'loadingTransfer.vehicle', 'loadingTransfer.driver', 'loadingTransfer.warehouse', 'lines.transferLine.stockItem.product.unit', 'lines.transferLine.stockItem.variant', 'lines.transferLine.lots', 'lines.transferLine.serials', 'events.user', 'proofs']);
+        $consignment->load(['customer', 'cancelledBy', 'routeStop.route', 'corrections', 'loadingTransfer.vehicle', 'loadingTransfer.driver', 'loadingTransfer.warehouse', 'lines.damageDisposition.location', 'lines.transferLine.stockItem.product.unit', 'lines.transferLine.stockItem.variant', 'lines.transferLine.lots', 'lines.transferLine.serials', 'lines.serialOutcomes.serial', 'events.user', 'proofs' => fn($q) => $q->whereNull('deleted_at')->with('uploader')]);
         $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
         return view('delivery.consignment-show', compact('consignment'));
     }
@@ -95,6 +95,22 @@ class DeliveryConsignmentController extends Controller
         $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
         $service->arrive($consignment, $request->user()->id);
         return back()->with('success', 'Customer arrival recorded.');
+    }
+
+    public function cancel(Request $request, DeliveryConsignment $consignment, DeliveryConsignmentService $service)
+    {
+        $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
+        $data = $request->validate(['cancel_reason' => ['required', 'string', 'min:5', 'max:500']]);
+        $service->cancel($consignment, $data['cancel_reason'], $request->user()->id);
+        return back()->with('success', 'Delivery cancelled. Vehicle stock was not moved.');
+    }
+
+    public function reschedule(Request $request, DeliveryConsignment $consignment, DeliveryConsignmentService $service)
+    {
+        $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
+        $data = $request->validate(['scheduled_at' => ['required', 'date', 'after:now'], 'reason' => ['required', 'string', 'min:5', 'max:500']]);
+        $service->reschedule($consignment, $data['scheduled_at'], $data['reason'], $request->user()->id);
+        return back()->with('success', 'Delivery rescheduled.');
     }
 
     public function complete(CompleteDeliveryConsignmentRequest $request, DeliveryConsignment $consignment, DeliveryConsignmentService $service)
@@ -117,13 +133,13 @@ class DeliveryConsignmentController extends Controller
                     $path = 'delivery-proofs/'.$consignment->id.'/'.Str::uuid().'.png';
                     if (! Storage::disk('local')->put($path, $signatureBytes)) throw ValidationException::withMessages(['signature_data' => 'Could not save the signature.']);
                     $savedPaths[] = $path;
-                    $consignment->proofs()->create(['kind' => 'signature', 'path' => $path, 'uploaded_by' => $request->user()->id, 'created_at' => now()]);
+                    $consignment->proofs()->create(['kind' => 'signature', 'path' => $path, 'caption' => 'Receiver signature', 'checksum' => hash('sha256', $signatureBytes), 'retention_until' => now()->addYears(7), 'uploaded_by' => $request->user()->id, 'created_at' => now()]);
                 }
                 foreach ($request->file('photos', []) as $photoFile) {
                     $path = $photoFile->store('delivery-proofs/'.$consignment->id, 'local');
                     if (! $path) throw ValidationException::withMessages(['photos' => 'Could not save a proof photo.']);
                     $savedPaths[] = $path;
-                    $consignment->proofs()->create(['kind' => 'photo', 'path' => $path, 'uploaded_by' => $request->user()->id, 'created_at' => now()]);
+                    $consignment->proofs()->create(['kind' => 'photo', 'path' => $path, 'caption' => $data['photo_caption'] ?? null, 'checksum' => hash_file('sha256', $photoFile->getRealPath()), 'retention_until' => now()->addYears(7), 'uploaded_by' => $request->user()->id, 'created_at' => now()]);
                 }
             });
         } catch (\Throwable $exception) {
@@ -137,8 +153,10 @@ class DeliveryConsignmentController extends Controller
     {
         $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
         abort_unless(in_array($consignment->status, ['delivered', 'partial', 'failed'], true), 422);
-        $data = $request->validate(['kind' => ['required', Rule::in(['photo', 'signature'])], 'image' => ['nullable', 'required_without:signature_data', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], 'signature_data' => ['nullable', 'required_without:image', 'string', 'max:2800000']]);
-        if ($consignment->proofs()->count() >= 10) throw \Illuminate\Validation\ValidationException::withMessages(['image' => 'This delivery already has the maximum of 10 proof files.']);
+        $data = $request->validate(['kind' => ['required', Rule::in(['photo', 'signature'])], 'caption' => ['nullable','string','max:250'], 'image' => ['nullable', 'required_without:signature_data', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], 'signature_data' => ['nullable', 'required_without:image', 'string', 'max:2800000']]);
+        if ($consignment->proofs()->whereNull('deleted_at')->count() >= 10) throw \Illuminate\Validation\ValidationException::withMessages(['image' => 'This delivery already has the maximum of 10 proof files.']);
+        if ($request->hasFile('image') && $data['kind'] !== 'photo') throw ValidationException::withMessages(['kind' => 'Uploaded image files must be saved as proof photos.']);
+        if ($data['kind'] === 'signature' && $consignment->proofs()->where('kind', 'signature')->exists()) throw ValidationException::withMessages(['signature_data' => 'This delivery already has a receiver signature.']);
         if (! empty($data['signature_data'])) {
             if ($data['kind'] !== 'signature' || ! str_starts_with($data['signature_data'], 'data:image/png;base64,')) throw \Illuminate\Validation\ValidationException::withMessages(['signature_data' => 'Invalid signature image.']);
             $bytes = base64_decode(substr($data['signature_data'], strlen('data:image/png;base64,')), true);
@@ -149,8 +167,9 @@ class DeliveryConsignmentController extends Controller
             $path = $request->file('image')->store('delivery-proofs/'.$consignment->id, 'local');
             if (! $path) throw \Illuminate\Validation\ValidationException::withMessages(['image' => 'Could not save the proof image.']);
         }
-        try { \Illuminate\Support\Facades\DB::transaction(function () use ($consignment, $data, $path, $request) {
-            $consignment->proofs()->create(['kind' => $data['kind'], 'path' => $path, 'uploaded_by' => $request->user()->id, 'created_at' => now()]);
+        $checksum = hash('sha256', Storage::disk('local')->get($path));
+        try { \Illuminate\Support\Facades\DB::transaction(function () use ($consignment, $data, $path, $checksum, $request) {
+            $consignment->proofs()->create(['kind' => $data['kind'], 'path' => $path, 'caption' => $data['caption'] ?? null, 'checksum' => $checksum, 'retention_until' => now()->addYears(7), 'uploaded_by' => $request->user()->id, 'created_at' => now()]);
             $consignment->events()->create(['event' => 'proof_uploaded', 'user_id' => $request->user()->id, 'created_at' => now()]);
         }); }
         catch (\Throwable $e) { Storage::disk('local')->delete($path); throw $e; }
@@ -160,8 +179,36 @@ class DeliveryConsignmentController extends Controller
     public function proof(Request $request, DeliveryConsignment $consignment, int $proof)
     {
         $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
-        $record = $consignment->proofs()->findOrFail($proof);
+        $record = $consignment->proofs()->whereNull('deleted_at')->findOrFail($proof);
         return Storage::disk('local')->response($record->path);
+    }
+
+    public function deleteProof(Request $request, DeliveryConsignment $consignment, int $proof)
+    {
+        $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
+        $record = $consignment->proofs()->whereNull('deleted_at')->findOrFail($proof);
+        DB::transaction(function () use ($record, $consignment, $request) {
+            // Keep the binary until retention expiry; remove it from operational POD views now.
+            $record->update(['deleted_at' => now(), 'deleted_by' => $request->user()->id]);
+            $consignment->events()->create(['event'=>'proof_deleted','user_id'=>$request->user()->id,'created_at'=>now()]);
+        });
+        return back()->with('success', 'Incorrect proof removed from the POD view and retained in the audit record.');
+    }
+
+    public function requestCorrection(Request $request, DeliveryConsignment $consignment, DeliveryConsignmentService $service)
+    {
+        $this->authorizeWarehouse($request, $consignment->loadingTransfer->warehouse_id);
+        $data=$request->validate(['reason'=>['required','string','min:10','max:500']]);
+        $service->requestCorrection($consignment,$data['reason'],$request->user()->id);
+        return back()->with('success','POD correction sent for supervisor approval.');
+    }
+
+    public function approveCorrection(Request $request, DeliveryPodCorrection $correction, DeliveryConsignmentService $service)
+    {
+        $correction->load('consignment.loadingTransfer');
+        $this->authorizeWarehouse($request,$correction->consignment->loadingTransfer->warehouse_id);
+        $service->approveCorrection($correction,$request->user()->id);
+        return redirect()->route('delivery.consignments.show',$correction->consignment_id)->with('success','POD reopened and stock reversal recorded.');
     }
 
     private function authorizeWarehouse(Request $request, int $id): void

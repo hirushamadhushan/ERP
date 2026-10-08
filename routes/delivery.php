@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\DeliveryConsignmentController;
+use App\Http\Controllers\DeliveryRouteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('delivery')->name('delivery.')->middleware('role.permission:delivery.view')->controller(DeliveryController::class)->group(function () {
@@ -29,16 +30,32 @@ Route::prefix('delivery')->name('delivery.')->middleware('role.permission:delive
     Route::get('/unloading', 'unloadingForm')->middleware('role.permission:delivery.transfer,delivery.unload')->name('unloading');
 });
 
+Route::prefix('delivery/routes')->name('delivery.routes.')->middleware('role.permission:delivery.view')->controller(DeliveryRouteController::class)->group(function(){
+    Route::get('/','index')->name('index');
+    Route::post('/','store')->middleware(['role.permission:delivery.route.manage','throttle:20,1'])->name('store');
+    Route::post('/{route}/depart','depart')->middleware(['role.permission:delivery.dispatch','throttle:20,1'])->name('depart');
+});
+
+
 Route::prefix('delivery')->name('delivery.consignments.')->middleware('role.permission:delivery.view')->controller(DeliveryConsignmentController::class)->group(function () {
     Route::get('/consignments', 'index')->name('index');
     Route::get('/consignments/{consignment}', 'show')->whereNumber('consignment')->name('show');
     Route::get('/consignments/{consignment}/proofs/{proof}', 'proof')->whereNumber('consignment')->whereNumber('proof')->name('proofs.show');
-    Route::middleware('role.permission:delivery.transfer')->group(function () {
+    Route::middleware('role.permission:delivery.create')->group(function () {
         Route::get('/consignments/create', 'create')->name('create');
         Route::post('/consignments', 'store')->middleware('throttle:30,1')->name('store');
+    });
+    Route::middleware('role.permission:delivery.dispatch')->group(function () {
         Route::post('/consignments/{consignment}/depart', 'depart')->middleware('throttle:30,1')->name('depart');
-        Route::post('/consignments/{consignment}/arrive', 'arrive')->middleware('throttle:30,1')->name('arrive');
+        Route::post('/consignments/{consignment}/reschedule', 'reschedule')->middleware('throttle:30,1')->name('reschedule');
+    });
+    Route::post('/consignments/{consignment}/arrive', 'arrive')->middleware(['role.permission:delivery.arrive', 'throttle:30,1'])->name('arrive');
+    Route::middleware('role.permission:delivery.pod')->group(function () {
         Route::post('/consignments/{consignment}/complete', 'complete')->middleware('throttle:30,1')->name('complete');
         Route::post('/consignments/{consignment}/proofs', 'uploadProof')->middleware('throttle:30,1')->name('proofs.store');
     });
+    Route::post('/consignments/{consignment}/cancel', 'cancel')->middleware(['role.permission:delivery.correct', 'throttle:30,1'])->name('cancel');
+    Route::post('/consignments/{consignment}/corrections', 'requestCorrection')->middleware(['role.permission:delivery.pod', 'throttle:20,1'])->name('corrections.store');
+    Route::post('/corrections/{correction}/approve', 'approveCorrection')->middleware(['role.permission:delivery.correct', 'throttle:20,1'])->name('corrections.approve');
+    Route::delete('/consignments/{consignment}/proofs/{proof}', 'deleteProof')->middleware(['role.permission:delivery.proof.manage', 'throttle:30,1'])->name('proofs.destroy');
 });

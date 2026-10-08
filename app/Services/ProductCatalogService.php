@@ -206,8 +206,8 @@ class ProductCatalogService
         if ($data['product_type'] === 'combo' && $data['enable_serial']) {
             throw ValidationException::withMessages(['enable_serial' => 'Serial tracking belongs to the individual products inside a combo.']);
         }
-        if ($data['track_lots'] && (! $data['manage_stock'] || $data['enable_serial'] || $data['product_type'] === 'combo')) {
-            throw ValidationException::withMessages(['track_lots' => 'Lot tracking requires managed stock and cannot be combined with serial or combo tracking.']);
+        if ($data['track_lots'] && (! $data['manage_stock'] || ($data['enable_serial'] && ! $data['is_manufacturable']) || $data['product_type'] === 'combo')) {
+            throw ValidationException::withMessages(['track_lots' => 'Lot tracking requires managed stock. Serial and lot tracking can be combined only for a manufactured product.']);
         }
         if (! $unit->allow_decimal && isset($data['alert_quantity']) && (float) $data['alert_quantity'] !== floor((float) $data['alert_quantity'])) {
             throw ValidationException::withMessages(['alert_quantity' => 'This unit requires a whole-number alert quantity.']);

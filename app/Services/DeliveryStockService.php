@@ -23,12 +23,15 @@ class DeliveryStockService
                 return $previous;
             }
             $loading = $data['direction'] === 'loading';
-            $hasActiveDelivery = DeliveryConsignment::active()
+            $blockingStatuses = $loading
+                ? [DeliveryConsignment::STATUS_IN_TRANSIT, DeliveryConsignment::STATUS_ARRIVED]
+                : DeliveryConsignment::ACTIVE_STATUSES;
+            $hasActiveDelivery = DeliveryConsignment::whereIn('status', $blockingStatuses)
                 ->whereHas('loadingTransfer', fn ($query) => $query->where('vehicle_id', $vehicle->id))
                 ->exists();
             if ($hasActiveDelivery) {
                 $this->fail($loading
-                    ? 'This vehicle has an active customer delivery. Complete it before loading more stock.'
+                    ? 'This vehicle has departed on a customer route. Complete it before loading more stock.'
                     : 'This vehicle has an active customer delivery. Record its POD before unloading stock to a warehouse.');
             }
             $warehouse = Location::findOrFail($data['warehouse_id']);
@@ -59,7 +62,24 @@ class DeliveryStockService
                 }
                 $record = $transfer->lines()->create(['stock_item_id' => $item->id, 'quantity' => $quantity]);
                 $product->locations()->syncWithoutDetaching([$destination]);
-                if ($product->track_lots) {
+                if ($product->enable_serial) {
+                    $ids = array_values(array_unique($line['serial_ids'] ?? []));
+                    $serials = ProductSerialNumber::forProduct($product->id)->where('product_variant_id', $variant?->id)->where('location_id', $source)->where('status', 'available')->whereIn('id', $ids)->lockForUpdate()->get();
+                    if (count($ids) !== (int) $quantity || $quantity != (int) $quantity || $serials->count() !== count($ids)) $this->fail('Select exactly one available serial per unit at the source location.');
+                    if ($product->track_lots) {
+                        $lotIds = $serials->pluck('product_lot_id')->filter()->unique();
+                        if ($lotIds->count() !== 1 || (int) $lotIds->first() !== (int) ($line['lot_id'] ?? 0)) $this->fail('All selected serials must belong to the selected production lot.');
+                        $lot = ProductLot::where('product_stock_item_id', $item->id)->find($line['lot_id']);
+                        if (! $lot) $this->fail('Select the production lot belonging to these serials.');
+                        if ($loading && $lot->expires_at && $lot->expires_at->toDateString() < now()->toDateString()) $this->fail('Expired lots cannot be loaded.');
+                        $available = InventoryMovement::where('product_lot_id', $lot->id)->where('location_id', $source)->sum('quantity_delta');
+                        if ((int) round((float) $available * 10000) < $scaled) $this->fail('Insufficient lot stock at the source location.');
+                        foreach ([$source => -$quantity, $destination => $quantity] as $locationId => $delta) InventoryMovement::create(['inventory_transaction_id' => $transaction->id, 'product_lot_id' => $lot->id, 'location_id' => $locationId, 'quantity_delta' => $delta, 'created_at' => now()]);
+                        $record->lots()->attach($lot->id);
+                    } elseif (! empty($line['lot_id'])) $this->fail('Lots cannot be supplied for this serial product.');
+                    foreach ($serials as $serial) $serial->update(['location_id' => $destination]);
+                    $record->serials()->attach($ids);
+                } elseif ($product->track_lots) {
                     if (! empty($line['serial_ids'])) $this->fail('Serials cannot be supplied for a lot product.');
                     $lot = ProductLot::where('product_stock_item_id', $item->id)->find($line['lot_id'] ?? null);
                     if (! $lot) $this->fail('Select a lot belonging to the chosen product and variation.');
@@ -68,13 +88,6 @@ class DeliveryStockService
                     if ((int) round((float) $available * 10000) < $scaled) $this->fail('Insufficient lot stock at the source location.');
                     foreach ([$source => -$quantity, $destination => $quantity] as $locationId => $delta) InventoryMovement::create(['inventory_transaction_id' => $transaction->id, 'product_lot_id' => $lot->id, 'location_id' => $locationId, 'quantity_delta' => $delta, 'created_at' => now()]);
                     $record->lots()->attach($lot->id);
-                } elseif ($product->enable_serial) {
-                    if (! empty($line['lot_id'])) $this->fail('Lots cannot be supplied for a serial product.');
-                    $ids = array_unique($line['serial_ids'] ?? []);
-                    $serials = ProductSerialNumber::forProduct($product->id)->where('product_variant_id', $variant?->id)->where('location_id', $source)->where('status', 'available')->whereIn('id', $ids)->lockForUpdate()->get();
-                    if (count($ids) !== (int) $quantity || $quantity != (int) $quantity || $serials->count() !== count($ids)) $this->fail('Select exactly one available serial per unit at the source location.');
-                    foreach ($serials as $serial) $serial->update(['location_id' => $destination]);
-                    $record->serials()->attach($ids);
                 } else {
                     if (! empty($line['lot_id']) || ! empty($line['serial_ids'])) $this->fail('This product does not use lots or serials.');
                     if ($variant) {

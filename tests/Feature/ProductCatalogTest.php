@@ -274,8 +274,10 @@ class ProductCatalogTest extends TestCase
     public function test_product_save_manual_auto_sku_and_price_calculations(): void
     {
         $data = $this->data();
+        $this->get('/products/create')->assertOk()->assertSee('id="enable_serial"', false)->assertSee('Enable Product description, IMEI or Serial Number')->assertSee('class="product-info" tabindex="0" role="button"',false)->assertSee('.product-info::after',false)->assertSee('Enable or disable adding product description, IMEI or Serial number while selling products in POS screen.');
         $this->post('/products', $data)->assertSessionHasNoErrors()->assertRedirect('/products');
         $product = Product::firstOrFail();
+        $this->assertTrue($product->enable_serial);
         $this->assertSame('PUMP-001', $product->code);
         $this->assertEquals(110, $product->purchase_price_inc);
         $this->assertEquals(25, $product->margin);

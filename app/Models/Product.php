@@ -17,7 +17,7 @@ class Product extends Model
     public function setSubcategoryIdAttribute($value): void { if ($value) { $this->attributes['selected_category_id']=$value; $this->unsetRelation('selectedCategory'); } }
 
     protected $fillable = ['selected_category_id', 'name', 'code', 'unit_id', 'purchase_unit_id', 'secondary_unit_id', 'brand_id', 'warranty_id', 'category_id',
-        'subcategory_id', 'barcode_type', 'manage_stock', 'enable_serial', 'track_lots',
+        'subcategory_id', 'barcode_type', 'manage_stock', 'enable_serial', 'track_lots', 'is_raw_material', 'is_manufacturable',
         'not_for_selling', 'alert_quantity', 'description', 'image_path',
         'brochure_path', 'brochure_name', 'variant_image_path', 'weight', 'expiry_period', 'expiry_period_type',
         'custom_fields', 'product_type', 'tax_rate_id', 'tax_rate', 'selling_price_tax_type',
@@ -25,7 +25,7 @@ class Product extends Model
 
     protected function casts(): array
     {
-        return ['manage_stock' => 'boolean', 'enable_serial' => 'boolean', 'track_lots' => 'boolean', 'not_for_selling' => 'boolean', 'is_active' => 'boolean'];
+        return ['manage_stock' => 'boolean', 'enable_serial' => 'boolean', 'track_lots' => 'boolean', 'is_raw_material' => 'boolean', 'is_manufacturable' => 'boolean', 'not_for_selling' => 'boolean', 'is_active' => 'boolean'];
     }
 
     protected static function booted(): void
@@ -74,6 +74,8 @@ class Product extends Model
     {
         return $this->hasMany(ProductStockItem::class);
     }
+
+    public function billsOfMaterials() { return $this->hasMany(BillOfMaterial::class); }
 
     public function comboItems()
     {

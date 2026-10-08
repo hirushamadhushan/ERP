@@ -9,4 +9,6 @@ class DeliveryConsignmentLine extends Model
     public $timestamps = false;
     protected $fillable = ['transfer_line_id', 'delivered_quantity', 'damaged_quantity', 'missing_quantity', 'remarks'];
     public function transferLine() { return $this->belongsTo(DeliveryTransferLine::class, 'transfer_line_id'); }
+    public function serialOutcomes() { return $this->hasMany(DeliveryConsignmentSerialOutcome::class, 'consignment_line_id'); }
+    public function damageDisposition() { return $this->hasOne(DeliveryDamageDisposition::class, 'consignment_line_id'); }
 }

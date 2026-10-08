@@ -1,5 +1,5 @@
 <div class="wide">
-    <label id="location-picker-label" class="mb-1">Business Locations * <span class="product-info" tabindex="0" title="Select every branch or warehouse that stocks this product.">i</span></label>
+    <label id="location-picker-label" class="mb-1">Business Locations * <span class="product-info" tabindex="0" role="button" aria-label="Business locations information" data-help="Locations where product will be available.">i</span></label>
     <details id="location-picker" class="relative open:z-30">
         <summary aria-labelledby="location-picker-label selected-location-label" class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 [&::-webkit-details-marker]:hidden">
             <span id="selected-location-label" class="min-w-0 truncate">Select business locations</span>

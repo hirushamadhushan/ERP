@@ -15,15 +15,15 @@ class DeliveryTransfer extends Model
     public function warehouse() { return $this->belongsTo(Location::class, 'warehouse_id'); }
     public function transaction() { return $this->belongsTo(InventoryTransaction::class, 'inventory_transaction_id'); }
     public function lines() { return $this->hasMany(DeliveryTransferLine::class, 'transfer_id'); }
-    public function consignment() { return $this->hasOne(DeliveryConsignment::class, 'loading_transfer_id'); }
+    public function consignment() { return $this->hasOne(DeliveryConsignment::class, 'loading_transfer_id')->latestOfMany(); }
 
     public function scopeAvailableForConsignment($query)
     {
         return $query->where('direction', self::DIRECTION_LOADING)
-            ->whereDoesntHave('consignment')
+            ->whereDoesntHave('consignment', fn ($q) => $q->where('status', '!=', DeliveryConsignment::STATUS_CANCELLED))
             ->whereNotIn('vehicle_id', DB::table('delivery_transfers as active_transfers')
                 ->join('delivery_consignments as active_deliveries', 'active_deliveries.loading_transfer_id', '=', 'active_transfers.id')
-                ->whereIn('active_deliveries.status', DeliveryConsignment::ACTIVE_STATUSES)
+                ->whereIn('active_deliveries.status', [DeliveryConsignment::STATUS_IN_TRANSIT, DeliveryConsignment::STATUS_ARRIVED])
                 ->select('active_transfers.vehicle_id'));
     }
 
