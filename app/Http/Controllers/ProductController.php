@@ -176,8 +176,7 @@ class ProductController extends Controller
             $product->setRelation('variants', $source->variants);
             $product->setRelation('comboItems', $source->comboItems);
         }
-        $locationDetails = isset($source) ? \Illuminate\Support\Facades\DB::table('product_location_details')->where('product_id', $source->id)->get()->keyBy('location_id') : collect();
-        return view('products.form', $this->references($request->filled('d') ? $source : null) + compact('product', 'locationDetails'));
+        return view('products.form', $this->references($request->filled('d') ? $source : null) + compact('product'));
     }
 
     public function store(SaveProductRequest $request, ProductCatalogService $catalog)
@@ -189,7 +188,6 @@ class ProductController extends Controller
     {
         return view('products.form', $this->references($product) + [
             'product' => $product->load(['locations', 'variants.variationValue.template', 'comboItems']),
-            'locationDetails' => \Illuminate\Support\Facades\DB::table('product_location_details')->where('product_id', $product->id)->get()->keyBy('location_id'),
         ]);
     }
 
@@ -248,18 +246,20 @@ class ProductController extends Controller
         }
 
         if ($data['action'] === 'delete') {
-            $hasRelatedTransactions = false;
+            $failures = [];
 
-            foreach ($products as $product) {
+            // A selected combo must be removed before selected products that it
+            // contains, otherwise its restrictive item FK blocks a valid batch.
+            foreach ($products->sortByDesc(fn ($product) => $product->product_type === 'combo' ? 1 : 0) as $product) {
                 try {
                     $catalog->delete($product);
-                } catch (\Illuminate\Validation\ValidationException) {
-                    $hasRelatedTransactions = true;
+                } catch (\Illuminate\Validation\ValidationException $exception) {
+                    $failures[] = $product->name.': '.collect($exception->errors())->flatten()->first();
                 }
             }
 
-            if ($hasRelatedTransactions) {
-                return back()->with('error', "Some products couldn't be deleted because it has transactions related to it.");
+            if ($failures) {
+                return back()->with('error', implode(' ', $failures));
             }
 
             return back()->with('success', count($products).' products deleted successfully.');
@@ -279,16 +279,21 @@ class ProductController extends Controller
     public function opening(Product $product)
     {
         if ($product->track_lots) return redirect()->route('products.catalog.lots.index', $product);
-        return view('products.opening', ['product' => $product->load('locations', 'variants.variationValues', 'variants.variationValue', 'variants.locationStocks')]);
+        $data = [
+            'product' => $product->load('unit', 'locations', 'variants.variationValues', 'variants.variationValue', 'variants.locationStocks'),
+            'expiryEnabled' => (bool) BusinessSetting::current()->productSettings?->expiry_enabled,
+        ];
+        if (request()->boolean('modal')) return view('products.partials.opening-stock-form', $data + ['modal' => true]);
+        return view('products.opening', $data);
     }
 
     public function saveOpening(SaveOpeningStockRequest $request, Product $product, ProductCatalogService $catalog)
     {
         if ($product->track_lots) return redirect()->route('products.catalog.lots.index', $product)->with('error', 'Use lot receiving to maintain this product stock.');
         if ($product->product_type === 'variable') {
-            $catalog->saveVariantOpeningStock($product, $request->validated('quantities'));
+            $catalog->saveVariantOpeningStock($product, $request->validated());
         } else {
-            $catalog->saveOpeningStock($product, $request->validated('quantities'));
+            $catalog->saveOpeningStock($product, $request->validated());
         }
 
         if ($request->boolean('return_to_products')) {

@@ -28,7 +28,9 @@ class BusinessSettingsTest extends TestCase
         $response->assertSee('Stop Selling n days before')
             ->assertSee('Specify action that needs to be done on product expiry.')
             ->assertSee('Based on selected Unit it will show sub units for it.')
-            ->assertSee('Enable this to add rack details of a product');
+            ->assertDontSee('Enable Racks')
+            ->assertDontSee('Enable Row')
+            ->assertDontSee('Enable Position');
         preg_match('/<input[^>]*id="expiry_days"[^>]*>/', $response->getContent(), $expiryDays);
         $this->assertStringContainsString('disabled', $expiryDays[0]);
     }
@@ -74,8 +76,7 @@ class BusinessSettingsTest extends TestCase
             'sku_prefix' => 'NEX', 'expiry_enabled' => '1', 'expiry_mode' => 'manufacturing_period',
             'on_expiry' => 'stop_selling', 'expiry_grace_days' => '3', 'default_unit_id' => '',
             'enable_brands' => '1', 'enable_categories' => '1', 'enable_subcategories' => '0',
-            'enable_price_tax' => '1', 'enable_our_price' => '0', 'enable_sub_units' => '0',
-            'enable_racks' => '1', 'enable_row' => '0', 'enable_position' => '0',
+            'enable_price_tax' => '1', 'enable_our_price' => '0', 'enable_sub_units' => '1',
             'enable_warranty' => '1', 'enable_secondary_unit' => '0', 'enable_serial_numbers' => '1',
         ];
 
@@ -93,6 +94,7 @@ class BusinessSettingsTest extends TestCase
         $settings = BusinessSetting::current()->fresh('productSettings');
         $this->assertSame('NEX', $settings->productSettings->sku_prefix);
         $this->assertFalse($settings->productSettings->enable_subcategories);
+        $this->assertTrue($settings->productSettings->enable_sub_units);
         $page = $this->actingAs($user)->get('/business/settings')
             ->assertOk()
             ->assertSee('name="product_settings[sku_prefix]"', false)

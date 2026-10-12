@@ -625,7 +625,6 @@
                         'on_expiry' => 'keep_selling', 'expiry_grace_days' => 0, 'default_unit_id' => null,
                         'enable_brands' => true, 'enable_categories' => true, 'enable_subcategories' => true,
                         'enable_price_tax' => true, 'enable_our_price' => false, 'enable_sub_units' => false,
-                        'enable_racks' => false, 'enable_row' => false, 'enable_position' => false,
                         'enable_warranty' => false, 'enable_secondary_unit' => false, 'enable_serial_numbers' => false,
                     ], $settings->productSettings?->toArray() ?? []);
                     $productOption = fn ($key) => old('product_settings.'.$key, $productOptions[$key]);
@@ -674,9 +673,9 @@
                                 @foreach($units as $unit)<option value="{{ $unit->id }}" @selected($productOption('default_unit_id') == $unit->id)>{{ $unit->name }} ({{ $unit->short_name }})</option>@endforeach
                             </select>
                         </div>
-                        @foreach(['enable_sub_units' => 'Enable Sub Units', 'enable_racks' => 'Enable Racks', 'enable_row' => 'Enable Row', 'enable_position' => 'Enable Position', 'enable_warranty' => 'Enable Warranty', 'enable_secondary_unit' => 'Enable secondary unit', 'enable_serial_numbers' => 'Enable serial numbers manage'] as $key => $label)
+                        @foreach(['enable_sub_units' => 'Enable Sub Units', 'enable_warranty' => 'Enable Warranty', 'enable_secondary_unit' => 'Enable secondary unit', 'enable_serial_numbers' => 'Enable serial numbers manage'] as $key => $label)
                             <div><input type="hidden" name="product_settings[{{ $key }}]" value="0"><label class="product-settings-check"><input type="checkbox" name="product_settings[{{ $key }}]" value="1" @checked($productOption($key))>{{ $label }}
-                                @if($key === 'enable_sub_units' || $key === 'enable_racks')<span class="settings-info-wrap"><span class="settings-info" tabindex="0" aria-label="{{ $label }} help">i</span><span class="settings-tooltip-card">{{ $key === 'enable_racks' ? 'Enable this to add rack details of a product for different business locations while adding products.' : 'Based on selected Unit it will show sub units for it. Select the sub-unit applicable. Leave blank if all sub-units are applicable for the product.' }}</span></span>@endif
+                                @if($key === 'enable_sub_units')<span class="settings-info-wrap"><span class="settings-info" tabindex="0" aria-label="{{ $label }} help">i</span><span class="settings-tooltip-card">Based on selected Unit it will show sub units for it. Select the sub-unit applicable. Leave blank if all sub-units are applicable for the product.</span></span>@endif
                             </label></div>
                         @endforeach
                     </div>
@@ -992,10 +991,28 @@ AppPage.ready( function() {
 </script>
 <script>
 (() => {
+const productSettingsChannel = 'BroadcastChannel' in window
+    ? new BroadcastChannel('codeza-product-settings')
+    : null;
+
+const publishProductSettingsUpdate = () => {
+    const updatedAt = String(Date.now());
+    try {
+        localStorage.setItem('codeza:product-settings-updated', updatedAt);
+    } catch (_) {
+        // BroadcastChannel still handles browsers where storage is unavailable.
+    }
+    productSettingsChannel?.postMessage({type: 'updated', updatedAt});
+};
+
+AppPage.signal.addEventListener('abort', () => productSettingsChannel?.close(), {once: true});
+
 /* Apply the saved business identity immediately; a full page reload is not
  * needed just to show the new name or uploaded logo in the shared layout. */
 document.addEventListener('app:form-saved', event => {
     if (event.detail.form?.id !== 'business-settings-form') return;
+
+    publishProductSettingsUpdate();
 
     const business = event.detail.result?.business;
     if (!business?.name) return;
@@ -1023,13 +1040,19 @@ document.addEventListener('app:form-saved', event => {
  * from racing this immediate brand update or falling back to a navigation.
  */
 const businessSettingsForm = document.getElementById('business-settings-form');
-businessSettingsForm?.addEventListener('submit', async event => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
+let settingsSaveInProgress = false;
+let productSettingsSaveQueued = false;
+
+const saveBusinessSettings = async () => {
+    if (!businessSettingsForm || settingsSaveInProgress) {
+        productSettingsSaveQueued = true;
+        return;
+    }
+
+    settingsSaveInProgress = true;
 
     const submitButton = businessSettingsForm.querySelector('button[type="submit"]');
     const originalButton = submitButton?.innerHTML;
-    if (submitButton?.disabled) return;
 
     if (submitButton) {
         submitButton.disabled = true;
@@ -1055,8 +1078,24 @@ businessSettingsForm?.addEventListener('submit', async event => {
             submitButton.disabled = false;
             submitButton.innerHTML = originalButton;
         }
+        settingsSaveInProgress = false;
+
+        if (productSettingsSaveQueued) {
+            productSettingsSaveQueued = false;
+            void saveBusinessSettings();
+        }
     }
+};
+
+businessSettingsForm?.addEventListener('submit', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void saveBusinessSettings();
 }, true);
+
+document.querySelectorAll('#tab-product input[type="checkbox"][name^="product_settings["]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => void saveBusinessSettings());
+});
 })();
 </script>
 @endsection

@@ -52,7 +52,9 @@ class Product extends Model
 
     public function locations()
     {
-        return $this->belongsToMany(Location::class)->withPivot('opening_quantity');
+        return $this->belongsToMany(Location::class)->withPivot([
+            'opening_quantity', 'opening_unit_cost', 'opening_expiry_date', 'opening_stocked_at', 'opening_note',
+        ]);
     }
 
     public function serialNumbers()

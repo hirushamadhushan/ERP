@@ -22,7 +22,20 @@ class ProductLotService
             }
 
             $variantId = $data['variant_id'] ?? null;
-            if ($product->product_type !== 'variable') $variantId = null;
+            if ($product->product_type === 'variable') {
+                if (! $variantId || ! $product->variants()->whereKey($variantId)->exists()) {
+                    throw ValidationException::withMessages(['variant_id' => 'Select a variation belonging to this product.']);
+                }
+            } else {
+                $variantId = null;
+            }
+            if (! $product->locations()->whereKey($data['location_id'])->exists()) {
+                throw ValidationException::withMessages(['location_id' => 'Select a location assigned to this product.']);
+            }
+
+            $supplierLotCode = filled($data['supplier_lot_code'] ?? null)
+                ? trim((string) $data['supplier_lot_code'])
+                : null;
             $stockItemQuery = ProductStockItem::query()->where('product_id', $product->id);
             $stockItem = $variantId
                 ? $stockItemQuery->whereHas('variant', fn ($query) => $query->whereKey($variantId))->first()
@@ -39,12 +52,17 @@ class ProductLotService
             }
 
             $lotQuery = ProductLot::query()->where('product_stock_item_id', $stockItem->id)
-                ->where('supplier_lot_code', $data['supplier_lot_code'] ?? null)
-                ->where('manufactured_at', $data['manufactured_at'] ?? null)
-                ->where('expires_at', $data['expires_at'] ?? null)
+                ->where('supplier_lot_code', $supplierLotCode)
                 ->where('unit_cost', $data['unit_cost'])
                 ->where('selling_price', $data['selling_price'] ?? null);
-            $lot = ! empty($data['supplier_lot_code']) ? $lotQuery->lockForUpdate()->first() : null;
+            foreach (['manufactured_at', 'expires_at'] as $dateField) {
+                filled($data[$dateField] ?? null)
+                    ? $lotQuery->whereDate($dateField, $data[$dateField])
+                    : $lotQuery->whereNull($dateField);
+            }
+            // A supplier code is the opt-in key for reuse. Without one every
+            // receipt is deliberately assigned its own internal lot identity.
+            $lot = $supplierLotCode !== null ? $lotQuery->lockForUpdate()->first() : null;
 
             if (! $lot) {
                 $lot = ProductLot::create([
@@ -53,7 +71,7 @@ class ProductLotService
                     // The final human-readable lot code is derived from that monotonic ID,
                     // making allocation concurrency-safe without a separate counter table.
                     'lot_number' => 'PENDING-'.Str::ulid(),
-                    'supplier_lot_code' => $data['supplier_lot_code'] ?? null,
+                    'supplier_lot_code' => $supplierLotCode,
                     'manufactured_at' => $data['manufactured_at'] ?? null,
                     'expires_at' => $data['expires_at'] ?? null,
                     'unit_cost' => $data['unit_cost'],

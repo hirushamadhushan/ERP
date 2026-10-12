@@ -32,11 +32,11 @@ window.addEventListener('beforeunload',event=>{if(productDirty&&!productSaving){
 // Protect unsaved product edits during in-app navigation as well.
 document.addEventListener('turbo:before-visit', event => { if(productDirty && !productSaving && !confirm('Discard unsaved product changes?')) event.preventDefault(); }, {signal: AppPage.signal});
 const locationChoices=Array.from(document.querySelectorAll('.location-choice'));
-const syncLocationRacks=()=>{const checked=locationChoices.filter(input=>input.checked),selected=new Set(checked.map(input=>input.value));const label=byId('selected-location-label');if(label){const names=checked.map(input=>input.dataset.locationName);label.textContent=names.length>2?`${names.slice(0,2).join(', ')} +${names.length-2} more`:(names.join(', ')||'Select business locations');label.title=names.join(', ');}document.querySelectorAll('.location-rack').forEach(card=>{const active=selected.has(card.dataset.location);card.hidden=!active;card.querySelectorAll('input').forEach(input=>input.disabled=!active);});};
-locationChoices.forEach(input=>input.addEventListener('change',syncLocationRacks));syncLocationRacks();
-const openingStockAction=byId('save-and-open-stock'),rawMaterial=byId('is_raw_material'),manageStock=byId('manage_stock'),productType=byId('product_type');
-const syncOpeningStockAction=()=>{const automaticFinishedLot=manageStock?.checked&&productType?.value==='single'&&!rawMaterial?.checked;if(openingStockAction)openingStockAction.textContent=automaticFinishedLot?'Save & Receive Initial Lot':'Save & Add Opening Stock';};
-[rawMaterial,manageStock,productType].forEach(field=>field?.addEventListener('change',syncOpeningStockAction));syncOpeningStockAction();
+const syncLocationLabel=()=>{const checked=locationChoices.filter(input=>input.checked),label=byId('selected-location-label');if(label){const names=checked.map(input=>input.dataset.locationName);label.textContent=names.length>2?`${names.slice(0,2).join(', ')} +${names.length-2} more`:(names.join(', ')||'Select business locations');label.title=names.join(', ');}};
+locationChoices.forEach(input=>input.addEventListener('change',syncLocationLabel));syncLocationLabel();
+const openingStockAction=byId('save-and-open-stock'),rawMaterial=byId('is_raw_material'),manageStock=byId('manage_stock'),openingProductType=byId('product_type');
+const syncOpeningStockAction=()=>{const automaticFinishedLot=manageStock?.checked&&openingProductType?.value==='single'&&!rawMaterial?.checked;if(openingStockAction)openingStockAction.textContent=automaticFinishedLot?'Save & Receive Initial Lot':'Save & Add Opening Stock';};
+[rawMaterial,manageStock,openingProductType].forEach(field=>field?.addEventListener('change',syncOpeningStockAction));syncOpeningStockAction();
 let scanBuffer='',lastScanAt=0;
 document.addEventListener('keydown',event=>{const target=document.activeElement?.tagName;if(event.ctrlKey||event.altKey||event.metaKey||['INPUT','TEXTAREA','SELECT'].includes(target))return;const now=Date.now();if(now-lastScanAt>80)scanBuffer='';lastScanAt=now;if(event.key==='Enter'){if(scanBuffer.length>=6){byId('sku').value=scanBuffer;byId('sku').dispatchEvent(new Event('input',{bubbles:true}));event.preventDefault();}scanBuffer='';}else if(event.key.length===1)scanBuffer+=event.key;}, {signal: AppPage.signal});
 productForm.addEventListener('submit',async event=>{
@@ -73,6 +73,31 @@ if (byId('category_id') && byId('subcategory_id')) {
     byId('subcategory_id').addEventListener('change',categories);
     categories();
 }
+const syncPurchaseSubUnits = () => {
+    const primaryUnit = byId('unit_id');
+    const purchaseUnit = byId('purchase_unit_id');
+    const purchaseUnitField = byId('purchase-unit-field');
+    if (!primaryUnit || !purchaseUnit || !purchaseUnitField) return;
+
+    const selectedParentId = primaryUnit.value;
+    let availableSubUnits = 0;
+    Array.from(purchaseUnit.options).forEach(option => {
+        if (!option.value) return;
+        const belongsToSelectedUnit = selectedParentId !== '' && option.dataset.parentUnit === selectedParentId;
+        option.hidden = !belongsToSelectedUnit;
+        option.disabled = !belongsToSelectedUnit;
+        if (belongsToSelectedUnit) availableSubUnits++;
+    });
+
+    const selectedOption = purchaseUnit.selectedOptions[0];
+    if (selectedOption?.value && selectedOption.disabled) purchaseUnit.value = '';
+
+    const hasSubUnits = availableSubUnits > 0;
+    purchaseUnitField.hidden = !hasSubUnits;
+    purchaseUnit.disabled = !hasSubUnits;
+};
+byId('unit_id')?.addEventListener('change', syncPurchaseSubUnits);
+syncPurchaseSubUnits();
 const stock = () => {
     const manageStock = byId('manage_stock').checked;
     const serialInput = byId('enable_serial');
@@ -133,7 +158,7 @@ byId('reference-form').addEventListener('submit',async event=>{
         const option=new Option(result.name+(result.code?' ('+result.code+')':''),result.id,true,true);
         if(kind==='unit')option.dataset.decimal=result.allow_decimal?'1':'0';
         if(kind==='subcategory')option.dataset.parent=result.parent_id;
-        select.add(option);categories();stock();dialog.close();
+        select.add(option);categories();syncPurchaseSubUnits();stock();dialog.close();
     }catch(error){byId('reference-error').textContent=error.message;}
     finally{button.disabled=false;}
 });

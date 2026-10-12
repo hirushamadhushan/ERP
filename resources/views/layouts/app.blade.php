@@ -111,16 +111,24 @@
         <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 hidden lg:flex flex-col bg-white border-r border-purple-100 shadow-sm">
 
             <!-- Brand Logo -->
-            <div class="border-b border-purple-100 bg-slate-950 px-4 py-3">
-                @php($brandLogo = $businessSetting->logo_path ?? asset('images/codeza-logo.png'))
-                <div class="flex items-center gap-3">
-                    <img id="business-brand-logo" src="{{ $brandLogo }}" alt="{{ $businessSetting->business_name ?? 'Codeza ERP' }} logo" class="h-10 w-12 shrink-0 rounded object-contain">
-                    <div class="min-w-0">
-                        <p id="business-brand-name" class="truncate text-sm font-bold text-white">{{ $businessSetting->business_name ?? 'Codeza ERP' }}</p>
-                        <p class="truncate text-[10px] text-slate-400">Business Management System</p>
-                    </div>
-                </div>
-            </div>
+            @php
+                $hasCustomBrandLogo = filled($businessSetting->logo_path ?? null);
+                $brandLogo = $businessSetting->logo_path ?? asset('images/codeza-logo.png');
+            @endphp
+            <a href="{{ route('home') }}" class="group flex min-h-[68px] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 transition hover:bg-slate-50" aria-label="{{ $businessSetting->business_name ?? 'Codeza ERP' }} dashboard">
+                <span class="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-950 shadow-sm ring-1 ring-slate-900/10 transition group-hover:shadow-md">
+                    @if($hasCustomBrandLogo)
+                        <img id="business-brand-logo" src="{{ $brandLogo }}" alt="" class="h-8 w-8 object-contain">
+                    @else
+                        <img id="business-brand-logo" src="{{ $brandLogo }}" alt="" class="absolute left-0 top-1/2 h-[54px] w-auto max-w-none -translate-y-1/2 object-contain">
+                    @endif
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span id="business-brand-name" class="block truncate text-[15px] font-extrabold tracking-[-.02em] text-slate-900">{{ $businessSetting->business_name ?? 'Codeza ERP' }}</span>
+                    <span class="mt-0.5 flex items-center gap-1.5 truncate text-[9px] font-semibold uppercase tracking-[.12em] text-slate-400"><i class="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" aria-hidden="true"></i>Business Suite</span>
+                </span>
+                <i class="bi bi-chevron-right text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-purple-500" aria-hidden="true"></i>
+            </a>
 
             <!-- Navigation -->
             <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

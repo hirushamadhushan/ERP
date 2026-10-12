@@ -168,6 +168,27 @@ class ProductCatalogTest extends TestCase
             ->assertDontSee('data-product-id="'.$otherProduct->id.'"', false);
     }
 
+    public function test_bulk_delete_removes_a_selected_combo_before_its_selected_component(): void
+    {
+        $componentData = array_replace($this->data(), ['enable_serial' => 0, 'sku' => 'DELETE-COMPONENT']);
+        $this->post('/products', $componentData)->assertSessionHasNoErrors();
+        $component = Product::where('code', 'DELETE-COMPONENT')->firstOrFail();
+
+        $comboData = array_replace($componentData, [
+            'name' => 'Delete Bundle', 'sku' => 'DELETE-BUNDLE', 'product_type' => 'combo',
+            'combo_items' => [['product_id' => $component->id, 'quantity' => 1]],
+        ]);
+        $this->post('/products', $comboData)->assertSessionHasNoErrors();
+        $combo = Product::where('code', 'DELETE-BUNDLE')->firstOrFail();
+
+        $this->post('/products/bulk', [
+            'action' => 'delete', 'product_ids' => [$component->id, $combo->id],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertDatabaseMissing('products', ['id' => $component->id]);
+        $this->assertDatabaseMissing('products', ['id' => $combo->id]);
+    }
+
     public function test_product_filter_options_do_not_shrink_with_location_results(): void
     {
         $first = $this->data();
@@ -348,5 +369,38 @@ class ProductCatalogTest extends TestCase
         $this->get('/products/'.$product->id.'/files/brochure')->assertOk();
         $this->get('/products/'.$product->id.'/files/invalid')->assertNotFound();
         $this->post('/products', array_replace($data, ['sku' => 'NEW', 'subcategory_id' => 1]))->assertSessionHasErrors('subcategory_id');
+    }
+
+    public function test_purchase_unit_must_be_a_direct_sub_unit_of_the_selected_unit(): void
+    {
+        $data = $this->data();
+        $primaryUnit = Unit::findOrFail($data['unit_id']);
+        $validSubUnit = Unit::create([
+            'name' => 'Box of pieces', 'short_name' => 'box', 'allow_decimal' => false,
+            'base_unit_id' => $primaryUnit->id, 'base_unit_multiplier' => 12,
+        ]);
+        $otherParent = Unit::create(['name' => 'Kilogram', 'short_name' => 'kg', 'allow_decimal' => true]);
+        $wrongSubUnit = Unit::create([
+            'name' => 'Rice sack', 'short_name' => 'sack', 'allow_decimal' => false,
+            'base_unit_id' => $otherParent->id, 'base_unit_multiplier' => 25,
+        ]);
+
+        \App\Models\BusinessSetting::current()->productSettings()->update(['enable_sub_units' => true]);
+        $page = $this->get('/products/create')->assertOk()
+            ->assertSee('id="purchase-unit-field" hidden', false)
+            ->assertSee('data-parent-unit="'.$primaryUnit->id.'"', false)
+            ->assertSee('>'.$primaryUnit->name.' ('.$primaryUnit->short_name.')</option>', false);
+        preg_match('/<select required id="unit_id".*?<\/select>/s', $page->getContent(), $primaryUnitSelect);
+        $this->assertStringNotContainsString($validSubUnit->name, $primaryUnitSelect[0]);
+
+        $this->post('/products', array_replace($data, ['purchase_unit_id' => $wrongSubUnit->id]))
+            ->assertSessionHasErrors('purchase_unit_id');
+        $this->post('/products', array_replace($data, ['purchase_unit_id' => $primaryUnit->id]))
+            ->assertSessionHasErrors('purchase_unit_id');
+        $this->post('/products', array_replace($data, ['unit_id' => $validSubUnit->id]))
+            ->assertSessionHasErrors('unit_id');
+        $this->post('/products', array_replace($data, ['purchase_unit_id' => $validSubUnit->id]))
+            ->assertSessionHasNoErrors();
+        $this->assertEquals($validSubUnit->id, Product::firstOrFail()->purchase_unit_id);
     }
 }

@@ -14,18 +14,5 @@
             @endforeach
         </div>
     </details>
-    <p class="product-help">Select one or more locations. Rack fields appear for each selected location.</p>
-    <div id="location-racks" class="mt-3 grid gap-3 md:grid-cols-2">
-        @foreach($locations as $location)
-            @php $detail = ($locationDetails ?? collect())->get($location->id); @endphp
-            <div class="location-rack rounded-xl border border-purple-100 bg-purple-50/40 p-3" data-location="{{ $location->id }}" @if(!in_array($location->id, $selectedLocations)) hidden @endif>
-                <strong class="mb-2 block text-xs text-purple-700">{{ $location->name }}</strong>
-                <div class="grid grid-cols-3 gap-2">
-                    <input name="location_details[{{ $location->id }}][rack]" maxlength="100" placeholder="Rack" value="{{ old('location_details.'.$location->id.'.rack', $detail->rack ?? '') }}">
-                    <input name="location_details[{{ $location->id }}][row]" maxlength="100" placeholder="Row" value="{{ old('location_details.'.$location->id.'.row', $detail->row ?? '') }}">
-                    <input name="location_details[{{ $location->id }}][position]" maxlength="100" placeholder="Position" value="{{ old('location_details.'.$location->id.'.position', $detail->position ?? '') }}">
-                </div>
-            </div>
-        @endforeach
-    </div>
+    <p class="product-help">Select one or more locations where this product will be available.</p>
 </div>

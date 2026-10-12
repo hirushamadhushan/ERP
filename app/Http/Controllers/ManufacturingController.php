@@ -24,7 +24,15 @@ class ManufacturingController extends Controller
         $outputs = Product::with('unit')->where('manage_stock', true)->where('is_raw_material', false)->where('product_type','single')->where('is_active', true)->orderBy('name')->get();
         $boms = BillOfMaterial::with(['items.product.unit','items.productVariant.variationValues'])->where('is_active', true)->whereIn('product_id', $outputs->pluck('id'))->orderBy('code')->get();
         $bomData = $boms->map(fn ($bom) => ['id'=>$bom->id,'code'=>$bom->code,'product_id'=>$bom->product_id,'output_quantity'=>(float)$bom->output_quantity,'items'=>$bom->items->map(fn($item)=>['name'=>$item->product->name,'variant'=>$item->productVariant?->value,'sku'=>$item->productVariant?->sku ?: $item->product->code,'quantity'=>(float)$item->quantity,'unit'=>$item->product->unit?->short_name,'unit_cost'=>(float)($item->productVariant?->purchase_price ?? $item->product->purchase_price)])]);
-        return view('manufacturing.create', compact('locations','outputs','bomData'));
+        $recipe = null;
+        $materials = Product::with(['unit','variants.variationValues'])->where('is_raw_material', true)->where('enable_serial', false)->where('manage_stock', true)->where('is_active', true)->whereIn('product_type', ['single','variable'])->orderBy('name')->get();
+        if ($request->has('recipe')) {
+            $recipe = $request->query('recipe') === 'new'
+                ? new BillOfMaterial()
+                : BillOfMaterial::with('items')->findOrFail((int) $request->query('recipe'));
+        }
+        $materialData = $materials->map(fn ($material) => ['id'=>$material->id,'name'=>$material->name,'code'=>$material->code,'type'=>$material->product_type,'unit'=>$material->unit?->short_name,'unit_cost'=>(float)$material->purchase_price,'variants'=>$material->variants->map(fn($variant)=>['id'=>$variant->id,'label'=>($variant->value ?: 'Variant').' ('.$variant->sku.')','unit_cost'=>(float)$variant->purchase_price])->values()])->values();
+        return view('manufacturing.create', compact('locations','outputs','bomData','recipe','materials','materialData'));
     }
 
     public function store(StoreManufacturingOrderRequest $request, ManufacturingService $service)

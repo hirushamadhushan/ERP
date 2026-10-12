@@ -12,21 +12,34 @@ class ManufacturingService
         return DB::transaction(function () use ($data, $userId) {
             $this->validateLocation((int) $data['location_id']);
             $output = Product::with('unit')->findOrFail($data['product_id']);
+            if (! empty($data['components'])) $output->update(['is_manufacturable' => true, 'track_lots' => true]);
             $this->validateOutput($output, (string) $data['quantity']);
-            $bom = BillOfMaterial::with(['items.product.unit','items.productVariant'])->whereKey($data['bill_of_material_id'])->where('is_active', true)->first();
-            if (! $bom || $bom->product_id !== $output->id) throw ValidationException::withMessages(['bill_of_material_id' => 'Select an active recipe for the finished product.']);
-            $scale = bcdiv((string) $data['quantity'], (string) $bom->output_quantity, 8);
-            $components = $bom->items->map(function ($item) use ($scale) {
-                $this->validateComponent($item->product, $item->productVariant);
-                $quantity = bcmul((string) $item->quantity, $scale, 4);
-                if (! $item->product->unit?->allow_decimal && bccomp($quantity, (string) floor((float) $quantity), 4) !== 0) throw ValidationException::withMessages(['quantity' => $item->product->name.' requires a whole-number quantity. Choose a compatible output quantity.']);
-                return ['product' => $item->product, 'variant' => $item->productVariant, 'quantity' => $quantity];
-            });
+            $bom = null;
+            if (! empty($data['components'])) {
+                $components = collect($data['components'])->map(function ($line) use ($data) {
+                    $product = Product::with(['unit','variants'])->findOrFail($line['product_id']);
+                    $variant = filled($line['product_variant_id'] ?? null) ? $product->variants->firstWhere('id', (int) $line['product_variant_id']) : null;
+                    $this->validateComponent($product, $variant);
+                    $quantity = bcmul((string) $line['quantity_per_unit'], (string) $data['quantity'], 4);
+                    if (! $product->unit?->allow_decimal && bccomp($quantity, (string) floor((float) $quantity), 4) !== 0) throw ValidationException::withMessages(['components' => $product->name.' requires a whole-number total quantity.']);
+                    return ['product' => $product, 'variant' => $variant, 'quantity' => $quantity];
+                });
+                $componentKeys = $components->map(fn ($line) => $line['product']->id.':'.($line['variant']?->id ?? 0));
+                if ($componentKeys->duplicates()->isNotEmpty()) throw ValidationException::withMessages(['components' => 'The same raw material variation cannot be added more than once.']);
+            } else {
+                $bom = BillOfMaterial::with(['items.product.unit','items.productVariant'])->whereKey($data['bill_of_material_id'] ?? null)->where('is_active', true)->first();
+                if (! $bom || $bom->product_id !== $output->id) throw ValidationException::withMessages(['bill_of_material_id' => 'Select an active materials setup for the finished product.']);
+                $scale = bcdiv((string) $data['quantity'], (string) $bom->output_quantity, 8);
+                $components = $bom->items->map(function ($item) use ($scale) {
+                    $this->validateComponent($item->product, $item->productVariant);
+                    return ['product' => $item->product, 'variant' => $item->productVariant, 'quantity' => bcmul((string) $item->quantity, $scale, 4)];
+                });
+            }
             $materialCost = $components->reduce(fn ($sum, $line) => bcadd($sum, bcmul((string) ($line['variant']?->purchase_price ?? $line['product']->purchase_price), $line['quantity'], 4), 4), '0');
             $expenses = collect($data['expenses'] ?? [])->filter(fn ($e) => filled($e['name'] ?? null) || isset($e['amount']));
             $expenseCost = $expenses->reduce(fn ($sum, $e) => bcadd($sum, (string) $e['amount'], 4), '0');
             $totalCost = bcadd($materialCost, $expenseCost, 4);
-            $order = ManufacturingOrder::create(['number' => 'TMP-'.bin2hex(random_bytes(8)), 'product_id' => $output->id, 'bill_of_material_id' => $bom->id, 'location_id' => $data['location_id'], 'quantity' => $data['quantity'], 'material_cost' => $materialCost, 'expense_cost' => $expenseCost, 'total_cost' => $totalCost, 'unit_cost' => bcdiv($totalCost, (string) $data['quantity'], 4), 'selling_price' => $data['selling_price'], 'manufactured_at' => $data['manufactured_at'], 'expires_at' => $data['expires_at'] ?? null, 'status' => 'draft', 'notes' => $data['notes'] ?? null, 'created_by' => $userId]);
+            $order = ManufacturingOrder::create(['number' => 'TMP-'.bin2hex(random_bytes(8)), 'product_id' => $output->id, 'bill_of_material_id' => $bom?->id, 'location_id' => $data['location_id'], 'quantity' => $data['quantity'], 'material_cost' => $materialCost, 'expense_cost' => $expenseCost, 'total_cost' => $totalCost, 'unit_cost' => bcdiv($totalCost, (string) $data['quantity'], 4), 'selling_price' => $data['selling_price'], 'manufactured_at' => $data['manufactured_at'], 'expires_at' => $data['expires_at'] ?? null, 'status' => 'draft', 'notes' => $data['notes'] ?? null, 'created_by' => $userId]);
             $order->update(['number' => 'MO-'.str_pad((string) $order->id, 7, '0', STR_PAD_LEFT)]);
             foreach ($components as $line) { $cost=(string)($line['variant']?->purchase_price ?? $line['product']->purchase_price); $order->components()->create(['product_id' => $line['product']->id, 'product_variant_id'=>$line['variant']?->id, 'quantity' => $line['quantity'], 'unit_cost' => $cost, 'total_cost' => bcmul($cost, $line['quantity'], 4)]); }
             foreach ($expenses as $expense) $order->expenses()->create(['name' => $expense['name'], 'amount' => $expense['amount']]);

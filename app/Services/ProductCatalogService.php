@@ -38,6 +38,14 @@ class ProductCatalogService
             if ($product->lots()->exists()) {
                 throw ValidationException::withMessages(['product' => 'This product has lot history and cannot be deleted.']);
             }
+            $containingCombos = Product::query()
+                ->whereHas('comboItems', fn ($query) => $query->whereKey($product->id))
+                ->pluck('name');
+            if ($containingCombos->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'product' => 'This product is used by the combo product(s): '.$containingCombos->implode(', ').'. Delete or edit those combos first.',
+                ]);
+            }
             // A featured-product assignment is presentation data owned by a
             // business location. It must not keep an otherwise deletable
             // product record alive.
@@ -50,14 +58,16 @@ class ProductCatalogService
         $this->cleanupAttachments($files);
     }
 
-    public function saveOpeningStock(Product $product, array $quantities): void
+    public function saveOpeningStock(Product $product, array $data): void
     {
         // Lock the product while replacing opening balances so concurrent stock
         // edits cannot leave one location with an older submitted value.
-        DB::transaction(function () use ($product, $quantities) {
+        DB::transaction(function () use ($product, $data) {
+            $quantities = $data['quantities'];
+            $expiryEnabled = (bool) BusinessSetting::current()->productSettings?->expiry_enabled;
             $product = Product::lockForUpdate()->findOrFail($product->id);
-            if (! $product->manage_stock || $product->enable_serial) {
-                throw ValidationException::withMessages(['quantities' => 'Serial products use individual serial numbers for opening stock.']);
+            if (! $product->manage_stock) {
+                throw ValidationException::withMessages(['quantities' => 'Enable stock management before adding opening stock.']);
             }
             $locationIds = $product->locations()->pluck('locations.id')->map(fn ($id) => (string) $id)->all();
             if (array_diff(array_keys($quantities), $locationIds) || count($locationIds) !== count($quantities)) {
@@ -71,19 +81,26 @@ class ProductCatalogService
                 if (! $product->unit?->allow_decimal && (float) $quantity !== floor((float) $quantity)) {
                     throw ValidationException::withMessages(['quantities' => 'This unit requires whole-number stock.']);
                 }
-                $product->locations()->updateExistingPivot($locationId, ['opening_quantity' => $quantity]);
+                $product->locations()->updateExistingPivot($locationId, [
+                    'opening_quantity' => $quantity,
+                    'opening_unit_cost' => $data['unit_costs'][$locationId] ?? $product->purchase_price,
+                    'opening_expiry_date' => $expiryEnabled ? ($data['expiry_dates'][$locationId] ?? null) : null,
+                    'opening_stocked_at' => $data['stocked_at'][$locationId] ?? now(),
+                    'opening_note' => $data['notes'][$locationId] ?? null,
+                ]);
             }
         });
     }
 
-    public function saveVariantOpeningStock(Product $product, array $quantities): void
+    public function saveVariantOpeningStock(Product $product, array $data): void
     {
-        // Variable stock is stored per variation and location; serial products
-        // deliberately use serial records instead of aggregate quantities.
-        DB::transaction(function () use ($product, $quantities) {
+        // Variable opening stock is stored per variation and location.
+        DB::transaction(function () use ($product, $data) {
+            $quantities = $data['quantities'];
+            $expiryEnabled = (bool) BusinessSetting::current()->productSettings?->expiry_enabled;
             $product = Product::with(['variants.locationStocks', 'locations', 'unit'])->lockForUpdate()->findOrFail($product->id);
-            if (! $product->manage_stock || $product->enable_serial || $product->product_type !== 'variable') {
-                throw ValidationException::withMessages(['quantities' => 'Variation opening stock is available only for non-serial variable products.']);
+            if (! $product->manage_stock || $product->product_type !== 'variable') {
+                throw ValidationException::withMessages(['quantities' => 'Variation opening stock is available only for variable products with stock management enabled.']);
             }
             $variantIds = $product->variants->pluck('id')->map(fn ($id) => (string) $id)->all();
             $locationIds = $product->locations->pluck('id')->map(fn ($id) => (string) $id)->all();
@@ -105,7 +122,13 @@ class ProductCatalogService
                         throw ValidationException::withMessages(['quantities' => 'This unit requires whole-number stock.']);
                     }
                     $product->variants->firstWhere('id', $variantId)->locationStocks()->updateOrCreate(
-                        ['location_id' => $locationId], ['opening_quantity' => $quantity]
+                        ['location_id' => $locationId], [
+                            'opening_quantity' => $quantity,
+                            'opening_unit_cost' => $data['unit_costs'][$variantId][$locationId] ?? $product->purchase_price,
+                            'opening_expiry_date' => $expiryEnabled ? ($data['expiry_dates'][$variantId][$locationId] ?? null) : null,
+                            'opening_stocked_at' => $data['stocked_at'][$variantId][$locationId] ?? now(),
+                            'opening_note' => $data['notes'][$variantId][$locationId] ?? null,
+                        ]
                     );
                 }
             }
@@ -134,7 +157,6 @@ class ProductCatalogService
         $variants = $data['variants'] ?? [];
         $variationTemplateId = $data['variation_template_id'] ?? null;
         $comboItems = $data['combo_items'] ?? [];
-        $locationDetails = $data['location_details'] ?? [];
         $this->applyProductTypePricing($data, $product, $variants, $variationTemplateId, $comboItems);
 
         $data['purchase_price_inc'] = bcmul((string) $data['purchase_price'], $factor, 4);
@@ -151,7 +173,7 @@ class ProductCatalogService
         unset($data['purchase_price_inc'], $data['margin']);
         $action = $data['save_action'];
         $locations = $data['location_ids'];
-        unset($data['sku'], $data['location_ids'], $data['location_details'], $data['save_action'], $data['image'], $data['variant_image'], $data['variant_images'], $data['brochure'], $data['variants'], $data['variation_template_id'], $data['combo_items']);
+        unset($data['sku'], $data['location_ids'], $data['save_action'], $data['image'], $data['variant_image'], $data['variant_images'], $data['brochure'], $data['variants'], $data['variation_template_id'], $data['combo_items']);
         $data['code'] = $code;
         $data['description'] = ProductDescription::clean($data['description'] ?? '');
         if (! $data['manage_stock'] || $data['product_type'] === 'combo') {
@@ -166,20 +188,12 @@ class ProductCatalogService
         try {
             // Product, locations, variants and combo contents are one business
             // unit. Roll everything back if any related record cannot be saved.
-            DB::transaction(function () use ($request, $product, &$data, $locations, $locationDetails, $variants, $variationTemplateId, $comboItems, $factor, &$newFiles, &$oldFiles) {
+            DB::transaction(function () use ($request, $product, &$data, $locations, $variants, $variationTemplateId, $comboItems, $factor, &$newFiles, &$oldFiles) {
                 $this->lockAndValidateExistingProduct($product, $data, $locations);
                 $this->storeAttachments($request, $product, $data, $newFiles, $oldFiles);
 
                 $product->fill($data)->save();
                 $product->locations()->sync($locations);
-                DB::table('product_location_details')->where('product_id', $product->id)->whereNotIn('location_id', $locations)->delete();
-                foreach ($locations as $locationId) {
-                    $details = $locationDetails[$locationId] ?? [];
-                    DB::table('product_location_details')->updateOrInsert(
-                        ['product_id' => $product->id, 'location_id' => $locationId],
-                        ['rack' => $details['rack'] ?? null, 'row' => $details['row'] ?? null, 'position' => $details['position'] ?? null]
-                    );
-                }
                 $this->syncVariants($request, $product, $data, $variants, $variationTemplateId, $factor, $locations, $newFiles, $oldFiles);
                 $product->comboItems()->sync($product->product_type === 'combo'
                     ? collect($comboItems)->mapWithKeys(fn ($item) => [$item['product_id'] => ['quantity' => $item['quantity']]])->all()

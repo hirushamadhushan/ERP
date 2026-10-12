@@ -31,19 +31,17 @@ class SaveProductRequest extends BaseFormRequest
                     $validator->errors()->add('subcategory_id', 'Choose a sub-category under the selected main category.');
                 }
             }
-            $selectedLocations = array_map('intval', $this->input('location_ids', []));
-            foreach (array_keys($this->input('location_details', [])) as $locationId) {
-                if (! in_array((int) $locationId, $selectedLocations, true)) {
-                    $validator->errors()->add('location_details', 'Rack details may only be entered for selected business locations.');
-                    break;
+            $primaryId = (int) $this->input('unit_id');
+            if ($this->input('purchase_unit_id')) {
+                $purchaseUnit = \App\Models\Unit::find($this->input('purchase_unit_id'));
+                if ($purchaseUnit && (int) $purchaseUnit->base_unit_id !== $primaryId) {
+                    $validator->errors()->add('purchase_unit_id', 'Choose a sub-unit belonging to the selected primary unit.');
                 }
             }
-            $primaryId = (int) $this->input('unit_id');
-            foreach (['purchase_unit_id', 'secondary_unit_id'] as $field) {
-                if (! $this->input($field)) continue;
-                $unit = \App\Models\Unit::find($this->input($field));
-                if ($unit && $unit->id !== $primaryId && (int) $unit->base_unit_id !== $primaryId) {
-                    $validator->errors()->add($field, 'Choose the primary unit or one of its direct sub-units.');
+            if ($this->input('secondary_unit_id')) {
+                $secondaryUnit = \App\Models\Unit::find($this->input('secondary_unit_id'));
+                if ($secondaryUnit && $secondaryUnit->id !== $primaryId && (int) $secondaryUnit->base_unit_id !== $primaryId) {
+                    $validator->errors()->add('secondary_unit_id', 'Choose the primary unit or one of its direct sub-units.');
                 }
             }
             if ($this->boolean('is_raw_material') && ! $this->boolean('manage_stock')) $validator->errors()->add('is_raw_material','A raw material must use stock management.');
@@ -58,7 +56,7 @@ class SaveProductRequest extends BaseFormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/D', Rule::unique('products', 'sku_key')->ignore($product?->id)],
-            'unit_id' => ['required', 'integer', 'exists:units,id'],
+            'unit_id' => ['required', 'integer', Rule::exists('units', 'id')->whereNull('base_unit_id')],
             'purchase_unit_id' => ['nullable', 'integer', 'exists:units,id'],
             'secondary_unit_id' => ['nullable', 'integer', 'different:unit_id', 'exists:units,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
@@ -87,10 +85,6 @@ class SaveProductRequest extends BaseFormRequest
             'weight' => ['nullable', 'string', 'max:100'],
             'expiry_period' => ['nullable', 'integer', 'min:1', 'max:1200', 'required_with:expiry_period_type'],
             'expiry_period_type' => ['nullable', Rule::in(['days', 'months']), 'required_with:expiry_period'],
-            'location_details' => ['nullable', 'array'],
-            'location_details.*.rack' => ['nullable', 'string', 'max:100'],
-            'location_details.*.row' => ['nullable', 'string', 'max:100'],
-            'location_details.*.position' => ['nullable', 'string', 'max:100'],
             'custom_fields' => ['nullable', 'array', 'max:4'],
             'custom_fields.*' => ['nullable', 'string', 'max:255'],
             'product_type' => ['required', Rule::in(['single', 'variable', 'combo'])],

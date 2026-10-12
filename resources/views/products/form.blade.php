@@ -70,8 +70,8 @@ $comboProductOptions=$comboProducts->map(function($item){return ['id'=>$item->id
 <div><label for="name">Product Name *</label><input id="name" name="name" required maxlength="255" placeholder="Product Name" value="{{ $value('name') }}"></div>
 <div><label for="sku">SKU <span class="product-info" tabindex="0" role="button" aria-label="More information" data-help="Enter a unique product code using letters, numbers, dots, hyphens or underscores. Leave empty to generate one automatically.">i</span></label><input id="sku" name="sku" maxlength="100" placeholder="Leave blank to auto-generate" value="{{ old('sku',$product->code) }}"><p class="product-help">Your own code, e.g. PUMP-001, or an automatic PRD-... code.</p></div>
 <div><label for="barcode_type">Barcode Type *</label><select name="barcode_type" id="barcode_type">@foreach(['CODE128'=>'Code 128 (C128)','CODE39'=>'Code 39 (C39)','EAN13'=>'EAN-13','UPCA'=>'UPC-A'] as $key=>$label)<option value="{{ $key }}" @selected($value('barcode_type','CODE128')===$key)>{{ $label }}</option>@endforeach</select></div>
-<div><label for="unit_id">Unit *</label><div class="flex gap-2"><select required id="unit_id" name="unit_id"><option value="">Please Select</option>@foreach($units as $unit)<option value="{{ $unit->id }}" data-decimal="{{ (int)$unit->allow_decimal }}" @selected($value('unit_id', $defaultUnitId)==$unit->id)>{{ $unit->name }} ({{ $unit->short_name }})</option>@endforeach</select><button type="button" class="quick-add" data-reference="unit" aria-label="Add unit">+</button></div></div>
-@if($feature('enable_sub_units'))<div><label for="purchase_unit_id">Purchase / Sub Unit</label><select id="purchase_unit_id" name="purchase_unit_id"><option value="">Same as primary unit</option>@foreach($units as $unit)<option value="{{ $unit->id }}" @selected($value('purchase_unit_id')==$unit->id)>{{ $unit->name }} ({{ $unit->short_name }})</option>@endforeach</select></div>@endif
+<div><label for="unit_id">Unit *</label><div class="flex gap-2"><select required id="unit_id" name="unit_id"><option value="">Please Select</option>@foreach($units->whereNull('base_unit_id') as $unit)<option value="{{ $unit->id }}" data-decimal="{{ (int)$unit->allow_decimal }}" @selected($value('unit_id', $defaultUnitId)==$unit->id)>{{ $unit->name }} ({{ $unit->short_name }})</option>@endforeach</select><button type="button" class="quick-add" data-reference="unit" aria-label="Add unit">+</button></div></div>
+@if($feature('enable_sub_units'))<div id="purchase-unit-field" hidden><label for="purchase_unit_id">Purchase / Sub Unit</label><select id="purchase_unit_id" name="purchase_unit_id" disabled><option value="">Same as primary unit</option>@foreach($units->whereNotNull('base_unit_id') as $unit)<option value="{{ $unit->id }}" data-parent-unit="{{ $unit->base_unit_id }}" @selected($value('purchase_unit_id')==$unit->id)>{{ $unit->name }} ({{ $unit->short_name }})</option>@endforeach</select></div>@endif
 @if($feature('enable_secondary_unit'))<div><label for="secondary_unit_id">Secondary Unit</label><select id="secondary_unit_id" name="secondary_unit_id"><option value="">No secondary unit</option>@foreach($units as $unit)<option value="{{ $unit->id }}" @selected($value('secondary_unit_id')==$unit->id)>{{ $unit->name }} ({{ $unit->short_name }})</option>@endforeach</select></div>@endif
 @if($feature('enable_brands', true))<div><label for="brand_id">Brand</label><div class="flex gap-2"><select id="brand_id" name="brand_id"><option value="">Please Select</option>@foreach($brands as $brand)<option value="{{ $brand->id }}" @selected($value('brand_id')==$brand->id)>{{ $brand->name }}</option>@endforeach</select><button type="button" class="quick-add" data-reference="brand" aria-label="Add brand">+</button></div></div>@endif
 @if($feature('enable_warranty'))<div><label for="warranty_id">Warranty</label><select id="warranty_id" name="warranty_id"><option value="">No warranty</option>@foreach($warranties as $warranty)<option value="{{ $warranty->id }}" @selected($value('warranty_id')==$warranty->id)>{{ $warranty->name }} ({{ $warranty->formatted_duration }})</option>@endforeach</select><p class="product-help">Expiry is calculated from the sale date.</p></div>@endif
@@ -123,4 +123,28 @@ $comboProductOptions=$comboProducts->map(function($item){return ['id'=>$item->id
 @endsection
 @push('scripts')
 @include('products.form-script')
+<script>
+AppPage.ready(() => {
+    let reloadScheduled = false;
+    const reloadForProductSettings = () => {
+        if (reloadScheduled) return;
+        reloadScheduled = true;
+        window.location.reload();
+    };
+
+    const productSettingsChannel = 'BroadcastChannel' in window
+        ? new BroadcastChannel('codeza-product-settings')
+        : null;
+
+    productSettingsChannel?.addEventListener('message', event => {
+        if (event.data?.type === 'updated') reloadForProductSettings();
+    });
+
+    window.addEventListener('storage', event => {
+        if (event.key === 'codeza:product-settings-updated') reloadForProductSettings();
+    }, {signal: AppPage.signal});
+
+    AppPage.signal.addEventListener('abort', () => productSettingsChannel?.close(), {once: true});
+});
+</script>
 @endpush

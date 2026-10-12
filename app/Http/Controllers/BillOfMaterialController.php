@@ -9,21 +9,10 @@ use Illuminate\Validation\ValidationException;
 
 class BillOfMaterialController extends Controller
 {
-    public function index()
-    {
-        $boms = BillOfMaterial::with(['product.unit', 'items'])->latest()->paginate(20);
-        return view('manufacturing.boms.index', compact('boms'));
-    }
+    public function index() { return redirect()->route('manufacturing.create'); }
 
-    public function create() { return $this->form(new BillOfMaterial()); }
-    public function edit(BillOfMaterial $bom) { $bom->load('items'); return $this->form($bom); }
-
-    private function form(BillOfMaterial $bom)
-    {
-        $outputs = Product::where('is_active', true)->where('manage_stock',true)->where('is_raw_material',false)->where('product_type','single')->orderBy('name')->get();
-        $materials = Product::with(['unit','variants.variationValues'])->where('is_raw_material', true)->where('enable_serial', false)->where('is_active', true)->whereIn('product_type',['single','variable'])->orderBy('name')->get();
-        return view('manufacturing.boms.form', compact('bom', 'outputs', 'materials'));
-    }
+    public function create() { return redirect()->route('manufacturing.create', ['recipe' => 'new']); }
+    public function edit(BillOfMaterial $bom) { return redirect()->route('manufacturing.create', ['recipe' => $bom->id]); }
 
     public function store(StoreBillOfMaterialRequest $request) { return $this->save($request, new BillOfMaterial()); }
     public function update(StoreBillOfMaterialRequest $request, BillOfMaterial $bom) { return $this->save($request, $bom); }
@@ -55,6 +44,6 @@ class BillOfMaterialController extends Controller
             $bom->items()->delete();
             foreach ($data['items'] as $position => $item) $bom->items()->create($item + ['position' => $position]);
         });
-        return redirect()->route('manufacturing.boms.index')->with('success', 'Bill of Materials saved.');
+        return redirect()->route('manufacturing.create')->with('success', 'Manufacturing materials saved. Continue with the manufacturing order.');
     }
 }

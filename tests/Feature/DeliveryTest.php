@@ -79,6 +79,32 @@ class DeliveryTest extends TestCase
         $this->assertSame($lot->id + 1, $nextLot->id);
         $this->assertStringEndsWith(str_pad((string) $nextLot->id, 6, '0', STR_PAD_LEFT), $nextLot->lot_number);
     }
+    public function test_lot_receipts_reuse_only_an_exact_supplier_lot_match(): void
+    {
+        [$user,$warehouse,$product]=$this->fixtures(true);
+        $service=app(ProductLotService::class);
+        $base=['location_id'=>$warehouse->id,'quantity'=>5,'supplier_lot_code'=>' BATCH-001 ','manufactured_at'=>'2026-01-01','expires_at'=>'2027-01-01','unit_cost'=>10,'selling_price'=>15,'reference'=>' GRN-1 ','notes'=>' First delivery '];
+
+        $first=$service->receive($product,$base,$user->id);
+        $same=$service->receive($product,array_replace($base,['quantity'=>3]),$user->id);
+        $this->assertSame($first->id,$same->id);
+        $this->assertSame('BATCH-001',$first->fresh()->supplier_lot_code);
+        $this->assertEquals(8,$first->movements()->sum('quantity_delta'));
+        $this->assertDatabaseCount('inventory_transactions',2);
+
+        foreach ([
+            ['manufactured_at'=>'2026-01-02'], ['expires_at'=>'2027-01-02'],
+            ['unit_cost'=>10.01], ['selling_price'=>15.01], ['supplier_lot_code'=>'BATCH-002'],
+        ] as $difference) {
+            $different=$service->receive($product,array_replace($base,$difference),$user->id);
+            $this->assertNotSame($first->id,$different->id);
+        }
+
+        $withoutCode=$service->receive($product,array_replace($base,['supplier_lot_code'=>null]),$user->id);
+        $withoutCodeAgain=$service->receive($product,array_replace($base,['supplier_lot_code'=>null]),$user->id);
+        $this->assertNotSame($withoutCode->id,$withoutCodeAgain->id);
+        $this->assertMatchesRegularExpression('/^LOT-\d{8}-\d{6}$/',$withoutCodeAgain->lot_number);
+    }
     public function test_permissions_and_required_vehicle_fields(): void
     {
         [$user]=$this->fixtures();
