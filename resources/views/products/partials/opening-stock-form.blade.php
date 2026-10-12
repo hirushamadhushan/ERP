@@ -25,8 +25,9 @@
 @if(!$product->manage_stock)
  <div class="p-6"><p class="rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-800">Enable Manage Stock on this product before adding opening stock.</p><div class="mt-4 flex justify-end gap-3"><a class="serial-btn" href="{{ route('products.catalog.edit', $product) }}">Edit Product</a>@if($modal)<button type="button" class="close-opening-stock-modal serial-btn serial-secondary">Close</button>@endif</div></div>
 @else
- <form data-async-form class="opening-stock-form" method="POST" action="{{ route('products.catalog.opening.store', $product) }}">
+ <form @if($modal)data-async-form @endif class="opening-stock-form" method="POST" action="{{ route('products.catalog.opening.store', $product) }}">
   @csrf
+  @unless($modal)<input type="hidden" name="return_to_products" value="1">@endunless
   <div class="opening-stock-scroll p-4 sm:p-6">
    @foreach($product->locations as $location)
     <section class="opening-location mb-5 overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm">
@@ -40,7 +41,7 @@
       @else
        @include('products.partials.opening-stock-row', ['key' => $location->id, 'quantityName' => 'quantities['.$location->id.']', 'fieldPrefix' => fn($name) => $name.'['.$location->id.']', 'label' => $product->name, 'record' => $location->pivot])
       @endif
-     </tbody><tfoot><tr><td></td><td class="px-4 py-3 text-right font-bold text-slate-700">Total Amount (Exc. Tax):</td><td class="opening-location-total px-4 py-3 text-center font-bold" colspan="{{ $expiryEnabled ? 5 : 4 }}">0.00</td></tr></tfoot></table></div>
+     </tbody><tfoot><tr><td></td><td class="px-4 py-3 text-right font-bold text-slate-700">Total Amount (Exc. Tax):</td><td class="opening-location-total px-4 py-3 text-center font-bold" colspan="{{ $expiryEnabled ? 5 : 4 }}">Rs 0.00</td></tr></tfoot></table></div>
     </section>
    @endforeach
    @if($product->locations->isEmpty())<p class="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Assign at least one business location to this product first.</p>@endif

@@ -295,7 +295,7 @@ class ProductCatalogTest extends TestCase
     public function test_product_save_manual_auto_sku_and_price_calculations(): void
     {
         $data = $this->data();
-        $this->get('/products/create')->assertOk()->assertSee('id="enable_serial"', false)->assertSee('Enable Product description, IMEI or Serial Number')->assertSee('class="product-info" tabindex="0" role="button"',false)->assertSee('.product-info::after',false)->assertSee('Enable or disable adding product description, IMEI or Serial number while selling products in POS screen.');
+        $this->get('/products/create')->assertOk()->assertSee('id="enable_serial"', false)->assertSee('Enable Product description, IMEI or Serial Number')->assertSee('class="product-info" tabindex="0" role="button"',false)->assertSee('.product-info::after',false)->assertSee('Enable or disable adding product description, IMEI or Serial number while selling products in POS screen.')->assertDontSee('name="expiry_period"', false)->assertDontSee('name="expiry_period_type"', false)->assertSee('id="margin" value=""', false)->assertSee("byId('purchase_price').addEventListener('input',()=>{inc();sellingFromMargin();});", false)->assertSee("if(!syncMarginAvailability()){put('selling_price',0);return;}", false);
         $this->post('/products', $data)->assertSessionHasNoErrors()->assertRedirect('/products');
         $product = Product::firstOrFail();
         $this->assertTrue($product->enable_serial);
@@ -311,12 +311,33 @@ class ProductCatalogTest extends TestCase
         $auto = Product::latest('id')->first();
         $this->assertStringStartsWith('PRD-', $auto->code);
         $this->assertEquals(125, $auto->selling_price);
+        $inclusiveDetails = $this->get('/products?product_id='.$auto->id)->assertOk()->viewData('productDetails')[$auto->id];
+        $this->assertSame('125.00', $inclusiveDetails['selling_exclusive']);
+        $this->assertSame('137.50', $inclusiveDetails['selling_inclusive']);
+        $this->assertSame('25.00', $inclusiveDetails['margin']);
         $this->put('/products/'.$product->id, array_replace($data, ['sku' => '', 'name' => 'Renamed']))->assertSessionHasNoErrors();
         $this->assertSame('PUMP-001', $product->fresh()->code);
         foreach (['0', '0000123'] as $sku) {
             $this->post('/products', array_replace($data, ['sku' => $sku]))->assertSessionHasNoErrors();
             $this->assertSame($sku, Product::latest('id')->first()->code);
         }
+    }
+
+    public function test_zero_purchase_price_has_no_margin_and_product_list_does_not_crash(): void
+    {
+        $data = array_replace($this->data(), [
+            'sku' => 'FREE-COST-OUTPUT',
+            'purchase_price' => 0,
+            'selling_price' => 220,
+            'margin' => null,
+            'enable_serial' => 0,
+        ]);
+
+        $this->post('/products', $data)->assertSessionHasNoErrors()->assertRedirect('/products');
+        $product = Product::where('code', 'FREE-COST-OUTPUT')->firstOrFail();
+        $this->assertSame('0', $product->margin);
+        $response = $this->get('/products?product_id='.$product->id)->assertOk();
+        $this->assertSame('N/A', $response->viewData('productDetails')[$product->id]['margin']);
     }
 
     public function test_sku_import_and_location_tracking_rules(): void

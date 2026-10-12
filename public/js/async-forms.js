@@ -13,26 +13,19 @@
         toast.textContent = message;
         toast.hidden = false;
         clearTimeout(toast.timer);
-        toast.timer = setTimeout(() => toast.hidden = true, 4000);
+        toast.timer = setTimeout(() => toast.hidden = true, 7000);
     };
     function showErrors(form, error) {
-        let box = form.querySelector('[data-async-errors]');
-        if (!box) {
-            box = document.createElement('div');
-            box.dataset.asyncErrors = '';
-            box.setAttribute('role', 'alert');
-            box.style.cssText = 'margin:16px;padding:12px;color:#9f1239;background:#fff1f2;border-radius:8px';
-            form.prepend(box);
-        }
-        box.textContent = error.message;
-        box.tabIndex = -1;
+        form.querySelector('[data-async-errors]')?.remove();
         form.querySelectorAll('[aria-invalid]').forEach(input => input.removeAttribute('aria-invalid'));
         Object.keys(error.errors || {}).forEach(name => {
             const field = name.replace(/\.([^.]*)/g, '[$1]');
             const input = form.elements.namedItem(field);
             if (input instanceof HTMLElement) input.setAttribute('aria-invalid', 'true');
         });
-        (form.querySelector('[aria-invalid=true]') || box).focus();
+        form.querySelector('[aria-invalid=true]')?.focus();
+        if (typeof window.showProductToast === 'function') window.showProductToast(error.message, 'error');
+        else window.AppErrors?.show(error.message);
     }
     function throwIfAborted(signal) {
         if (signal?.aborted) throw new DOMException('Request superseded by a newer filter.', 'AbortError');

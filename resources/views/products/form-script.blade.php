@@ -113,8 +113,12 @@ let previousTax=Number(byId('tax_rate').value)||0, previousType=byId('selling_pr
 const n=id=>Number(byId(id).value)||0, empty=id=>byId(id).value.trim()==='', put=(id,v)=>byId(id).value=(Math.round((v+Number.EPSILON)*10000)/10000).toFixed(4);
 const factor=()=>1+n('tax_rate')/100;
 const inc=()=>{if(empty('purchase_price')){byId('purchase_price_inc').value='';return;}put('purchase_price_inc',n('purchase_price')*factor());};
-const sellingFromMargin=()=>{if(empty('purchase_price')){byId('selling_price').value='';return;}put('selling_price',n('purchase_price')*(1+n('margin')/100)*(byId('selling_price_tax_type').value==='inclusive'?factor():1));};
-const marginFromSelling=()=>{if(empty('purchase_price')||empty('selling_price'))return;const sell=n('selling_price')/(byId('selling_price_tax_type').value==='inclusive'?factor():1);if(n('purchase_price')>0)put('margin',((sell/n('purchase_price'))-1)*100);};
+const syncMarginAvailability=()=>{const unavailable=empty('purchase_price')||n('purchase_price')<=0,margin=byId('margin');margin.readOnly=unavailable;margin.placeholder=unavailable?'N/A when purchase price is 0':'';if(unavailable)margin.value='';return !unavailable;};
+const sellingFromMargin=()=>{if(!syncMarginAvailability()){put('selling_price',0);return;}put('selling_price',n('purchase_price')*(1+n('margin')/100)*(byId('selling_price_tax_type').value==='inclusive'?factor():1));};
+const marginFromSelling=()=>{if(!syncMarginAvailability())return;if(empty('selling_price')){byId('margin').value='';return;}const sell=n('selling_price')/(byId('selling_price_tax_type').value==='inclusive'?factor():1);put('margin',((sell/n('purchase_price'))-1)*100);};
+// Purchase price is the source value for a new price row. Rebuild selling
+// price from the entered margin (0% when blank) instead of reverse-calculating
+// a negative margin from a stale/autofilled selling value.
 byId('purchase_price').addEventListener('input',()=>{inc();sellingFromMargin();});
 byId('purchase_price_inc').addEventListener('input',()=>{put('purchase_price',n('purchase_price_inc')/factor());sellingFromMargin();});
 byId('margin').addEventListener('input',sellingFromMargin);
@@ -132,7 +136,7 @@ const taxChange=()=>{
 byId('selling-label').textContent=previousType==='inclusive'?'Inc. tax *':'Exc. tax *';
 byId('tax_rate').addEventListener('input',taxChange);byId('selling_price_tax_type').addEventListener('change',taxChange);
 const taxMode=()=>{const mode=byId('tax_mode'),option=mode.selectedOptions[0],configured=mode.value.startsWith('tax:');byId('tax_rate_id').value=configured?mode.value.slice(4):'';byId('tax_rate').readOnly=configured||mode.value==='none';byId('tax_rate').hidden=mode.value==='none';if(configured)byId('tax_rate').value=option.dataset.rate;if(mode.value==='none')byId('tax_rate').value=0;taxChange();};
-byId('tax_mode').addEventListener('change',taxMode);taxMode();inc();
+byId('tax_mode').addEventListener('change',taxMode);taxMode();inc();marginFromSelling();
 let imageUrl;
 byId('image').addEventListener('change',event=>{
     if(imageUrl)URL.revokeObjectURL(imageUrl);

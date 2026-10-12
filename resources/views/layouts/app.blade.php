@@ -88,6 +88,7 @@
             outline: none;
         }
         .sticky-table-region { position: relative; width: 100%; overflow: visible; }
+        .sticky-table-host-ready { overflow-x: visible !important; }
         .sticky-table-viewport { width: 100%; overflow-x: auto; scrollbar-color: #8b8b8b #eef2f7; scrollbar-width: auto; }
         .sticky-table-viewport::-webkit-scrollbar { height: 13px; }
         .sticky-table-viewport::-webkit-scrollbar-track { background: #eef2f7; border-radius: 999px; }
@@ -101,6 +102,12 @@
         .sticky-data-table-source thead th { height: 0 !important; min-height: 0 !important; line-height: 0 !important; }
         .sticky-data-table-source thead th { padding-top: 0 !important; padding-bottom: 0 !important; border-top: 0 !important; border-bottom: 0 !important; }
         .sticky-data-table-source thead th > * { height: 0 !important; overflow: hidden !important; }
+        .sticky-data-table-scrollbar { position: fixed; z-index: 40; display: none; height: 16px; overflow-x: auto; overflow-y: hidden; border: 1px solid #d5dbe5; border-radius: 8px; background: #eef2f7; box-shadow: 0 -3px 12px rgb(15 23 42 / .14); scrollbar-color: #737b86 #eef2f7; scrollbar-width: auto; }
+        .sticky-data-table-scrollbar.is-visible { display: block; }
+        .sticky-data-table-scrollbar-spacer { height: 1px; }
+        .sticky-data-table-scrollbar::-webkit-scrollbar { height: 14px; }
+        .sticky-data-table-scrollbar::-webkit-scrollbar-track { background: #eef2f7; border-radius: 999px; }
+        .sticky-data-table-scrollbar::-webkit-scrollbar-thumb { background: #737b86; border: 3px solid #eef2f7; border-radius: 999px; }
     </style>
 </head>
 <body class="h-full bg-slate-50 font-sans text-slate-800 antialiased selection:bg-purple-500 selection:text-white">
@@ -368,7 +375,7 @@
     <script data-turbo-eval="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
     <script data-turbo-eval="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 
-    <script data-turbo-eval="false" src="{{ asset('js/error-handling.js') }}"></script>
+    <script data-turbo-eval="false" src="{{ asset('js/error-handling.js') }}?v={{ filemtime(public_path('js/error-handling.js')) }}"></script>
     <script data-turbo-eval="false" src="{{ asset('js/async-forms.js') }}?v={{ filemtime(public_path('js/async-forms.js')) }}"></script>
     <script>
         (() => {

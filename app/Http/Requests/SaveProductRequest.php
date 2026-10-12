@@ -83,8 +83,6 @@ class SaveProductRequest extends BaseFormRequest
             'variant_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'brochure' => ['nullable', 'file', 'mimes:pdf,csv,txt,zip,doc,docx,jpg,jpeg,png', 'max:5120'],
             'weight' => ['nullable', 'string', 'max:100'],
-            'expiry_period' => ['nullable', 'integer', 'min:1', 'max:1200', 'required_with:expiry_period_type'],
-            'expiry_period_type' => ['nullable', Rule::in(['days', 'months']), 'required_with:expiry_period'],
             'custom_fields' => ['nullable', 'array', 'max:4'],
             'custom_fields.*' => ['nullable', 'string', 'max:255'],
             'product_type' => ['required', Rule::in(['single', 'variable', 'combo'])],

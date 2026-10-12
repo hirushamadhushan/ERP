@@ -18,7 +18,7 @@
             box = document.createElement('div');
             box.id = 'request-error';
             box.setAttribute('role', 'alert');
-            box.style.cssText = 'position:fixed;bottom:20px;right:20px;max-width:min(480px,calc(100vw - 40px));padding:16px;background:#fff1f2;color:#9f1239;border:1px solid #fecdd3;border-radius:12px;z-index:99999;box-shadow:0 8px 30px #0002';
+            box.style.cssText = 'position:fixed;top:20px;right:20px;max-width:min(480px,calc(100vw - 40px));padding:16px;background:#fff1f2;color:#9f1239;border:1px solid #fecdd3;border-radius:12px;z-index:99999;box-shadow:0 8px 30px #0002';
             const content = document.createElement('span');
             content.className = 'request-error-message';
             const close = document.createElement('button');
@@ -29,6 +29,9 @@
             (document.querySelector('dialog[open]') || document.body).appendChild(box);
         }
         box.querySelector('.request-error-message').textContent = text;
+        box.hidden = false;
+        clearTimeout(box.timer);
+        box.timer = setTimeout(() => { box.hidden = true; }, 7000);
     }
     async function request(url, options = {}) {
         document.dispatchEvent(new CustomEvent('app:request-start'));

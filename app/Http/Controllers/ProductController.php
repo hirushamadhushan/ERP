@@ -98,9 +98,11 @@ class ProductController extends Controller
         // raw model attributes or making a second request per selected product.
         $productDetails = $products->mapWithKeys(function (Product $product) use ($report) {
             $factor = 1 + ((float) $product->tax_rate / 100);
-            $sellingExclusive = $product->selling_price_tax_type === 'inclusive'
-                ? (float) $product->selling_price / $factor
-                : (float) $product->selling_price;
+            // ProductCatalogService always normalizes the submitted selling
+            // price to an exclusive amount before persistence. The tax type
+            // records the user's preferred input/display mode; it must not
+            // cause the stored value to be divided by tax a second time.
+            $sellingExclusive = (float) $product->selling_price;
             $stockRows = $report['rows']->filter(fn (array $row) => $row['product']->id === $product->id);
 
             return [$product->id => [
@@ -122,19 +124,23 @@ class ProductController extends Controller
                 'image_url' => $product->image_path ? route('products.catalog.attachment', [$product, 'image']) : null,
                 'purchase_exclusive' => number_format((float) $product->purchase_price, 2),
                 'purchase_inclusive' => number_format((float) $product->purchase_price * $factor, 2),
-                'margin' => number_format($product->purchase_price ? (($sellingExclusive / (float) $product->purchase_price) - 1) * 100 : 0, 2),
+                // DECIMAL values are returned as strings. In PHP, "0.0000" is
+                // truthy, so a truthiness check here can still divide by zero.
+                'margin' => (float) $product->purchase_price > 0
+                    ? number_format((($sellingExclusive / (float) $product->purchase_price) - 1) * 100, 2)
+                    : 'N/A',
                 'selling_exclusive' => number_format($sellingExclusive, 2),
                 'selling_inclusive' => number_format($sellingExclusive * $factor, 2),
                 'variants' => $product->variants->map(function ($variant) use ($factor, $product) {
-                    $variantSellingExclusive = $product->selling_price_tax_type === 'inclusive'
-                        ? (float) $variant->selling_price / $factor
-                        : (float) $variant->selling_price;
+                    $variantSellingExclusive = (float) $variant->selling_price;
 
                     return [
                         'name' => $variant->value ?: 'Default', 'sku' => $variant->sku ?: '—',
                         'purchase_exclusive' => number_format((float) $variant->purchase_price, 2),
                         'purchase_inclusive' => number_format((float) $variant->purchase_price * $factor, 2),
-                        'margin' => number_format($variant->purchase_price ? (($variantSellingExclusive / (float) $variant->purchase_price) - 1) * 100 : 0, 2),
+                        'margin' => (float) $variant->purchase_price > 0
+                            ? number_format((($variantSellingExclusive / (float) $variant->purchase_price) - 1) * 100, 2)
+                            : 'N/A',
                         'selling_exclusive' => number_format($variantSellingExclusive, 2),
                         'selling_inclusive' => number_format($variantSellingExclusive * $factor, 2),
                     ];

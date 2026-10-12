@@ -9,11 +9,28 @@
 @push('scripts')
 <script>
 AppPage.ready(()=>{
+ const form=document.querySelector('.opening-stock-form');
+ const money=value=>Number(value||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const updateTotals=()=>{
+  form?.querySelectorAll('.opening-location').forEach(location=>{
+   let total=0;
+   location.querySelectorAll('.opening-stock-row').forEach(row=>{
+    const subtotal=(Number(row.querySelector('.opening-quantity')?.value)||0)*(Number(row.querySelector('.opening-unit-cost')?.value)||0);
+    row.querySelector('.opening-subtotal').textContent=money(subtotal);
+    total+=subtotal;
+   });
+   location.querySelector('.opening-location-total').textContent='Rs '+money(total);
+  });
+ };
+ form?.addEventListener('input',event=>{if(event.target.matches('.opening-quantity,.opening-unit-cost'))updateTotals();});
+ form?.addEventListener('focusin',event=>{if(event.target.matches('.opening-quantity')&&Number(event.target.value)===0)event.target.value='';});
+ form?.addEventListener('focusout',event=>{if(event.target.matches('.opening-quantity')&&event.target.value.trim()===''){event.target.value='0';updateTotals();}});
+ updateTotals();
  @if(session('success'))
  const toast=document.getElementById('opening-stock-toast');
  document.getElementById('opening-stock-toast-message').textContent=@json(session('success'));
  toast.classList.remove('hidden');
- window.setTimeout(()=>toast.classList.add('hidden'),4000);
+ window.setTimeout(()=>toast.classList.add('hidden'),7000);
  @endif
 });
 </script>
