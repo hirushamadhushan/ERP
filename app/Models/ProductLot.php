@@ -18,4 +18,5 @@ class ProductLot extends Model
 
     public function stockItem() { return $this->belongsTo(ProductStockItem::class, 'product_stock_item_id'); }
     public function movements() { return $this->hasMany(InventoryMovement::class); }
+    public function manufacturingOrder() { return $this->hasOne(ManufacturingOrder::class, 'output_lot_id'); }
 }

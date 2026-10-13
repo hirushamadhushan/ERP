@@ -12,6 +12,7 @@ class ManufacturingService
         return DB::transaction(function () use ($data, $userId) {
             $this->validateLocation((int) $data['location_id']);
             $output = Product::with('unit')->findOrFail($data['product_id']);
+            if (! $output->locations()->where('locations.id', $data['location_id'])->exists()) throw ValidationException::withMessages(['product_id' => 'Choose a finished product assigned to the selected warehouse.']);
             if (! empty($data['components'])) $output->update(['is_manufacturable' => true, 'track_lots' => true]);
             $this->validateOutput($output, (string) $data['quantity']);
             $bom = null;
@@ -22,7 +23,9 @@ class ManufacturingService
                     $this->validateComponent($product, $variant);
                     $quantity = bcmul((string) $line['quantity_per_unit'], (string) $data['quantity'], 4);
                     if (! $product->unit?->allow_decimal && bccomp($quantity, (string) floor((float) $quantity), 4) !== 0) throw ValidationException::withMessages(['components' => $product->name.' requires a whole-number total quantity.']);
-                    return ['product' => $product, 'variant' => $variant, 'quantity' => $quantity];
+                    $reference = trim((string) ($line['source_lot_number'] ?? '')) ?: null;
+                    $lot = $reference ? ProductLot::where('lot_number', $reference)->whereHas('stockItem', function ($stock) use ($product, $variant) { $stock->where('product_id', $product->id); if ($variant) $stock->whereHas('variant', fn ($query) => $query->where('product_variants.id', $variant->id)); })->first() : null;
+                    return ['product' => $product, 'variant' => $variant, 'quantity' => $quantity, 'lot' => $lot, 'source_lot_reference' => $reference];
                 });
                 $componentKeys = $components->map(fn ($line) => $line['product']->id.':'.($line['variant']?->id ?? 0));
                 if ($componentKeys->duplicates()->isNotEmpty()) throw ValidationException::withMessages(['components' => 'The same raw material variation cannot be added more than once.']);
@@ -32,16 +35,16 @@ class ManufacturingService
                 $scale = bcdiv((string) $data['quantity'], (string) $bom->output_quantity, 8);
                 $components = $bom->items->map(function ($item) use ($scale) {
                     $this->validateComponent($item->product, $item->productVariant);
-                    return ['product' => $item->product, 'variant' => $item->productVariant, 'quantity' => bcmul((string) $item->quantity, $scale, 4)];
+                    return ['product' => $item->product, 'variant' => $item->productVariant, 'quantity' => bcmul((string) $item->quantity, $scale, 4), 'lot' => null, 'source_lot_reference' => null];
                 });
             }
             $materialCost = $components->reduce(fn ($sum, $line) => bcadd($sum, bcmul((string) ($line['variant']?->purchase_price ?? $line['product']->purchase_price), $line['quantity'], 4), 4), '0');
             $expenses = collect($data['expenses'] ?? [])->filter(fn ($e) => filled($e['name'] ?? null) || isset($e['amount']));
             $expenseCost = $expenses->reduce(fn ($sum, $e) => bcadd($sum, (string) $e['amount'], 4), '0');
             $totalCost = bcadd($materialCost, $expenseCost, 4);
-            $order = ManufacturingOrder::create(['number' => 'TMP-'.bin2hex(random_bytes(8)), 'product_id' => $output->id, 'bill_of_material_id' => $bom?->id, 'location_id' => $data['location_id'], 'quantity' => $data['quantity'], 'material_cost' => $materialCost, 'expense_cost' => $expenseCost, 'total_cost' => $totalCost, 'unit_cost' => bcdiv($totalCost, (string) $data['quantity'], 4), 'selling_price' => $data['selling_price'], 'manufactured_at' => $data['manufactured_at'], 'expires_at' => $data['expires_at'] ?? null, 'status' => 'draft', 'notes' => $data['notes'] ?? null, 'created_by' => $userId]);
+            $order = ManufacturingOrder::create(['number' => 'TMP-'.bin2hex(random_bytes(8)), 'product_id' => $output->id, 'bill_of_material_id' => $bom?->id, 'location_id' => $data['location_id'], 'quantity' => $data['quantity'], 'material_cost' => $materialCost, 'expense_cost' => $expenseCost, 'total_cost' => $totalCost, 'unit_cost' => bcdiv($totalCost, (string) $data['quantity'], 4), 'selling_price' => $output->selling_price, 'manufactured_at' => $data['manufactured_at'], 'expires_at' => null, 'status' => 'draft', 'notes' => $data['notes'] ?? null, 'created_by' => $userId]);
             $order->update(['number' => 'MO-'.str_pad((string) $order->id, 7, '0', STR_PAD_LEFT)]);
-            foreach ($components as $line) { $cost=(string)($line['variant']?->purchase_price ?? $line['product']->purchase_price); $order->components()->create(['product_id' => $line['product']->id, 'product_variant_id'=>$line['variant']?->id, 'quantity' => $line['quantity'], 'unit_cost' => $cost, 'total_cost' => bcmul($cost, $line['quantity'], 4)]); }
+            foreach ($components as $line) { $cost=(string)($line['variant']?->purchase_price ?? $line['product']->purchase_price); $order->components()->create(['product_id' => $line['product']->id, 'product_variant_id'=>$line['variant']?->id, 'product_lot_id'=>$line['lot']?->id, 'source_lot_reference'=>$line['source_lot_reference'], 'quantity' => $line['quantity'], 'unit_cost' => $cost, 'total_cost' => bcmul($cost, $line['quantity'], 4)]); }
             foreach ($expenses as $expense) $order->expenses()->create(['name' => $expense['name'], 'amount' => $expense['amount']]);
             return $order;
         }, 3);
@@ -49,6 +52,32 @@ class ManufacturingService
 
     public function confirm(ManufacturingOrder $order, int $userId): ManufacturingOrder { return $this->transition($order, 'draft', ['status' => 'confirmed', 'confirmed_by' => $userId, 'confirmed_at' => now()]); }
     public function start(ManufacturingOrder $order, int $userId): ManufacturingOrder { return $this->transition($order, 'confirmed', ['status' => 'in_progress', 'started_by' => $userId, 'started_at' => now()]); }
+
+    public function completeDraft(ManufacturingOrder $order, int $userId): ManufacturingOrder
+    {
+        return DB::transaction(function () use ($order, $userId) {
+            $order = $this->confirm($order, $userId);
+            $order = $this->start($order, $userId);
+            $lotSelections = [];
+            $order->load(['components.product', 'components.productVariant']);
+
+            foreach ($order->components as $line) {
+                if (! $line->product->track_lots) continue;
+                if ($line->product_lot_id) { $lotSelections[$line->id] = $line->product_lot_id; continue; }
+                $query = ProductLot::query()->whereHas('stockItem', function ($stock) use ($line) {
+                    $stock->where('product_id', $line->product_id);
+                    if ($line->product_variant_id) $stock->whereHas('variant', fn ($variant) => $variant->where('product_variants.id', $line->product_variant_id));
+                });
+                $lot = $query->withSum(['movements as available' => fn ($movement) => $movement->where('location_id', $order->location_id)], 'quantity_delta')
+                    ->orderByRaw('expires_at IS NULL')->orderBy('expires_at')->orderBy('id')->get()
+                    ->first(fn ($candidate) => bccomp((string) ($candidate->available ?? 0), (string) $line->quantity, 4) >= 0);
+                if (! $lot) throw ValidationException::withMessages(['components' => 'No single source lot has enough '.$line->product->name.' stock at the selected warehouse.']);
+                $lotSelections[$line->id] = $lot->id;
+            }
+
+            return $this->complete($order, $lotSelections, $userId, $order->product->enable_serial ? ['serial_mode' => 'auto'] : []);
+        }, 3);
+    }
     public function cancel(ManufacturingOrder $order, string $reason, int $userId): ManufacturingOrder
     {
         return DB::transaction(function () use ($order, $reason, $userId) {
@@ -103,7 +132,7 @@ class ManufacturingService
                 $line->update(['product_lot_id' => $lot?->id, 'unit_cost' => $componentUnitCost, 'total_cost' => $componentTotal]);
             }
             $stockItem = ProductStockItem::firstOrCreate(['product_id' => $order->product_id]);
-            $lot = ProductLot::create(['product_stock_item_id' => $stockItem->id, 'lot_number' => 'PENDING-'.\Illuminate\Support\Str::ulid(), 'manufactured_at' => $order->manufactured_at, 'expires_at' => $order->expires_at, 'unit_cost' => $unitCost, 'selling_price' => $order->selling_price, 'created_by' => $userId]);
+            $lot = ProductLot::create(['product_stock_item_id' => $stockItem->id, 'lot_number' => 'PENDING-'.\Illuminate\Support\Str::ulid(), 'manufactured_at' => $order->manufactured_at, 'expires_at' => null, 'unit_cost' => $unitCost, 'selling_price' => $order->selling_price, 'created_by' => $userId]);
             $lot->update(['lot_number' => sprintf('LOT-%s-%06d', $lot->created_at->format('Ymd'), $lot->id)]);
             $order->product->locations()->syncWithoutDetaching([$order->location_id => ['opening_quantity' => 0]]);
             InventoryMovement::create(['inventory_transaction_id' => $transaction->id, 'product_lot_id' => $lot->id, 'location_id' => $order->location_id, 'quantity_delta' => $order->quantity, 'created_at' => now()]);

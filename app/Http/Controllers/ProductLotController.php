@@ -16,7 +16,7 @@ class ProductLotController extends Controller
         abort_unless($product->track_lots, 404);
 
         $lots = ProductLot::query()->whereHas('stockItem', fn ($query) => $query->where('product_id', $product->id))
-            ->with('stockItem.variant.variationValues')
+            ->with(['stockItem.variant.variationValues', 'manufacturingOrder'])
             ->withSum('movements as current_quantity', 'quantity_delta')
             ->latest('id')->paginate(25);
         $lotLocationBalances = InventoryMovement::query()

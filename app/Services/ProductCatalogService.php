@@ -139,6 +139,7 @@ class ProductCatalogService
     public function save(SaveProductRequest $request, Product $product): array
     {
         $data = $request->validated();
+        if ($data['is_raw_material'] && $data['manage_stock'] && ! $data['enable_serial'] && $data['product_type'] !== 'combo') $data['track_lots'] = true;
         if (! empty($data['tax_rate_id'])) {
             // Resolve the percentage on the server; a browser cannot override
             // the configured amount for the selected single or group tax.
