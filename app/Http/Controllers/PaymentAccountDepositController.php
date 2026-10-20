@@ -6,7 +6,9 @@ use App\Models\PaymentAccount;
 use App\Models\PaymentAccountDeposit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Records a cash deposit or an internal deposit between two payment accounts.
@@ -27,82 +29,92 @@ class PaymentAccountDepositController extends Controller
             'note' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        DB::transaction(function () use ($data): void {
-            $sourceAccountId = $data['from_account_id'] ?? null;
-            $existing = PaymentAccountDeposit::where('request_id', $data['request_id'])->first();
+        try {
+            DB::transaction(function () use ($data): void {
+                $sourceAccountId = $data['from_account_id'] ?? null;
+                $existing = PaymentAccountDeposit::where('request_id', $data['request_id'])->first();
 
-            if ($existing) {
-                // Retrying the same browser request is safe. Reusing its UUID
-                // with different financial data must be rejected, never treated
-                // as a successful deposit.
-                $sameRequest = $existing->created_by === auth()->id()
-                    && $existing->account_id == $data['account_id']
-                    && $existing->from_account_id == $sourceAccountId
-                    && PaymentAccountTransferController::cents($existing->amount)
-                        === PaymentAccountTransferController::cents($data['amount']);
+                if ($existing) {
+                    // Retrying the same browser request is safe. Reusing its UUID
+                    // with different financial data must be rejected, never treated
+                    // as a successful deposit.
+                    $sameRequest = $existing->created_by === auth()->id()
+                        && $existing->account_id == $data['account_id']
+                        && $existing->from_account_id == $sourceAccountId
+                        && PaymentAccountTransferController::cents($existing->amount)
+                            === PaymentAccountTransferController::cents($data['amount']);
 
-                if (! $sameRequest) {
+                    if (! $sameRequest) {
+                        throw ValidationException::withMessages([
+                            'request_id' => 'This deposit request was already used.',
+                        ]);
+                    }
+
+                    return;
+                }
+
+                // Lock both accounts before checking funds or changing balances.
+                // This prevents two simultaneous deposits from spending the same
+                // source balance twice.
+                $accountIds = array_filter([$data['account_id'], $sourceAccountId]);
+                $accounts = PaymentAccount::whereIn('id', $accountIds)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $target = $accounts->get($data['account_id']);
+                $source = $sourceAccountId ? $accounts->get($sourceAccountId) : null;
+
+                if (! $target?->is_active || ($source && ! $source->is_active)) {
                     throw ValidationException::withMessages([
-                        'request_id' => 'This deposit request was already used.',
+                        'account_id' => 'Select active accounts.',
                     ]);
                 }
 
-                return;
-            }
+                // Compare integer cents, not PHP floats, to avoid rounding errors
+                // when validating that an internal source account has enough funds.
+                if ($source && PaymentAccountTransferController::cents($source->current_balance)
+                    < PaymentAccountTransferController::cents($data['amount'])) {
+                    throw ValidationException::withMessages([
+                        'amount' => 'The source account has insufficient funds.',
+                    ]);
+                }
 
-            // Lock both accounts before checking funds or changing balances.
-            // This prevents two simultaneous deposits from spending the same
-            // source balance twice.
-            $accountIds = array_filter([$data['account_id'], $sourceAccountId]);
-            $accounts = PaymentAccount::whereIn('id', $accountIds)
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $target = $accounts->get($data['account_id']);
-            $source = $sourceAccountId ? $accounts->get($sourceAccountId) : null;
-
-            if (! $target?->is_active || ($source && ! $source->is_active)) {
-                throw ValidationException::withMessages([
-                    'account_id' => 'Select active accounts.',
+                PaymentAccountDeposit::create([
+                    'request_id' => $data['request_id'],
+                    'account_id' => $target->id,
+                    'from_account_id' => $source?->id,
+                    'amount' => $data['amount'],
+                    'deposited_at' => str_replace('T', ' ', $data['date']).':00',
+                    'note' => $data['note'] ?? null,
+                    'created_by' => auth()->id(),
                 ]);
-            }
 
-            // Compare integer cents, not PHP floats, to avoid rounding errors
-            // when validating that an internal source account has enough funds.
-            if ($source && PaymentAccountTransferController::cents($source->current_balance)
-                < PaymentAccountTransferController::cents($data['amount'])) {
-                throw ValidationException::withMessages([
-                    'amount' => 'The source account has insufficient funds.',
-                ]);
-            }
+                // SQL decimal arithmetic keeps the stored balance exact and avoids
+                // stale Eloquent model values overwriting concurrent updates.
+                DB::update(
+                    'UPDATE payment_accounts SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?',
+                    [$data['amount'], now(), $target->id]
+                );
 
-            PaymentAccountDeposit::create([
-                'request_id' => $data['request_id'],
-                'account_id' => $target->id,
-                'from_account_id' => $source?->id,
-                'amount' => $data['amount'],
-                'deposited_at' => str_replace('T', ' ', $data['date']).':00',
-                'note' => $data['note'] ?? null,
-                'created_by' => auth()->id(),
+                if ($source) {
+                    DB::update(
+                        'UPDATE payment_accounts SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?',
+                        [$data['amount'], now(), $source->id]
+                    );
+                }
+            });
+
+            return response()->json(['message' => 'Deposit completed successfully.']);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to process payment account deposit: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            // SQL decimal arithmetic keeps the stored balance exact and avoids
-            // stale Eloquent model values overwriting concurrent updates.
-            DB::update(
-                'UPDATE payment_accounts SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?',
-                [$data['amount'], now(), $target->id]
-            );
-
-            if ($source) {
-                DB::update(
-                    'UPDATE payment_accounts SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?',
-                    [$data['amount'], now(), $source->id]
-                );
-            }
-        });
-
-        return response()->json(['message' => 'Deposit completed successfully.']);
+            return response()->json(['message' => 'Unable to complete deposit. Please try again.'], 500);
+        }
     }
 }

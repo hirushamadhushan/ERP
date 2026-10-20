@@ -681,8 +681,24 @@
                     </div>
                 </div>
 
+                <div id="tab-sale" class="tab-panel hidden">
+                    <div class="product-settings-grid">
+                        <div>
+                            <input type="hidden" name="enable_commission_agent" value="0">
+                            <label class="product-settings-check">
+                                <input type="checkbox" name="enable_commission_agent" value="1" @checked(old('enable_commission_agent', $settings->enable_commission_agent))>
+                                Enable Commission Agent
+                            </label>
+                        </div>
+                        <div class="product-settings-field"><label for="invoice_receivable_account_code">Accounts Receivable code</label><input id="invoice_receivable_account_code" name="invoice_receivable_account_code" maxlength="30" required value="{{ old('invoice_receivable_account_code',$settings->invoice_receivable_account_code ?: '121000') }}"></div>
+                        <div class="product-settings-field"><label for="invoice_revenue_account_code">Sales Revenue code</label><input id="invoice_revenue_account_code" name="invoice_revenue_account_code" maxlength="30" required value="{{ old('invoice_revenue_account_code',$settings->invoice_revenue_account_code ?: '400000') }}"></div>
+                        <div class="product-settings-field"><label for="invoice_tax_account_code">Sales Tax Payable code</label><input id="invoice_tax_account_code" name="invoice_tax_account_code" maxlength="30" required value="{{ old('invoice_tax_account_code',$settings->invoice_tax_account_code ?: '220000') }}"></div>
+                        <div class="product-settings-field"><label for="invoice_advance_account_code">Customer Advances code</label><input id="invoice_advance_account_code" name="invoice_advance_account_code" maxlength="30" required value="{{ old('invoice_advance_account_code',$settings->invoice_advance_account_code ?: '210000') }}"></div>
+                    </div>
+                </div>
+
                 <!-- OTHER TABS (UI PLACEHOLDERS FOR FUTURE MODULES) -->
-                @foreach(['tax', 'contact', 'sale', 'pos', 'purchases', 'payment', 'dashboard', 'system', 'prefixes', 'email', 'sms', 'reward', 'modules', 'custom-labels'] as $otherTab)
+                @foreach(['tax', 'contact', 'pos', 'purchases', 'payment', 'dashboard', 'system', 'prefixes', 'email', 'sms', 'reward', 'modules', 'custom-labels'] as $otherTab)
                 <div id="tab-{{ $otherTab }}" class="tab-panel hidden">
                     <div class="py-8 text-center">
                         <div class="w-16 h-16 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-4 text-2xl">

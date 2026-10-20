@@ -70,19 +70,30 @@ class RoleController extends Controller
      */
     public function store(StoreRoleRequest $request)
     {
-        $validated = $request->validated();
+        try {
+            $validated = $request->validated();
 
-        $role = $this->databaseTransaction(
-            fn () => Role::create($validated),
-            'A role with this name already exists.',
-            'name'
-        );
+            $role = $this->databaseTransaction(
+                fn () => Role::create($validated),
+                'A role with this name already exists.',
+                'name'
+            );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Role created successfully!',
-            'role' => $role,
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Role created successfully!',
+                'role' => $role,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create role: '.$e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unable to create role. Please try again.',
+            ], 500);
+        }
     }
 
     /**
@@ -102,21 +113,35 @@ class RoleController extends Controller
     {
         $role = Role::findOrFail($id);
 
-        $validated = $request->roleData();
-        $permissions = $validated['permissions'];
-        unset($validated['permissions']);
+        try {
+            $validated = $request->roleData();
+            $permissions = $validated['permissions'];
+            unset($validated['permissions']);
 
-        $this->databaseTransaction(
-            function () use ($role, $validated, $permissions) { $role->update($validated); $role->syncPermissions($permissions); },
-            'A role with this name already exists.',
-            'name'
-        );
+            $this->databaseTransaction(
+                function () use ($role, $validated, $permissions) {
+                    $role->update($validated);
+                    $role->syncPermissions($permissions);
+                },
+                'A role with this name already exists.',
+                'name'
+            );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Role updated successfully!',
-            'role' => $role,
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Role updated successfully!',
+                'role' => $role,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update role ID '.$role->id.': '.$e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unable to update role. Please try again.',
+            ], 500);
+        }
     }
 
     /**
@@ -134,14 +159,25 @@ class RoleController extends Controller
             ], 403);
         }
 
-        $this->databaseTransaction(
-            fn () => $role->delete(),
-            'This role is assigned to one or more users and cannot be deleted.'
-        );
+        try {
+            $this->databaseTransaction(
+                fn () => $role->delete(),
+                'This role is assigned to one or more users and cannot be deleted.'
+            );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Role deleted successfully!',
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Role deleted successfully!',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete role ID '.$role->id.': '.$e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unable to delete role. It may be linked to active users.',
+            ], 500);
+        }
     }
 }

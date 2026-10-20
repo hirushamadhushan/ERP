@@ -8,6 +8,7 @@ use App\Http\Requests\SaveContactRequest;
 use App\Models\Contact;
 use App\Models\CustomerGroup;
 use App\Models\User;
+use App\Models\SalesInvoice;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\CustomerDocument;
@@ -54,18 +55,32 @@ class ContactController extends Controller
 
     public function store(SaveContactRequest $request)
     {
-        $data = $request->contactData();
-        $this->authorizeContactType($data['type']);
-        $this->assignOwnedContact($data);
-        $this->normalizeCustomerGroup($data);
-        $data['contact_id'] = $data['contact_id'] ?? 'C-'.Str::upper((string) Str::ulid());
-        $contact = $this->databaseTransaction(
-            fn () => Contact::create($data),
-            'This Contact ID is already in use.',
-            'contact_id'
-        );
+        try {
+            $data = $request->contactData();
+            $this->authorizeContactType($data['type']);
+            $this->assignOwnedContact($data);
+            $this->normalizeCustomerGroup($data);
+            $data['contact_id'] = $data['contact_id'] ?? 'C-'.Str::upper((string) Str::ulid());
 
-        return redirect()->route('contacts.index', $contact->type === 'both' ? 'customer' : $contact->type)->with('success', 'Contact added successfully.');
+            $contact = $this->databaseTransaction(
+                function () use ($data) {
+                    $contact = Contact::create($data);
+                    app(\App\Services\CustomerBalanceService::class)->refresh($contact);
+                    return $contact;
+                },
+                'This Contact ID is already in use.',
+                'contact_id'
+            );
+
+            return redirect()->route('contacts.index', $contact->type === 'both' ? 'customer' : $contact->type)->with('success', 'Contact added successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create contact: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withInput()->with('error', 'Unable to create contact. Please verify your data.');
+        }
     }
 
     public function show(Contact $contact)
@@ -77,19 +92,32 @@ class ContactController extends Controller
 
     public function update(SaveContactRequest $request, Contact $contact)
     {
-        $this->ensureRecordVisible($contact);
-        $data = $request->contactData();
-        $this->authorizeContactType($data['type']);
-        $this->assignOwnedContact($data);
-        $this->normalizeCustomerGroup($data);
-        $data['contact_id'] = $data['contact_id'] ?? $contact->contact_id;
-        $this->databaseTransaction(
-            fn () => $contact->update($data),
-            'This Contact ID is already in use.',
-            'contact_id'
-        );
+        try {
+            $this->ensureRecordVisible($contact);
+            $data = $request->contactData();
+            $this->authorizeContactType($data['type']);
+            $this->assignOwnedContact($data);
+            $this->normalizeCustomerGroup($data);
+            $data['contact_id'] = $data['contact_id'] ?? $contact->contact_id;
 
-        return redirect()->route('contacts.index', $contact->type === 'both' ? 'customer' : $contact->type)->with('success', 'Contact updated successfully.');
+            $this->databaseTransaction(
+                function () use ($contact, $data) {
+                    $contact->update($data);
+                    app(\App\Services\CustomerBalanceService::class)->refresh($contact);
+                },
+                'This Contact ID is already in use.',
+                'contact_id'
+            );
+
+            return redirect()->route('contacts.index', $contact->type === 'both' ? 'customer' : $contact->type)->with('success', 'Contact updated successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update contact ID '.$contact->id.': '.$e->getMessage());
+            return back()->withInput()->with('error', 'Unable to update contact. Please verify your data.');
+        }
     }
 
     private function normalizeCustomerGroup(array &$data): void
@@ -101,49 +129,153 @@ class ContactController extends Controller
 
     public function destroy(Contact $contact)
     {
-        $this->ensureRecordVisible($contact);
-        $type = $contact->type === 'both' ? 'customer' : $contact->type;
-        $this->databaseTransaction(
-            fn () => $contact->delete(),
-            'This contact is linked to another record and cannot be deleted.'
-        );
+        try {
+            $this->ensureRecordVisible($contact);
+            $type = $contact->type === 'both' ? 'customer' : $contact->type;
+            $this->databaseTransaction(
+                fn () => $contact->delete(),
+                'This contact is linked to another record and cannot be deleted.'
+            );
 
-        return redirect()->route('contacts.index', $type)->with('success', 'Contact deleted successfully.');
+            return redirect()->route('contacts.index', $type)->with('success', 'Contact deleted successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete contact ID '.$contact->id.': '.$e->getMessage());
+            return back()->with('error', 'Unable to delete contact because it is linked to other records.');
+        }
     }
 
     public function ledger(Contact $contact)
     {
         $this->customerOnly($contact);
-        return view('contacts.ledger', ['contact'=>$contact, 'payments'=>$contact->customerPayments()->with('creator')->latest('paid_at')->get()]);
+        return view('contacts.ledger', ['contact'=>$contact, 'payments'=>$contact->customerPayments()->with('creator')->latest('paid_at')->get(), 'invoices'=>SalesInvoice::with(['payments','creditNotes'])->where('customer_id',$contact->id)->where('status','!=','draft')->orderBy('invoice_date')->get()]);
     }
 
     public function salesHistory(Contact $contact)
     {
         $this->customerOnly($contact);
-        // Sales transactions are not yet modelled in this ERP; this endpoint is ready for that relation.
-        return view('contacts.sales-history', ['contact'=>$contact, 'sales'=>collect()]);
+        return view('contacts.sales-history', ['contact'=>$contact, 'sales'=>SalesInvoice::where('customer_id',$contact->id)->where('status','!=','draft')->latest('invoice_date')->get()]);
     }
 
     public function collectDue(Request $request, Contact $contact, CustomerManagementService $service)
     {
         $this->customerOnly($contact);
-        $data=$request->validate(['request_id'=>['required','uuid'],'amount'=>['required','numeric','gt:0'],'payment_method'=>['required','string','max:40'],'paid_at'=>['required','date'],'note'=>['nullable','string','max:5000']]);
-        $payment=$service->collectDue($contact,$data,(int) auth()->id());
-        return response()->json(['message'=>'Payment received. Receipt '.$payment->receipt_no.' created.', 'receipt_no'=>$payment->receipt_no]);
+        $data = $request->validate([
+            'request_id' => ['required', 'uuid'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'payment_method' => ['required', 'string', 'max:40'],
+            'paid_at' => ['required', 'date'],
+            'note' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        try {
+            $payment = $service->collectDue($contact, $data, (int) auth()->id());
+            return response()->json([
+                'message' => 'Payment received. Receipt '.$payment->receipt_no.' created.',
+                'receipt_no' => $payment->receipt_no,
+            ]);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to collect due for customer ID '.$contact->id.': '.$e->getMessage());
+            return response()->json(['message' => 'Payment collection failed: '.$e->getMessage()], 422);
+        }
     }
 
-    public function documents(Contact $contact) { $this->customerOnly($contact); return response()->json(['documents'=>$contact->customerDocuments()->with('creator')->latest()->get(), 'notes'=>$contact->customerNotes()->with('creator')->latest()->get()]); }
+    public function documents(Contact $contact)
+    {
+        $this->customerOnly($contact);
+        return response()->json([
+            'documents' => $contact->customerDocuments()->with('creator')->latest()->get(),
+            'notes' => $contact->customerNotes()->with('creator')->latest()->get(),
+        ]);
+    }
+
     public function storeDocument(Request $request, Contact $contact)
     {
-        $this->customerOnly($contact); $data=$request->validate(['document'=>['required','file','max:10240','mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx'],'note'=>['nullable','string','max:5000']]);
-        $file=$data['document']; $record=$contact->customerDocuments()->create(['name'=>$file->getClientOriginalName(),'path'=>$file->store('customer-documents','local'),'mime_type'=>$file->getMimeType() ?: 'application/octet-stream','size'=>$file->getSize(),'created_by'=>auth()->id()]);
-        if(filled($data['note'] ?? null)) $contact->customerNotes()->create(['body'=>$data['note'],'created_by'=>auth()->id()]);
-        return response()->json(['message'=>'Customer document saved.','document'=>$record]);
+        $this->customerOnly($contact);
+        $data = $request->validate([
+            'document' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx'],
+            'note' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $filePath = null;
+        try {
+            $file = $data['document'];
+            $filePath = $file->store('customer-documents', 'local');
+
+            $record = $contact->customerDocuments()->create([
+                'name' => $file->getClientOriginalName(),
+                'path' => $filePath,
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+                'size' => $file->getSize(),
+                'created_by' => auth()->id(),
+            ]);
+
+            if (filled($data['note'] ?? null)) {
+                $contact->customerNotes()->create([
+                    'body' => $data['note'],
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
+            return response()->json(['message' => 'Customer document saved.', 'document' => $record]);
+        } catch (\Throwable $e) {
+            if ($filePath) {
+                Storage::disk('local')->delete($filePath);
+            }
+            \Illuminate\Support\Facades\Log::error('Failed to upload customer document: '.$e->getMessage());
+            return response()->json(['message' => 'Unable to save document. Please try again.'], 500);
+        }
     }
-    public function storeNote(Request $request, Contact $contact) { $this->customerOnly($contact); $data=$request->validate(['body'=>['required','string','max:5000']]); $note=$contact->customerNotes()->create($data+['created_by'=>auth()->id()]); return response()->json(['message'=>'Note saved.','note'=>$note]); }
-    public function downloadDocument(CustomerDocument $document) { $this->customerOnly($document->customer); abort_unless(Storage::disk('local')->exists($document->path),404); return Storage::disk('local')->download($document->path,$document->name); }
-    public function toggleStatus(Contact $contact) { $this->customerOnly($contact); $contact->update(['status'=>$contact->status==='active'?'inactive':'active']); return response()->json(['message'=>'Customer status updated.','status'=>$contact->status]); }
-    public function toggleSupplierStatus(Contact $contact) { $this->supplierOnly($contact); $contact->update(['status'=>$contact->status==='active'?'inactive':'active']); return response()->json(['message'=>'Supplier status updated.','status'=>$contact->status]); }
+
+    public function storeNote(Request $request, Contact $contact)
+    {
+        $this->customerOnly($contact);
+        $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
+
+        try {
+            $note = $contact->customerNotes()->create($data + ['created_by' => auth()->id()]);
+            return response()->json(['message' => 'Note saved.', 'note' => $note]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to store customer note: '.$e->getMessage());
+            return response()->json(['message' => 'Unable to save note.'], 500);
+        }
+    }
+
+    public function downloadDocument(CustomerDocument $document)
+    {
+        $this->customerOnly($document->customer);
+        abort_unless(Storage::disk('local')->exists($document->path), 404);
+        return Storage::disk('local')->download($document->path, $document->name);
+    }
+
+    public function toggleStatus(Contact $contact)
+    {
+        $this->customerOnly($contact);
+        try {
+            $contact->update(['status' => $contact->status === 'active' ? 'inactive' : 'active']);
+            return response()->json(['message' => 'Customer status updated.', 'status' => $contact->status]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to toggle contact status: '.$e->getMessage());
+            return response()->json(['message' => 'Unable to update status.'], 500);
+        }
+    }
+
+    public function toggleSupplierStatus(Contact $contact)
+    {
+        $this->supplierOnly($contact);
+        try {
+            $contact->update(['status' => $contact->status === 'active' ? 'inactive' : 'active']);
+            return response()->json(['message' => 'Supplier status updated.', 'status' => $contact->status]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to toggle supplier status: '.$e->getMessage());
+            return response()->json(['message' => 'Unable to update status.'], 500);
+        }
+    }
     private function customerOnly(Contact $contact): void { abort_unless(in_array($contact->type,['customer','both']),404); $this->ensureContactVisible($contact, 'customer'); }
     private function supplierOnly(Contact $contact): void { abort_unless(in_array($contact->type,['supplier','both']),404); $this->ensureContactVisible($contact, 'supplier'); }
     private function ensureRecordVisible(Contact $contact): void

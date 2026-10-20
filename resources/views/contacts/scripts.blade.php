@@ -191,7 +191,7 @@ AppPage.ready( function () {
                 const api = this.api();
                 api.columns().every(function () {
                     if (!this.footer()?.hasAttribute('data-total')) return;
-                    const sum = api.column(this.index(), { search: 'applied' }).data().toArray().reduce((sum, value) => sum + (Number(String(value).replace(/[^0-9.-]/g, '')) || 0), 0);
+                    const sum = api.column(this.index(), { search: 'applied' }).nodes().toArray().reduce((sum, cell) => sum + (Number(cell.dataset.amount) || 0), 0);
                     this.footer().textContent = 'Rs. ' + sum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 });
             }

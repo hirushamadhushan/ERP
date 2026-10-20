@@ -108,6 +108,42 @@
         .sticky-data-table-scrollbar::-webkit-scrollbar { height: 14px; }
         .sticky-data-table-scrollbar::-webkit-scrollbar-track { background: #eef2f7; border-radius: 999px; }
         .sticky-data-table-scrollbar::-webkit-scrollbar-thumb { background: #737b86; border: 3px solid #eef2f7; border-radius: 999px; }
+
+        @media (min-width: 1024px) {
+            #main-sidebar { width: 5rem; }
+            .app-main-shell { margin-left: 5rem; }
+            #main-sidebar .sidebar-brand { justify-content: center; padding-left: .75rem; padding-right: .75rem; }
+            #main-sidebar .sidebar-brand-copy,
+            #main-sidebar .sidebar-brand-chevron,
+            #main-sidebar .sidebar-section-label,
+            #main-sidebar .sidebar-label,
+            #main-sidebar .sidebar-user-copy { display: none; }
+            #main-sidebar .sidebar-navigation { padding-left: .75rem; padding-right: .75rem; overflow: visible; }
+            #main-sidebar .sidebar-link { position: relative; justify-content: center; padding-left: .75rem; padding-right: .75rem; }
+            #main-sidebar .sidebar-link::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                left: calc(100% + .65rem);
+                top: 50%;
+                z-index: 70;
+                padding: .45rem .7rem;
+                border-radius: .55rem;
+                background: #0f172a;
+                color: #fff;
+                font-size: .75rem;
+                font-weight: 700;
+                line-height: 1;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transform: translate(.25rem, -50%);
+                transition: opacity .15s ease, transform .15s ease;
+                box-shadow: 0 8px 20px rgb(15 23 42 / .2);
+            }
+            #main-sidebar .sidebar-link:hover::after,
+            #main-sidebar .sidebar-link:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+            #main-sidebar .sidebar-user-card { justify-content: center; padding-left: .5rem; padding-right: .5rem; }
+        }
     </style>
 </head>
 <body class="h-full bg-slate-50 font-sans text-slate-800 antialiased selection:bg-purple-500 selection:text-white">
@@ -122,7 +158,7 @@
                 $hasCustomBrandLogo = filled($businessSetting->logo_path ?? null);
                 $brandLogo = $businessSetting->logo_path ?? asset('images/codeza-logo.png');
             @endphp
-            <a href="{{ route('home') }}" class="group flex min-h-[68px] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 transition hover:bg-slate-50" aria-label="{{ $businessSetting->business_name ?? 'Codeza ERP' }} dashboard">
+            <a href="{{ route('home') }}" class="sidebar-brand group flex min-h-[68px] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 transition hover:bg-slate-50" aria-label="{{ $businessSetting->business_name ?? 'Codeza ERP' }} dashboard" title="{{ $businessSetting->business_name ?? 'Codeza ERP' }}">
                 <span class="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-950 shadow-sm ring-1 ring-slate-900/10 transition group-hover:shadow-md">
                     @if($hasCustomBrandLogo)
                         <img id="business-brand-logo" src="{{ $brandLogo }}" alt="" class="h-8 w-8 object-contain">
@@ -130,84 +166,89 @@
                         <img id="business-brand-logo" src="{{ $brandLogo }}" alt="" class="absolute left-0 top-1/2 h-[54px] w-auto max-w-none -translate-y-1/2 object-contain">
                     @endif
                 </span>
-                <span class="min-w-0 flex-1">
+                <span class="sidebar-brand-copy min-w-0 flex-1">
                     <span id="business-brand-name" class="block truncate text-[15px] font-extrabold tracking-[-.02em] text-slate-900">{{ $businessSetting->business_name ?? 'Codeza ERP' }}</span>
                     <span class="mt-0.5 flex items-center gap-1.5 truncate text-[9px] font-semibold uppercase tracking-[.12em] text-slate-400"><i class="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" aria-hidden="true"></i>Business Suite</span>
                 </span>
-                <i class="bi bi-chevron-right text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-purple-500" aria-hidden="true"></i>
+                <i class="sidebar-brand-chevron bi bi-chevron-right text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-purple-500" aria-hidden="true"></i>
             </a>
 
             <!-- Navigation -->
-            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                <p class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Main Menu</p>
+            <nav class="sidebar-navigation flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+                <p class="sidebar-section-label px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Main Menu</p>
 
                 <!-- Home -->
-                <a href="{{ route('home') }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150
+                <a href="{{ route('home') }}" data-tooltip="Home / Dashboard"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150
                           {{ request()->routeIs('home') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-speedometer2 text-base"></i>
-                    Home / Dashboard
+                    <span class="sidebar-label">Home / Dashboard</span>
                 </a>
 
                 <!-- User Management (Single sidebar item, no vertical submenus) -->
-                <a href="{{ route('users.index') }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150
+                <a href="{{ route('users.index') }}" data-tooltip="User Management"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150
                           {{ request()->routeIs(['users.*', 'roles.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-people-fill text-base"></i>
-                    User Management
+                    <span class="sidebar-label">User Management</span>
                 </a>
 
-                <a href="{{ route('contacts.index', 'customer') }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('contacts.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                <a href="{{ route('contacts.index', 'customer') }}" data-tooltip="Contacts"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('contacts.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-person-lines-fill text-base" aria-hidden="true"></i>
-                    Contacts
+                    <span class="sidebar-label">Contacts</span>
                 </a>
 
-                <a href="{{ route('products.catalog.index') }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('products.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
-                    <i class="bi bi-boxes text-base" aria-hidden="true"></i>Products
+                <a href="{{ route('products.catalog.index') }}" data-tooltip="Products"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('products.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-boxes text-base" aria-hidden="true"></i><span class="sidebar-label">Products</span>
+                </a>
+
+                <a href="{{ route('sales.index') }}" data-tooltip="Transactions"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs(['invoices.*', 'sales.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-arrow-left-right text-base" aria-hidden="true"></i><span class="sidebar-label">Transactions</span>
                 </a>
 
                 @if(auth()->user()->canUse('manufacturing.view'))
-                <a href="{{ route('manufacturing.index') }}" class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('manufacturing.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
-                    <i class="bi bi-gear-wide-connected text-base" aria-hidden="true"></i>Manufacturing
+                <a href="{{ route('manufacturing.index') }}" data-tooltip="Manufacturing" class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('manufacturing.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-gear-wide-connected text-base" aria-hidden="true"></i><span class="sidebar-label">Manufacturing</span>
                 </a>
                 @endif
 
                 @if(auth()->user()->canUseDelivery())
-                <a href="{{ route('delivery.consignments.index') }}" class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('delivery.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
-                    <i class="bi bi-truck text-base" aria-hidden="true"></i>Delivery
+                <a href="{{ route('delivery.consignments.index') }}" data-tooltip="Delivery" class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('delivery.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-truck text-base" aria-hidden="true"></i><span class="sidebar-label">Delivery</span>
                 </a>
                 @endif
-                <p class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-4 mb-2">System</p>
+                <p class="sidebar-section-label px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-4 mb-2">System</p>
 
-                <a href="{{ route('payment-accounts.index') }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('payment-accounts.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                <a href="{{ route('payment-accounts.index') }}" data-tooltip="Payment Accounts"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('payment-accounts.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-credit-card-2-front-fill text-base"></i>
-                    Payment Accounts
+                    <span class="sidebar-label">Payment Accounts</span>
                 </a>
 
                 <!-- Settings -->
-                <a href="{{ route('business.settings.index') }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs(['business.*', 'settings.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                <a href="{{ route('business.settings.index') }}" data-tooltip="Settings"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs(['business.*', 'settings.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
                     <i class="bi bi-gear-fill text-base"></i>
-                    Settings
+                    <span class="sidebar-label">Settings</span>
                 </a>
             </nav>
 
             <!-- Logged In User Card -->
             <div class="px-3 py-4 border-t border-purple-100">
-                <div class="flex items-center gap-3 px-3 py-3 rounded-xl bg-purple-50 border border-purple-100">
+                <div class="sidebar-user-card flex items-center gap-3 px-3 py-3 rounded-xl bg-purple-50 border border-purple-100">
                     <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">
                         {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="sidebar-user-copy flex-1 min-w-0">
                         <p class="text-xs font-bold text-slate-800 truncate">{{ auth()->user()->name ?? 'User' }}</p>
                         <p class="text-[10px] text-slate-500 truncate">{{ auth()->user()->role ?? 'Staff' }}</p>
                     </div>
-                    <a href="{{ route('logout') }}"
+                    <a href="{{ route('logout') }}" class="sidebar-link text-slate-400 hover:text-rose-500 transition-colors" data-tooltip="Logout"
                        onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();"
-                       class="text-slate-400 hover:text-rose-500 transition-colors" title="Logout">
+                       title="Logout">
                         <i class="bi bi-box-arrow-right text-base"></i>
                     </a>
                     <form id="sidebar-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
@@ -221,7 +262,7 @@
         <button id="sidebar-backdrop" type="button" class="hidden fixed inset-0 z-30 bg-slate-900/50 lg:hidden" aria-label="Close navigation"></button>
 
         <!-- ================================ MAIN AREA ================================ -->
-        <div class="flex-1 flex flex-col min-w-0 min-h-full lg:ml-64">
+        <div class="app-main-shell flex-1 flex flex-col min-w-0 min-h-full">
 
             <!-- Top Header Bar -->
             <header class="sticky top-0 z-30 bg-white border-b border-purple-100 shadow-xs">
@@ -246,6 +287,14 @@
                             <i class="bi bi-shield-check" aria-hidden="true"></i>
                             Roles
                         </a>
+                    </nav>
+                    @elseif(request()->routeIs(['invoices.*', 'sales.*']))
+                    <nav aria-label="Transactions" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                        @foreach([
+                            ['sales.index', 'Sales', 'bi-cart-check', request()->routeIs(['sales.*', 'invoices.*'])],
+                        ] as [$transactionRoute, $transactionLabel, $transactionIcon, $isActive])
+                            <a href="{{ route($transactionRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $transactionIcon }}" aria-hidden="true"></i>{{ $transactionLabel }}</a>
+                        @endforeach
                     </nav>
                     @elseif(request()->routeIs('products.*'))
                     <nav aria-label="Products" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">

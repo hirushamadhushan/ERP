@@ -123,7 +123,8 @@ class ContactCsvImport
         }
         DB::transaction(function () use ($rows) {
             foreach ($rows as $row) {
-                Contact::create($row);
+                $contact=Contact::create($row);
+                app(CustomerBalanceService::class)->refresh($contact);
             }
         });
 

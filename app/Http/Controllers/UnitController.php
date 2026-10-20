@@ -18,32 +18,56 @@ class UnitController extends Controller
 
     public function store(SaveUnitRequest $request)
     {
-        $this->save($request);
+        try {
+            $this->save($request);
 
-        return redirect()->route('products.units.index')->with('success', 'Unit added successfully.');
+            return redirect()->route('products.units.index')->with('success', 'Unit added successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create unit: '.$e->getMessage());
+
+            return back()->withInput()->with('error', 'Unable to create unit. Please try again.');
+        }
     }
 
     public function update(SaveUnitRequest $request, Unit $unit)
     {
-        $this->save($request, $unit);
+        try {
+            $this->save($request, $unit);
 
-        return redirect()->route('products.units.index')->with('success', 'Unit updated successfully.');
+            return redirect()->route('products.units.index')->with('success', 'Unit updated successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update unit ID '.$unit->id.': '.$e->getMessage());
+
+            return back()->withInput()->with('error', 'Unable to update unit. Please try again.');
+        }
     }
 
     public function destroy(Unit $unit)
     {
-        return $this->databaseTransaction(function () use ($unit) {
-            $unit = Unit::lockForUpdate()->findOrFail($unit->id);
-            if (Schema::hasColumn('products', 'unit_id') && Product::where('unit_id', $unit->id)->exists()) {
-                return back()->with('unit_error', 'This unit is used by products. Change their unit before deleting it.');
-            }
-            if (Unit::where('base_unit_id', $unit->id)->exists()) {
-                return back()->with('unit_error', 'This unit is used as a base by other units. Update those units before deleting it.');
-            }
-            $unit->delete();
+        try {
+            return $this->databaseTransaction(function () use ($unit) {
+                $unit = Unit::lockForUpdate()->findOrFail($unit->id);
+                if (Schema::hasColumn('products', 'unit_id') && Product::where('unit_id', $unit->id)->exists()) {
+                    return back()->with('unit_error', 'This unit is used by products. Change their unit before deleting it.');
+                }
+                if (Unit::where('base_unit_id', $unit->id)->exists()) {
+                    return back()->with('unit_error', 'This unit is used as a base by other units. Update those units before deleting it.');
+                }
+                $unit->delete();
 
-            return redirect()->route('products.units.index')->with('success', 'Unit deleted successfully.');
-        }, 'This unit is still linked to existing products or units.');
+                return redirect()->route('products.units.index')->with('success', 'Unit deleted successfully.');
+            }, 'This unit is still linked to existing products or units.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete unit ID '.$unit->id.': '.$e->getMessage());
+
+            return back()->with('error', 'Unable to delete unit.');
+        }
     }
 
     private function save(SaveUnitRequest $request, ?Unit $unit = null): void

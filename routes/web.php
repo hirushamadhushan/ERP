@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/contact-imports.php';
     require __DIR__.'/customer-groups.php';
     require __DIR__.'/contacts.php';
+    require __DIR__.'/invoices.php';
 
     // Settings and payment administration require the configured system permission.
     Route::middleware('role.permission:system.settings')->group(function () {

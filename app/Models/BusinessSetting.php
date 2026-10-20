@@ -21,6 +21,11 @@ class BusinessSetting extends Model
         'time_format',
         'currency_precision',
         'quantity_precision',
+        'enable_commission_agent',
+        'invoice_receivable_account_code',
+        'invoice_revenue_account_code',
+        'invoice_tax_account_code',
+        'invoice_advance_account_code',
     ];
 
     protected $casts = [
@@ -28,6 +33,7 @@ class BusinessSetting extends Model
         'transaction_edit_days' => 'integer',
         'currency_precision' => 'integer',
         'quantity_precision' => 'integer',
+        'enable_commission_agent' => 'boolean',
     ];
 
     public static function current(): self

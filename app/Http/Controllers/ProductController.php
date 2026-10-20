@@ -21,7 +21,11 @@ use App\Models\SellingPriceGroup;
 use App\Services\ProductCatalogService;
 use App\Services\ProductStockReport;
 use App\Services\ProductLotService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 class ProductController extends Controller
 {
@@ -187,7 +191,14 @@ class ProductController extends Controller
 
     public function store(SaveProductRequest $request, ProductCatalogService $catalog)
     {
-        return $this->savedResponse($request, $catalog->save($request, new Product));
+        try {
+            return $this->savedResponse($request, $catalog->save($request, new Product));
+        } catch (ValidationException|HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to store product', ['error' => $e->getMessage()]);
+            return back()->withInput()->with('error', 'Failed to create product: ' . $e->getMessage());
+        }
     }
 
     public function edit(Product $product)
@@ -199,12 +210,26 @@ class ProductController extends Controller
 
     public function update(SaveProductRequest $request, Product $product, ProductCatalogService $catalog)
     {
-        return $this->savedResponse($request, $catalog->save($request, $product));
+        try {
+            return $this->savedResponse($request, $catalog->save($request, $product));
+        } catch (ValidationException|HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to update product', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+            return back()->withInput()->with('error', 'Failed to update product: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Product $product, ProductCatalogService $catalog)
     {
-        $catalog->delete($product);
+        try {
+            $catalog->delete($product);
+        } catch (ValidationException|HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to delete product', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+            return back()->with('error', 'Unable to delete product: ' . $e->getMessage());
+        }
 
         return redirect()->route('products.catalog.index')->with('success', 'Product deleted successfully.');
     }
@@ -228,14 +253,22 @@ class ProductController extends Controller
             'prices' => ['nullable', 'array'],
             'prices.*' => ['nullable', 'numeric', 'min:0', 'max:999999999', 'decimal:0,4'],
         ]);
-        $this->databaseTransaction(function () use ($product, $data) {
-            foreach (SellingPriceGroup::pluck('id') as $groupId) {
-                $price = $data['prices'][$groupId] ?? null;
-                if ($price === null || $price === '') $product->sellingPrices()->where('selling_price_group_id', $groupId)->delete();
-                else $product->sellingPrices()->updateOrCreate(['selling_price_group_id' => $groupId], ['selling_price' => $price]);
-            }
-        });
-        return redirect()->route('products.catalog.index')->with('success', 'Selling price group prices saved.');
+        try {
+            $this->databaseTransaction(function () use ($product, $data) {
+                foreach (SellingPriceGroup::pluck('id') as $groupId) {
+                    $price = $data['prices'][$groupId] ?? null;
+                    if ($price === null || $price === '') $product->sellingPrices()->where('selling_price_group_id', $groupId)->delete();
+                    else $product->sellingPrices()->updateOrCreate(['selling_price_group_id' => $groupId], ['selling_price' => $price]);
+                }
+            });
+
+            return redirect()->route('products.catalog.index')->with('success', 'Selling price group prices saved.');
+        } catch (ValidationException|HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to save product selling prices', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+            return back()->withInput()->with('error', 'Failed to update selling prices.');
+        }
     }
 
     public function bulk(\Illuminate\Http\Request $request, ProductCatalogService $catalog)
@@ -295,7 +328,8 @@ class ProductController extends Controller
 
     public function saveOpening(SaveOpeningStockRequest $request, Product $product, ProductCatalogService $catalog)
     {
-        if ($product->track_lots) return redirect()->route('products.catalog.lots.index', $product)->with('error', 'Use lot receiving to maintain this product stock.');
+        try {
+            if ($product->track_lots) return redirect()->route('products.catalog.lots.index', $product)->with('error', 'Use lot receiving to maintain this product stock.');
         if ($product->product_type === 'variable') {
             $catalog->saveVariantOpeningStock($product, $request->validated());
         } else {
@@ -306,7 +340,13 @@ class ProductController extends Controller
             return redirect()->route('products.catalog.index')->with('success', 'Opening stock saved.');
         }
 
-        return back()->with('success', 'Opening stock saved successfully.');
+            return back()->with('success', 'Opening stock saved successfully.');
+        } catch (ValidationException|HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to save opening stock', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+            return back()->withInput()->with('error', 'Failed to save opening stock: ' . $e->getMessage());
+        }
     }
 
     public function attachment(Product $product, string $kind)
@@ -346,13 +386,20 @@ class ProductController extends Controller
         $kind = $data['kind'];
         unset($data['kind']);
         $model = ['unit' => Unit::class, 'brand' => Brand::class, 'category' => Category::class, 'location' => Location::class][$kind];
-        $record = $this->databaseTransaction(
+        try {
+            $record = $this->databaseTransaction(
             fn () => $model::create($data),
             ucfirst($kind).' with these details already exists.',
             'name'
         );
 
-        return response()->json($record, 201);
+            return response()->json($record, 201);
+        } catch (ValidationException|HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Failed to create quick reference item', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Unable to create reference item.'], 422);
+        }
     }
 
     private function references(?Product $product = null): array

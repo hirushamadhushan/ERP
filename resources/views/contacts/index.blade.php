@@ -83,7 +83,7 @@
                                 <summary class="cursor-pointer list-none rounded-full bg-purple-600 px-3 py-1.5 text-xs font-bold text-white">Actions <i class="bi bi-chevron-down"></i></summary>
                                 <div class="absolute left-0 z-40 mt-1 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
                                     @if($type === 'supplier')
-                                        <button type="button" class="supplier-action block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-cash-coin mr-2"></i>Pay</button>
+                                        <button type="button" disabled title="Requires the Purchases module; this function is not available yet." class="supplier-action block w-full px-4 py-2 text-left text-xs text-slate-400 cursor-not-allowed"><i class="bi bi-cash-coin mr-2"></i>Pay (Unavailable)</button>
                                     @endif
                                     <button type="button" data-contact-url="{{ route('contacts.show', $contact) }}" data-mode="view" class="contact-action block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-eye mr-2"></i>View</button>
                                     <button type="button" data-contact-url="{{ route('contacts.show', $contact) }}" data-mode="edit" class="contact-action block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-pencil-square mr-2"></i>Edit</button>
@@ -98,15 +98,15 @@
                                     @elseif($type === 'supplier')
                                         <button type="button" data-status-url="{{ route('contacts.suppliers.status', $contact) }}" class="toggle-supplier-status block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-power mr-2"></i>{{ $contact->status === 'active' ? 'Deactivate' : 'Activate' }}</button>
                                         <div class="my-1 border-t"></div>
-                                        <button type="button" class="supplier-action block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-journal-text mr-2"></i>Ledger</button>
-                                        <button type="button" class="supplier-action block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-bag mr-2"></i>Purchases</button>
-                                        <button type="button" class="supplier-action block w-full px-4 py-2 text-left text-xs hover:bg-slate-100"><i class="bi bi-bar-chart-line mr-2"></i>Stock Report</button>
+                                        <button type="button" disabled title="Requires the Purchases module; this function is not available yet." class="supplier-action block w-full px-4 py-2 text-left text-xs text-slate-400 cursor-not-allowed"><i class="bi bi-journal-text mr-2"></i>Ledger (Unavailable)</button>
+                                        <button type="button" disabled title="Requires the Purchases module; this function is not available yet." class="supplier-action block w-full px-4 py-2 text-left text-xs text-slate-400 cursor-not-allowed"><i class="bi bi-bag mr-2"></i>Purchases (Unavailable)</button>
+                                        <button type="button" disabled title="Requires the Purchases module; this function is not available yet." class="supplier-action block w-full px-4 py-2 text-left text-xs text-slate-400 cursor-not-allowed"><i class="bi bi-bar-chart-line mr-2"></i>Stock Report (Unavailable)</button>
                                     @endif
                                 </div>
                             </details>
                         </td>
                         @foreach($columns as $key => $label)
-                            <td class="{{ in_array($key, $moneyColumns) ? 'whitespace-nowrap' : '' }}">
+                            <td data-contact-column="{{ $key }}" @if(in_array($key, $moneyColumns)) data-amount="{{ $contact->$key }}" @endif class="{{ in_array($key, $moneyColumns) ? 'whitespace-nowrap' : '' }}">
                                 @if(in_array($key, $moneyColumns))
                                     Rs. {{ number_format((float) $contact->$key, 2) }}
                                 @elseif(str_starts_with($key, 'custom_fields.'))
@@ -148,7 +148,13 @@
     #contact-dialog::backdrop { background: rgb(15 23 42 / .5); backdrop-filter: blur(3px); }
     #contacts-page .dataTables_wrapper .dt-buttons { display: flex; flex-wrap: wrap; gap: .25rem; }
     #contacts-page .dataTables_wrapper .dataTables_filter, #contacts-page .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
-    #contacts-page table.dataTable { min-width: 1050px; }
+    /* Wide contact records scroll horizontally; squeezing their address/custom
+       columns into the viewport makes every row several hundred pixels tall. */
+    #contacts-page table.dataTable { min-width: 1050px; height: auto !important; }
+    #contacts-page table.dataTable :is(th, td) { white-space: nowrap; }
+    #contacts-page table.dataTable tbody td { padding-top: .65rem; padding-bottom: .65rem; }
+    #contacts-page table.dataTable td[data-contact-column="address"] { min-width: 260px; max-width: 300px; white-space: normal; overflow-wrap: break-word; }
+    #contacts-page table.dataTable td[data-contact-column^="custom_fields."] { min-width: 150px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; }
 </style>
 @include('contacts.scripts')
 @endpush

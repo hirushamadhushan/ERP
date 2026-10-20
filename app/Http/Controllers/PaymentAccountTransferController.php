@@ -59,9 +59,18 @@ class PaymentAccountTransferController extends Controller
                 DB::update('UPDATE payment_accounts SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?',[$data['amount'],now(),$source->id]);
                 DB::update('UPDATE payment_accounts SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?',[$data['amount'],now(),$destination->id]);
             });
+        } catch (ValidationException $e) {
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            throw $e;
         } catch (\Throwable $error) {
-            if ($path) Storage::disk('local')->delete($path);
-            throw $error;
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            \Illuminate\Support\Facades\Log::error('Failed to complete fund transfer: '.$error->getMessage());
+
+            return response()->json(['message' => 'Unable to complete fund transfer. Please try again.'], 500);
         }
         return response()->json(['message'=>'Funds transferred successfully.']);
     }

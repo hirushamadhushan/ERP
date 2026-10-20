@@ -1,0 +1,92 @@
+.invoice-breadcrumb{display:flex;justify-content:space-between;background:white;padding:14px 20px;margin-bottom:18px;border-radius:5px;color:#16435d;font-size:13px}.invoice-breadcrumb b{margin:0 14px;color:#94a3b8}
+.odoo-invoice-shell .invoice-workspace{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,1fr);gap:24px;align-items:stretch}
+.odoo-invoice-shell .invoice-main{background:white;border-radius:22px;border:1px solid #e7e8ef;padding:22px;box-shadow:0 1px 2px #172b4d12;min-width:0}
+.odoo-invoice-shell .odoo-sheet{border:0;border-radius:0;box-shadow:none;min-height:0}
+.odoo-invoice-shell .odoo-actionbar{border:0!important;background:transparent;padding:0 0 12px;min-height:0;justify-content:flex-end}
+.odoo-invoice-shell .odoo-actionbar>details,.odoo-invoice-shell .odoo-actionbar>.odoo-cancel,.odoo-invoice-shell .odoo-status{display:none}
+.odoo-invoice-shell:not([data-invoice-locked]) .odoo-actionbar>.odoo-confirm{display:none}
+.odoo-invoice-shell .odoo-document-type,.odoo-invoice-shell .odoo-number{display:none}
+.reference-invoice-heading{display:flex;align-items:center;gap:28px;min-height:65px;margin:0 0 22px;color:#17425e;font-size:19px}.reference-invoice-heading>span{color:#777}.reference-invoice-heading strong{font-weight:500}.reference-invoice-heading button{margin-left:auto;background:#62a177;border:0;color:white;padding:11px 22px;border-radius:4px;font-size:12px;font-weight:700}
+.odoo-invoice-shell .odoo-header-grid{padding:0 15px 20px;gap:8px 55px;grid-template-columns:1fr 1fr}
+.odoo-invoice-shell .odoo-header-grid>.odoo-field{grid-column:auto;grid-row:auto;min-height:36px}
+.odoo-invoice-shell .invoice-customer-details{display:none!important}
+.odoo-invoice-shell .odoo-header-grid .odoo-field label{min-width:90px;font-size:11px;color:#173b50;font-weight:500}
+.odoo-invoice-shell .odoo-header-grid .odoo-field input,.odoo-invoice-shell .odoo-header-grid .odoo-field select{border:1px solid #ced5df!important;border-radius:18px!important;padding:8px 12px!important;min-height:36px;font-size:12px!important}
+.odoo-invoice-shell .odoo-or,.odoo-invoice-shell .odoo-arrow{display:none}
+.odoo-invoice-shell .odoo-due-field .payment-term-control{display:none}
+.reference-order-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:22px 15px;border-top:1px solid #ccd2d9;border-bottom:1px dashed #e2e8f0;margin-bottom:20px;color:#163f59;font-size:12px}
+.reference-order-summary input{display:block;width:100%;margin-top:12px;background:#eef1f5;border:1px solid #cdd4df;border-radius:3px;padding:7px 9px;font-size:11px}
+.odoo-invoice-shell .odoo-tabs{height:35px;background:white;border:0;padding:0;margin-bottom:10px}.odoo-invoice-shell .odoo-tabs>button{height:32px;font-size:11px;padding:0 10px}.odoo-invoice-shell .tax-switch{bottom:0;right:0}
+.odoo-invoice-shell #tab-lines{border:1px solid #dce6ed;border-radius:12px;padding-top:0}
+.odoo-invoice-shell .odoo-line-head{background:#f8fbfd;color:#17425e;text-transform:none;font-weight:500;min-height:48px;border-bottom:1px solid #dce6ed}
+.odoo-invoice-shell .odoo-line{min-height:48px}.odoo-invoice-shell .odoo-line:hover{background:#f4f9fc}
+.odoo-invoice-shell .odoo-add-row{justify-content:center;gap:12px;background:white;border:1px dashed #dbe6ee;margin:8px 0;height:44px;padding:5px}
+.odoo-invoice-shell .odoo-add-row button{color:#25445b;background:#f1f1f1;border:1px solid #aaa;border-radius:4px;padding:7px 16px;font-size:11px;font-weight:400}
+.odoo-invoice-shell .odoo-spacer{display:none}
+.odoo-invoice-shell .odoo-bottom{gap:30px;padding:20px 0;min-height:170px}
+.odoo-invoice-shell .odoo-bottom textarea{background:#f0f3f7;border:1px solid #d2d8e1;border-radius:3px;align-self:flex-start;min-height:90px;margin-left:12px}
+.odoo-invoice-shell .odoo-totals{width:310px;padding-right:12px;color:#243b53;font-size:12px}.odoo-invoice-shell .odoo-totals>div{gap:15px;margin-bottom:8px;align-items:center}.odoo-invoice-shell .odoo-totals b{background:#f0f3f7;border:1px solid #d2d8e1;border-radius:3px;padding:6px 8px;min-width:155px;text-align:right;font-size:12px;font-weight:500}.odoo-invoice-shell .odoo-totals .grand{font-size:13px;border:0}
+.reference-invoice-footer{display:flex;justify-content:flex-end;gap:8px;padding:18px 0 0}.reference-invoice-footer button,.reference-invoice-footer a{border:1px solid #d1d5db;padding:11px 25px;border-radius:3px;font-size:12px;background:white;color:#334155}.reference-invoice-footer button:first-child{background:#727c85;color:white;border-color:#727c85}.reference-invoice-footer .reference-save{background:#315f7b;color:white;border-color:#315f7b}
+.odoo-invoice-shell .invoice-side{position:static;max-height:none;padding:0;display:flex;flex-direction:column;gap:16px}
+.reference-customer-card{background:white;border:1px solid #e7e8ef;border-radius:22px;padding:25px;flex:1;min-height:550px;box-shadow:0 1px 2px #172b4d12}.reference-customer-card h2{font-size:16px;font-weight:700;color:#405464;margin:0 0 28px}.reference-customer-card dt{color:#7c8796;font-size:12px;margin:20px 0 7px}.reference-customer-card dd{font-size:12px;color:#16435d;overflow-wrap:anywhere}
+.odoo-invoice-shell:not([data-invoice-locked]) .invoice-communication{display:none}
+#orders-dialog{width:min(800px,calc(100vw - 40px));border-radius:4px}#orders-dialog header{border:0;padding:22px;color:#16435d}#orders-dialog h2{font-size:17px;font-weight:500}#orders-dialog header small{display:none}#orders-dialog thead{background:#315f7b;color:white;text-transform:none}#orders-dialog th{padding:12px 10px;font-weight:500}#orders-dialog td{padding:10px;font-size:12px}#orders-dialog tbody tr:nth-child(odd){background:#f1f1f1}#orders-dialog td a{background:#123f5a;border-radius:3px}
+@media(max-width:1000px){.odoo-invoice-shell .invoice-workspace{grid-template-columns:1fr}.reference-customer-card{min-height:0}.odoo-invoice-shell .odoo-header-grid{gap:10px 20px}}
+@media(max-width:600px){.odoo-invoice-shell .invoice-main{padding:14px}.odoo-invoice-shell .odoo-header-grid{grid-template-columns:1fr;padding:0}.reference-order-summary{gap:10px;padding-inline:0}.reference-invoice-heading{gap:10px;font-size:15px}.reference-invoice-heading button{padding:10px}.reference-invoice-footer button,.reference-invoice-footer a{padding:10px 14px}}
+
+/* Reference invoice: two independent header columns and a scrolling document. */
+.odoo-invoice-shell{color:#153d57}
+.odoo-invoice-shell .invoice-main{padding:24px}
+.odoo-invoice-shell:not([data-invoice-locked]) .odoo-actionbar{display:none}
+.reference-form-scroll{max-height:calc(100vh - 290px);min-height:390px;overflow-y:auto;overflow-x:hidden;padding-right:16px;scrollbar-color:#929292 #f8fafc;scrollbar-width:thin}
+.reference-invoice-heading{margin:12px 0 16px;min-height:54px;gap:32px}
+.reference-invoice-heading strong{font-size:18px}
+.odoo-invoice-shell .odoo-header-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(280px,1fr);grid-template-rows:repeat(4,36px);column-gap:100px;row-gap:5px;padding:0 0 18px 15px;margin-bottom:18px;border-bottom:1px solid #c8cdd2}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-customer{grid-area:1/1}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-type{grid-area:2/1}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-reference{grid-area:3/1;align-self:start}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-date{grid-area:1/2}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-due{grid-area:2/2}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-salesperson{grid-area:3/2}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-location{grid-area:4/2}
+.odoo-invoice-shell .odoo-header-grid>.reference-field-agent{grid-area:4/1}
+.odoo-invoice-shell .odoo-header-grid .odoo-field label{min-width:82px;width:82px}
+.odoo-invoice-shell .odoo-header-grid .reference-field-customer select{max-width:195px}
+.odoo-invoice-shell .odoo-header-grid .reference-field-type input{border:0!important;background:transparent!important;border-radius:0!important}
+.odoo-invoice-shell .odoo-header-grid .reference-field-reference input{max-width:195px;border:0!important;border-bottom:1px solid #d1d5db!important;border-radius:0!important}
+.odoo-invoice-shell #tab-lines{border:0;overflow:visible}
+.reference-lines-scroll{overflow-x:auto;border:1px solid #dce6ed;border-radius:12px;min-height:155px;margin:20px 5px 0;scrollbar-color:#929292 #fafafa}
+.reference-lines-scroll::-webkit-scrollbar{height:12px}.reference-lines-scroll::-webkit-scrollbar-thumb{background:#929292;border:2px solid white;border-radius:8px}
+.reference-lines-scroll #invoice-lines{min-height:90px;min-width:1100px}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head,.odoo-invoice-shell .reference-lines-scroll .odoo-line{box-sizing:border-box;width:1200px;min-width:100%;grid-template-columns:54px 64px 160px 72px 64px 80px 72px 56px 100px 200px 80px 46px;padding:0 12px;gap:8px}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head{font-size:10px;min-height:52px}
+.reference-lines-scroll .line-grip{display:none}
+.reference-lines-scroll .reference-line-type{grid-column:1;font-size:11px}
+.reference-lines-scroll .reference-line-code{grid-column:2;font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.reference-lines-scroll .line-product{grid-column:3}
+.reference-lines-scroll .line-price{grid-column:4}
+.reference-lines-scroll .line-discount{grid-column:5;min-width:0;width:100%}
+.reference-lines-scroll .line-discount-amount{grid-column:6;font-size:11px}
+.reference-lines-scroll .reference-line-available{grid-column:7;font-size:11px}
+.reference-lines-scroll .line-qty{grid-column:8}
+.reference-lines-scroll .line-amount{grid-column:9}
+.reference-lines-scroll .line-lot{grid-column:10}
+.reference-lines-scroll .line-tax{grid-column:11}
+.reference-lines-scroll .line-remove{grid-column:12}
+.reference-lines-scroll .odoo-line>*:not([type="hidden"]){grid-row:1}
+.odoo-invoice-shell .odoo-due-field.has-payment-term #invoice-due-date{display:block}
+.reference-notes .payment-term-open{display:grid}
+.odoo-invoice-shell .odoo-add-row{margin:5px 5px 0;min-height:43px}
+.odoo-invoice-shell .odoo-add-row [hidden]{display:none}
+.odoo-invoice-shell .odoo-bottom{width:100%;display:grid;grid-template-columns:minmax(240px,1fr) minmax(275px,310px);gap:40px;padding:22px 0 12px}
+.reference-notes{display:grid;align-content:start;gap:10px;max-width:320px}
+.reference-notes>label{display:block;font-size:11px;font-weight:400;color:#193b50}
+.odoo-invoice-shell .reference-notes textarea,.odoo-invoice-shell .reference-notes input{display:block;width:100%;min-height:28px;height:28px;margin:9px 0 0;border:1px solid #cdd4df;border-radius:3px;background:#eef1f5;padding:5px 8px;font-size:11px;color:#193b50;resize:vertical}
+.reference-notes .payment-term-control{display:flex;width:100%;align-items:center}.reference-notes .payment-term-control input{border:0;background:#f2f5f8}.reference-notes .payment-term-open{margin-top:9px}
+.odoo-invoice-shell .odoo-totals{width:100%;padding:0}.odoo-invoice-shell .odoo-totals>div{margin:0 0 7px;padding:0;min-height:28px}.odoo-invoice-shell .odoo-totals b{width:65%;min-width:0}
+.reference-invoice-footer{padding:12px 0 0;background:white;position:relative;z-index:2}.reference-invoice-footer button,.reference-invoice-footer a{font-size:11px;min-width:80px;padding:10px 16px}
+.reference-customer-card{min-height:0;height:100%;padding:24px}.reference-customer-card h2{margin-bottom:26px;font-size:16px}.reference-customer-card dt{margin:0 0 8px}.reference-customer-card dd{min-height:8px;margin:0 0 18px}
+.reference-advanced{margin-top:12px;color:#64748b;font-size:11px}.reference-advanced summary{cursor:pointer;padding:5px}.reference-advanced .odoo-tabs{margin-top:8px}.reference-ledger-dialog{width:min(1050px,95vw);padding:18px}.reference-ledger-dialog>button{display:block;margin:0 0 15px auto;padding:8px 14px;background:#315f7b;color:white;border:0;border-radius:4px}
+@media(max-width:1150px){.odoo-invoice-shell .odoo-header-grid{column-gap:30px}.odoo-invoice-shell .invoice-workspace{grid-template-columns:minmax(0,1fr) 245px}.odoo-invoice-shell .odoo-bottom{gap:16px;grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.odoo-invoice-shell .invoice-workspace{grid-template-columns:1fr}.reference-form-scroll{max-height:none;min-height:0;overflow:visible;padding:0}.reference-customer-card{min-height:240px}.odoo-invoice-shell .odoo-header-grid{column-gap:35px}}
+@media(max-width:600px){.odoo-invoice-shell .odoo-header-grid{display:flex;flex-direction:column;padding-left:0}.odoo-invoice-shell .odoo-header-grid .odoo-field{width:100%}.odoo-invoice-shell .odoo-bottom{grid-template-columns:1fr}.reference-notes{max-width:none}.reference-invoice-footer{flex-wrap:wrap}.odoo-invoice-shell .invoice-main{padding:15px}}

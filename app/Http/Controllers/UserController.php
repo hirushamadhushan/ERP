@@ -97,23 +97,40 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request, UserManagementService $users)
     {
-        $user = $users->create($request->validated());
+        try {
+            $user = $users->create($request->validated());
 
-        if (! $request->expectsJson()) {
-            return redirect()->route('users.index')->with('success', 'User created successfully.');
+            if (! $request->expectsJson()) {
+                return redirect()->route('users.index')->with('success', 'User created successfully.');
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User created successfully!',
+                'redirect' => route('users.index'),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->assignedRole?->name,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create user: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unable to create user. Please verify user details.',
+                ], 500);
+            }
+
+            return back()->withInput()->with('error', 'Unable to create user. Please try again.');
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'User created successfully!',
-            'redirect' => route('users.index'),
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->assignedRole?->name,
-            ],
-        ]);
     }
 
     /**
@@ -140,18 +157,29 @@ class UserController extends Controller
         $validated = $request->validate([
             'document' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
         ]);
-        $file = $validated['document'];
-        $path = $file->store('user-documents/'.$user->id, 'local');
-        $document = $user->documents()->create([
-            'name' => $file->getClientOriginalName(), 'path' => $path,
-            'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(),
-            'created_by' => $request->user()?->id,
-        ]);
-        $user->activities()->create([
-            'actor_id' => $request->user()?->id, 'action' => 'Document added', 'note' => $document->name,
-        ]);
 
-        return response()->json(['message' => 'Document added successfully.']);
+        $path = null;
+        try {
+            $file = $validated['document'];
+            $path = $file->store('user-documents/'.$user->id, 'local');
+            $document = $user->documents()->create([
+                'name' => $file->getClientOriginalName(), 'path' => $path,
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(),
+                'created_by' => $request->user()?->id,
+            ]);
+            $user->activities()->create([
+                'actor_id' => $request->user()?->id, 'action' => 'Document added', 'note' => $document->name,
+            ]);
+
+            return response()->json(['message' => 'Document added successfully.']);
+        } catch (\Throwable $e) {
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            \Illuminate\Support\Facades\Log::error('Failed to upload user document: '.$e->getMessage());
+
+            return response()->json(['message' => 'Unable to save document.'], 500);
+        }
     }
 
     public function storeNote(Request $request, User $user)
@@ -163,21 +191,34 @@ class UserController extends Controller
             'documents' => ['nullable', 'array', 'max:10'],
             'documents.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
         ]);
-        $user->notes()->create([
-            'heading' => $validated['heading'], 'body' => $validated['body'],
-            'is_private' => $request->boolean('is_private'), 'created_by' => $request->user()?->id,
-        ]);
-        foreach ($request->file('documents', []) as $file) {
-            $user->documents()->create([
-                'name' => $file->getClientOriginalName(), 'path' => $file->store('user-documents/'.$user->id, 'local'),
-                'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(), 'created_by' => $request->user()?->id,
-            ]);
-        }
-        $user->activities()->create([
-            'actor_id' => $request->user()?->id, 'action' => 'Note added', 'note' => $validated['heading'],
-        ]);
 
-        return response()->json(['message' => 'Note added successfully.']);
+        $uploadedPaths = [];
+        try {
+            $user->notes()->create([
+                'heading' => $validated['heading'], 'body' => $validated['body'],
+                'is_private' => $request->boolean('is_private'), 'created_by' => $request->user()?->id,
+            ]);
+            foreach ($request->file('documents', []) as $file) {
+                $path = $file->store('user-documents/'.$user->id, 'local');
+                $uploadedPaths[] = $path;
+                $user->documents()->create([
+                    'name' => $file->getClientOriginalName(), 'path' => $path,
+                    'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(), 'created_by' => $request->user()?->id,
+                ]);
+            }
+            $user->activities()->create([
+                'actor_id' => $request->user()?->id, 'action' => 'Note added', 'note' => $validated['heading'],
+            ]);
+
+            return response()->json(['message' => 'Note added successfully.']);
+        } catch (\Throwable $e) {
+            foreach ($uploadedPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+            \Illuminate\Support\Facades\Log::error('Failed to store user note: '.$e->getMessage());
+
+            return response()->json(['message' => 'Unable to save note.'], 500);
+        }
     }
 
     public function downloadDocument(UserDocument $document)
@@ -226,12 +267,24 @@ class UserController extends Controller
     /** Update the full Add User form when it is opened in edit mode. */
     public function updateProfile(UpdateManagedUserRequest $request, User $user, UserManagementService $users)
     {
-        $users->update($user, $request->validated());
+        try {
+            $users->update($user, $request->validated());
 
-        return response()->json([
-            'message' => 'User updated successfully.',
-            'redirect' => route('users.view', $user),
-        ]);
+            return response()->json([
+                'message' => 'User updated successfully.',
+                'redirect' => route('users.view', $user),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update managed user ID '.$user->id.': '.$e->getMessage());
+
+            return response()->json([
+                'message' => 'Unable to update user profile. Please try again.',
+            ], 500);
+        }
     }
 
     /**
@@ -249,34 +302,45 @@ class UserController extends Controller
             ], 403);
         }
 
-        $validated = $request->validated();
-        $validated['role_id'] = Role::where('name', $validated['role'])->value('id');
-        unset($validated['role']);
+        try {
+            $validated = $request->validated();
+            $validated['role_id'] = Role::where('name', $validated['role'])->value('id');
+            unset($validated['role']);
 
-        if (! empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
+            if (! empty($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            } else {
+                unset($validated['password']);
+            }
+
+            $this->databaseTransaction(
+                function () use ($user, $validated) {
+                    $user->update($validated);
+                    $user->activities()->create([
+                        'actor_id' => auth()->id(),
+                        'action' => 'User account updated',
+                        'note' => 'Account details were updated from User Management.',
+                    ]);
+                },
+                'The username or email address is already in use.',
+                'email'
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User updated successfully!',
+                'user' => $user,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update user ID '.$user->id.': '.$e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unable to update user. Please check if the email or username is already taken.',
+            ], 500);
         }
-
-        $this->databaseTransaction(
-            function () use ($user, $validated) {
-                $user->update($validated);
-                $user->activities()->create([
-                    'actor_id' => auth()->id(),
-                    'action' => 'User account updated',
-                    'note' => 'Account details were updated from User Management.',
-                ]);
-            },
-            'The username or email address is already in use.',
-            'email'
-        );
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'User updated successfully!',
-            'user' => $user,
-        ]);
     }
 
     /**
@@ -294,14 +358,25 @@ class UserController extends Controller
             ], 403);
         }
 
-        $this->databaseTransaction(
-            fn () => $user->delete(),
-            'This user is assigned to existing records and cannot be deleted.'
-        );
+        try {
+            $this->databaseTransaction(
+                fn () => $user->delete(),
+                'This user is assigned to existing records and cannot be deleted.'
+            );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'User deleted successfully!',
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User deleted successfully!',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete user ID '.$user->id.': '.$e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This user is assigned to existing records and cannot be deleted.',
+            ], 500);
+        }
     }
 }
