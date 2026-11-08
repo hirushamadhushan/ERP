@@ -8,7 +8,12 @@ Route::prefix('sales')->name('sales.')->controller(SalesOrderController::class)-
     Route::get('/', 'index')->middleware('role.permission:invoice.view')->name('index');
     Route::get('/create', 'create')->middleware('role.permission:invoice.create')->name('create');
     Route::post('/', 'store')->middleware('role.permission:invoice.create')->name('store');
+    Route::get('/dispatches', 'dispatches')->middleware('role.permission:invoice.view')->name('dispatches');
+    Route::get('/dispatches/{dispatch}', 'showDispatch')->middleware('role.permission:invoice.view')->name('dispatches.show');
+    Route::post('/dispatches/{dispatch}', 'updateDispatch')->middleware('role.permission:invoice.view')->name('dispatches.update');
 });
+
+Route::get('/Transactions/dispatches', fn () => redirect()->route('sales.dispatches'));
 
 Route::prefix('invoices')->name('invoices.')->controller(SalesInvoiceController::class)->group(function () {
     Route::get('/', 'index')->middleware('role.permission:invoice.view')->name('index');

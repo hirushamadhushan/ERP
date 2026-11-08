@@ -3,10 +3,10 @@
 @section('subtitle', 'Manage warranties')
 @section('content')
 @php
-    $input = 'w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all';
+    $input = 'w-full px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all h-8';
 @endphp
 @if(session('success'))
-    <div role="status" class="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm flex items-center gap-2">
+    <div role="status" class="mb-6 p-3 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs flex items-center gap-2" style="border-radius: 4px;">
         <i class="bi bi-check-circle-fill text-emerald-600"></i>
         <span>{{ session('success') }}</span>
     </div>
@@ -20,10 +20,10 @@
     </div>
 </div>
 
-<section class="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 sm:p-6">
+<section class="bg-white rounded border border-purple-100 shadow-sm p-4 sm:p-6" style="border-radius: 4px; border-top: 3px solid #7c3aed;">
     <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
         <h2 class="text-base font-bold text-slate-800">All Warranties</h2>
-        <button id="add-warranty" type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">
+        <button id="add-warranty" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition-all" style="border-radius: 4px; height: 32px;">
             <i class="bi bi-plus-lg text-sm" aria-hidden="true"></i> Add
         </button>
     </div>
@@ -46,13 +46,13 @@
                         <td class="text-slate-600">{{ $record->formatted_duration }}</td>
                         <td>
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <button type="button" class="edit-warranty inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-warranty="{{ json_encode($record->only(['id', 'name', 'description', 'duration', 'duration_type'])) }}" data-url="{{ route('products.warranties.update', $record) }}">
+                                <button type="button" class="edit-warranty inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-semibold transition-all" style="border-radius: 4px;" data-warranty="{{ json_encode($record->only(['id', 'name', 'description', 'duration', 'duration_type'])) }}" data-url="{{ route('products.warranties.update', $record) }}">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
                                 </button>
                                 <form data-async-form class="delete-warranty" method="POST" action="{{ route('products.warranties.destroy', $record) }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all">
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold transition-all" style="border-radius: 4px;">
                                         <i class="bi bi-trash" aria-hidden="true"></i> Delete
                                     </button>
                                 </form>
@@ -65,10 +65,10 @@
     </div>
 </section>
 
-<dialog id="warranty-dialog" aria-labelledby="warranty-title" class="bg-white shadow-2xl text-slate-800 rounded-2xl p-0 overflow-hidden border-0">
+<dialog id="warranty-dialog" aria-labelledby="warranty-title" class="bg-white shadow-2xl text-slate-800 rounded p-0 overflow-hidden border border-slate-200" style="border-radius: 4px;">
     <div class="flex justify-between items-center px-6 py-4 bg-purple-50 border-b border-purple-100">
         <h2 id="warranty-title" class="text-base font-bold text-slate-800">Add Warranty</h2>
-        <button type="button" data-close-warranty aria-label="Close form" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100 flex items-center justify-center transition-colors">
+        <button type="button" data-close-warranty aria-label="Close form" class="w-8 h-8 rounded text-slate-500 hover:bg-purple-100 flex items-center justify-center transition-colors">
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
     </div>
@@ -117,8 +117,8 @@
         </div>
 
         <div class="flex justify-end gap-2 px-6 py-4 border-t border-purple-100 bg-slate-50/50">
-            <button id="save-warranty" type="submit" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">Save</button>
-            <button type="button" data-close-warranty class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold transition-all">Close</button>
+            <button id="save-warranty" type="submit" class="px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-sm transition-all" style="border-radius: 4px; height: 32px;">Save</button>
+            <button type="button" data-close-warranty class="px-3 py-1.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold transition-all" style="border-radius: 4px; height: 32px;">Close</button>
         </div>
     </form>
 </dialog>
@@ -126,7 +126,7 @@
 
 @push('scripts')
 <style>
-    #warranty-dialog { margin:auto; padding:0; border:0; border-radius:1rem; width:calc(100% - 2rem); max-width:34rem; max-height:calc(100dvh - 2rem); }
+    #warranty-dialog { margin:auto; padding:0; border:0; border-radius: 4px; width:calc(100% - 2rem); max-width:34rem; max-height:calc(100dvh - 2rem); }
     #warranty-dialog::backdrop { background:rgb(15 23 42 / .5); backdrop-filter:blur(3px); }
     #warranties-table_wrapper .dt-buttons { display:flex; flex-wrap:wrap; gap:.25rem; }
     #warranties-table_wrapper .dataTables_filter, #warranties-table_wrapper .dataTables_length { float:none; text-align:left; }

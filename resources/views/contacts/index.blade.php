@@ -5,10 +5,10 @@
 
 @section('content')
 @php
-    $inputClass = 'w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-500';
+    $inputClass = 'w-full px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 focus:border-purple-500 h-8';
     $labelClass = 'block text-xs font-bold text-slate-700 mb-1.5';
-    $primaryClass = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20 transition-colors';
-    $secondaryClass = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-colors';
+    $primaryClass = 'inline-flex items-center justify-center gap-1.5 px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded shadow-sm shadow-purple-500/20 transition-colors h-8';
+    $secondaryClass = 'inline-flex items-center justify-center gap-1.5 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded transition-colors h-8';
     $columns = ['contact_id' => 'Contact ID', 'business_name' => 'Business Name', 'name' => 'Name', 'email' => 'Email'];
     if ($type === 'commission') {
         $columns += ['commission_percentage' => 'Commission %'];
@@ -45,7 +45,7 @@
     @endif
     <div id="contact-load-error" role="alert" hidden class="px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm"></div>
 
-    <details open class="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
+    <details open class="bg-white rounded border border-purple-100 shadow-sm overflow-hidden" style="border-radius:4px;border-top:3px solid #7c3aed;">
         <summary class="px-6 py-4 bg-purple-50/50 border-b border-purple-100 text-sm font-bold text-purple-700 cursor-pointer"><i class="bi bi-funnel-fill mr-2" aria-hidden="true"></i>Filters</summary>
         <form method="GET" action="{{ route('contacts.index', $type) }}" class="p-6 space-y-5" data-auto-filter data-async-filter>
             @if($type !== 'commission')
@@ -67,7 +67,7 @@
         </form>
     </details>
 
-    <section class="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 sm:p-6">
+    <section class="bg-white rounded border border-purple-100 shadow-sm p-4 sm:p-6" style="border-radius:4px;border-top:3px solid #7c3aed;">
         <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
             <div><h2 class="text-lg font-bold text-slate-900">{{ $type === 'commission' ? 'All commission agents' : 'All your '.$title }}</h2><p class="text-xs text-slate-400 mt-1">{{ $type === 'commission' ? 'Manage agent details and commission rates' : 'View, add and manage your '.strtolower($title) }}</p></div>
             <button id="add-contact" type="button" class="{{ $primaryClass }} shrink-0"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
@@ -80,8 +80,8 @@
                     <tr>
                         <td class="whitespace-nowrap">
                             <details class="contact-actions relative inline-block">
-                                <summary class="cursor-pointer list-none rounded-full bg-purple-600 px-3 py-1.5 text-xs font-bold text-white">Actions <i class="bi bi-chevron-down"></i></summary>
-                                <div class="absolute left-0 z-40 mt-1 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
+                                <summary class="cursor-pointer list-none rounded bg-purple-600 px-2.5 py-1 text-xs font-bold text-white">Actions <i class="bi bi-chevron-down"></i></summary>
+                                <div class="absolute left-0 z-40 mt-1 w-48 overflow-hidden rounded border border-slate-200 bg-white py-1 shadow-xl">
                                     @if($type === 'supplier')
                                         <button type="button" disabled title="Requires the Purchases module; this function is not available yet." class="supplier-action block w-full px-4 py-2 text-left text-xs text-slate-400 cursor-not-allowed"><i class="bi bi-cash-coin mr-2"></i>Pay (Unavailable)</button>
                                     @endif

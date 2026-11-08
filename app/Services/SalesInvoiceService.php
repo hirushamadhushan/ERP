@@ -37,7 +37,7 @@ class SalesInvoiceService
         return DB::transaction(function () use ($invoice, $userId) {
             $invoice = SalesInvoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
             if ($invoice->status !== 'draft') throw ValidationException::withMessages(['invoice' => 'Only draft invoices can be confirmed.']);
-            if (! $invoice->lines()->where('line_type', 'product')->exists()) throw ValidationException::withMessages(['lines' => 'Add at least one product line.']);
+            if (! $invoice->lines()->whereIn('line_type', ['product', 'service'])->exists()) throw ValidationException::withMessages(['lines' => 'Add at least one product or service line.']);
             $customer=Contact::whereKey($invoice->customer_id)->lockForUpdate()->firstOrFail();
             app(CustomerBalanceService::class)->refresh($customer);
             if ($customer->credit_limit !== null && round((float)$customer->due_balance+(float)$invoice->total_amount,2) > (float)$customer->credit_limit) {
@@ -161,29 +161,45 @@ class SalesInvoiceService
         });
     }
 
-    private function calculate(array $lines, string $taxDisplay): array
+    private function calculate(array $lines, string $taxDisplay, float $discountPercent = 0, float $discountAmount = 0): array
     {
         $untaxed = $taxTotal = $grand = 0; $output = [];
         foreach ($lines as $line) {
-            if ($line['line_type'] !== 'product') {
+            if (! in_array($line['line_type'], ['product', 'service'])) {
                 $output[] = ['line_type'=>$line['line_type'], 'description'=>$line['description'], 'quantity'=>0, 'unit_price'=>0, 'tax_rate'=>0, 'subtotal'=>0, 'tax_amount'=>0, 'total'=>0];
                 continue;
             }
             $rate = ($line['tax_rate_id'] ?? null) ? (float) TaxRate::findOrFail($line['tax_rate_id'])->amount : 0;
             $raw = round((float)$line['quantity'] * (float)$line['unit_price'], 2);
-            $discountPercent = (float) ($line['discount_percent'] ?? 0);
-            if ($discountPercent < 0 || $discountPercent > 100) {
+            $lineDiscountPercent = (float) ($line['discount_percent'] ?? 0);
+            if ($lineDiscountPercent < 0 || $lineDiscountPercent > 100) {
                 throw ValidationException::withMessages(['lines' => 'Discount must be between 0 and 100 percent.']);
             }
-            $line['discount_percent'] = $discountPercent;
-            $line['discount_amount'] = round($raw * $discountPercent / 100, 2);
+            $line['discount_percent'] = $lineDiscountPercent;
+            $line['discount_amount'] = round($raw * $lineDiscountPercent / 100, 2);
             $raw = round($raw - $line['discount_amount'], 2);
             if ($taxDisplay === 'inclusive' && $rate > 0) { $subtotal = round($raw / (1 + $rate / 100), 2); $tax = $raw - $subtotal; }
             else { $subtotal = $raw; $tax = round($subtotal * $rate / 100, 2); }
             $total = $subtotal + $tax; $untaxed += $subtotal; $taxTotal += $tax; $grand += $total;
             $output[] = $line + ['tax_rate'=>$rate, 'subtotal'=>$subtotal, 'tax_amount'=>$tax, 'total'=>$total];
         }
-        return ['untaxed_amount'=>$untaxed, 'tax_amount'=>$taxTotal, 'total_amount'=>$grand, 'lines'=>$output];
+
+        if ($discountPercent > 0) {
+            $discountAmount = round($untaxed * $discountPercent / 100, 2);
+        } elseif ($discountAmount > 0 && $untaxed > 0) {
+            $discountPercent = round(($discountAmount / $untaxed) * 100, 2);
+        }
+
+        $netTotal = max(0, round($grand - $discountAmount, 2));
+
+        return [
+            'untaxed_amount' => $untaxed,
+            'discount_percent' => $discountPercent,
+            'discount_amount' => $discountAmount,
+            'tax_amount' => $taxTotal,
+            'total_amount' => $netTotal,
+            'lines' => $output
+        ];
     }
 
     private function syncInstallments(SalesInvoice $invoice): void

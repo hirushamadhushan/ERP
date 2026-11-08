@@ -1,92 +1,5182 @@
-.invoice-breadcrumb{display:flex;justify-content:space-between;background:white;padding:14px 20px;margin-bottom:18px;border-radius:5px;color:#16435d;font-size:13px}.invoice-breadcrumb b{margin:0 14px;color:#94a3b8}
-.odoo-invoice-shell .invoice-workspace{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,1fr);gap:24px;align-items:stretch}
-.odoo-invoice-shell .invoice-main{background:white;border-radius:22px;border:1px solid #e7e8ef;padding:22px;box-shadow:0 1px 2px #172b4d12;min-width:0}
-.odoo-invoice-shell .odoo-sheet{border:0;border-radius:0;box-shadow:none;min-height:0}
-.odoo-invoice-shell .odoo-actionbar{border:0!important;background:transparent;padding:0 0 12px;min-height:0;justify-content:flex-end}
-.odoo-invoice-shell .odoo-actionbar>details,.odoo-invoice-shell .odoo-actionbar>.odoo-cancel,.odoo-invoice-shell .odoo-status{display:none}
-.odoo-invoice-shell:not([data-invoice-locked]) .odoo-actionbar>.odoo-confirm{display:none}
-.odoo-invoice-shell .odoo-document-type,.odoo-invoice-shell .odoo-number{display:none}
-.reference-invoice-heading{display:flex;align-items:center;gap:28px;min-height:65px;margin:0 0 22px;color:#17425e;font-size:19px}.reference-invoice-heading>span{color:#777}.reference-invoice-heading strong{font-weight:500}.reference-invoice-heading button{margin-left:auto;background:#62a177;border:0;color:white;padding:11px 22px;border-radius:4px;font-size:12px;font-weight:700}
-.odoo-invoice-shell .odoo-header-grid{padding:0 15px 20px;gap:8px 55px;grid-template-columns:1fr 1fr}
-.odoo-invoice-shell .odoo-header-grid>.odoo-field{grid-column:auto;grid-row:auto;min-height:36px}
-.odoo-invoice-shell .invoice-customer-details{display:none!important}
-.odoo-invoice-shell .odoo-header-grid .odoo-field label{min-width:90px;font-size:11px;color:#173b50;font-weight:500}
-.odoo-invoice-shell .odoo-header-grid .odoo-field input,.odoo-invoice-shell .odoo-header-grid .odoo-field select{border:1px solid #ced5df!important;border-radius:18px!important;padding:8px 12px!important;min-height:36px;font-size:12px!important}
-.odoo-invoice-shell .odoo-or,.odoo-invoice-shell .odoo-arrow{display:none}
-.odoo-invoice-shell .odoo-due-field .payment-term-control{display:none}
-.reference-order-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:22px 15px;border-top:1px solid #ccd2d9;border-bottom:1px dashed #e2e8f0;margin-bottom:20px;color:#163f59;font-size:12px}
-.reference-order-summary input{display:block;width:100%;margin-top:12px;background:#eef1f5;border:1px solid #cdd4df;border-radius:3px;padding:7px 9px;font-size:11px}
-.odoo-invoice-shell .odoo-tabs{height:35px;background:white;border:0;padding:0;margin-bottom:10px}.odoo-invoice-shell .odoo-tabs>button{height:32px;font-size:11px;padding:0 10px}.odoo-invoice-shell .tax-switch{bottom:0;right:0}
-.odoo-invoice-shell #tab-lines{border:1px solid #dce6ed;border-radius:12px;padding-top:0}
-.odoo-invoice-shell .odoo-line-head{background:#f8fbfd;color:#17425e;text-transform:none;font-weight:500;min-height:48px;border-bottom:1px solid #dce6ed}
-.odoo-invoice-shell .odoo-line{min-height:48px}.odoo-invoice-shell .odoo-line:hover{background:#f4f9fc}
-.odoo-invoice-shell .odoo-add-row{justify-content:center;gap:12px;background:white;border:1px dashed #dbe6ee;margin:8px 0;height:44px;padding:5px}
-.odoo-invoice-shell .odoo-add-row button{color:#25445b;background:#f1f1f1;border:1px solid #aaa;border-radius:4px;padding:7px 16px;font-size:11px;font-weight:400}
-.odoo-invoice-shell .odoo-spacer{display:none}
-.odoo-invoice-shell .odoo-bottom{gap:30px;padding:20px 0;min-height:170px}
-.odoo-invoice-shell .odoo-bottom textarea{background:#f0f3f7;border:1px solid #d2d8e1;border-radius:3px;align-self:flex-start;min-height:90px;margin-left:12px}
-.odoo-invoice-shell .odoo-totals{width:310px;padding-right:12px;color:#243b53;font-size:12px}.odoo-invoice-shell .odoo-totals>div{gap:15px;margin-bottom:8px;align-items:center}.odoo-invoice-shell .odoo-totals b{background:#f0f3f7;border:1px solid #d2d8e1;border-radius:3px;padding:6px 8px;min-width:155px;text-align:right;font-size:12px;font-weight:500}.odoo-invoice-shell .odoo-totals .grand{font-size:13px;border:0}
-.reference-invoice-footer{display:flex;justify-content:flex-end;gap:8px;padding:18px 0 0}.reference-invoice-footer button,.reference-invoice-footer a{border:1px solid #d1d5db;padding:11px 25px;border-radius:3px;font-size:12px;background:white;color:#334155}.reference-invoice-footer button:first-child{background:#727c85;color:white;border-color:#727c85}.reference-invoice-footer .reference-save{background:#315f7b;color:white;border-color:#315f7b}
-.odoo-invoice-shell .invoice-side{position:static;max-height:none;padding:0;display:flex;flex-direction:column;gap:16px}
-.reference-customer-card{background:white;border:1px solid #e7e8ef;border-radius:22px;padding:25px;flex:1;min-height:550px;box-shadow:0 1px 2px #172b4d12}.reference-customer-card h2{font-size:16px;font-weight:700;color:#405464;margin:0 0 28px}.reference-customer-card dt{color:#7c8796;font-size:12px;margin:20px 0 7px}.reference-customer-card dd{font-size:12px;color:#16435d;overflow-wrap:anywhere}
-.odoo-invoice-shell:not([data-invoice-locked]) .invoice-communication{display:none}
-#orders-dialog{width:min(800px,calc(100vw - 40px));border-radius:4px}#orders-dialog header{border:0;padding:22px;color:#16435d}#orders-dialog h2{font-size:17px;font-weight:500}#orders-dialog header small{display:none}#orders-dialog thead{background:#315f7b;color:white;text-transform:none}#orders-dialog th{padding:12px 10px;font-weight:500}#orders-dialog td{padding:10px;font-size:12px}#orders-dialog tbody tr:nth-child(odd){background:#f1f1f1}#orders-dialog td a{background:#123f5a;border-radius:3px}
-@media(max-width:1000px){.odoo-invoice-shell .invoice-workspace{grid-template-columns:1fr}.reference-customer-card{min-height:0}.odoo-invoice-shell .odoo-header-grid{gap:10px 20px}}
-@media(max-width:600px){.odoo-invoice-shell .invoice-main{padding:14px}.odoo-invoice-shell .odoo-header-grid{grid-template-columns:1fr;padding:0}.reference-order-summary{gap:10px;padding-inline:0}.reference-invoice-heading{gap:10px;font-size:15px}.reference-invoice-heading button{padding:10px}.reference-invoice-footer button,.reference-invoice-footer a{padding:10px 14px}}
+/* Codeza ERP - Modern Enterprise Invoice Stylesheet */
+/* Clean Purple-Indigo-Cyan Theme Matching Sales Dashboard & Sales Orders */
 
-/* Reference invoice: two independent header columns and a scrolling document. */
-.odoo-invoice-shell{color:#153d57}
-.odoo-invoice-shell .invoice-main{padding:24px}
-.odoo-invoice-shell:not([data-invoice-locked]) .odoo-actionbar{display:none}
-.reference-form-scroll{max-height:calc(100vh - 290px);min-height:390px;overflow-y:auto;overflow-x:hidden;padding-right:16px;scrollbar-color:#929292 #f8fafc;scrollbar-width:thin}
-.reference-invoice-heading{margin:12px 0 16px;min-height:54px;gap:32px}
-.reference-invoice-heading strong{font-size:18px}
-.odoo-invoice-shell .odoo-header-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(280px,1fr);grid-template-rows:repeat(4,36px);column-gap:100px;row-gap:5px;padding:0 0 18px 15px;margin-bottom:18px;border-bottom:1px solid #c8cdd2}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-customer{grid-area:1/1}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-type{grid-area:2/1}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-reference{grid-area:3/1;align-self:start}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-date{grid-area:1/2}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-due{grid-area:2/2}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-salesperson{grid-area:3/2}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-location{grid-area:4/2}
-.odoo-invoice-shell .odoo-header-grid>.reference-field-agent{grid-area:4/1}
-.odoo-invoice-shell .odoo-header-grid .odoo-field label{min-width:82px;width:82px}
-.odoo-invoice-shell .odoo-header-grid .reference-field-customer select{max-width:195px}
-.odoo-invoice-shell .odoo-header-grid .reference-field-type input{border:0!important;background:transparent!important;border-radius:0!important}
-.odoo-invoice-shell .odoo-header-grid .reference-field-reference input{max-width:195px;border:0!important;border-bottom:1px solid #d1d5db!important;border-radius:0!important}
-.odoo-invoice-shell #tab-lines{border:0;overflow:visible}
-.reference-lines-scroll{overflow-x:auto;border:1px solid #dce6ed;border-radius:12px;min-height:155px;margin:20px 5px 0;scrollbar-color:#929292 #fafafa}
-.reference-lines-scroll::-webkit-scrollbar{height:12px}.reference-lines-scroll::-webkit-scrollbar-thumb{background:#929292;border:2px solid white;border-radius:8px}
-.reference-lines-scroll #invoice-lines{min-height:90px;min-width:1100px}
-.odoo-invoice-shell .reference-lines-scroll .odoo-line-head,.odoo-invoice-shell .reference-lines-scroll .odoo-line{box-sizing:border-box;width:1200px;min-width:100%;grid-template-columns:54px 64px 160px 72px 64px 80px 72px 56px 100px 200px 80px 46px;padding:0 12px;gap:8px}
-.odoo-invoice-shell .reference-lines-scroll .odoo-line-head{font-size:10px;min-height:52px}
-.reference-lines-scroll .line-grip{display:none}
-.reference-lines-scroll .reference-line-type{grid-column:1;font-size:11px}
-.reference-lines-scroll .reference-line-code{grid-column:2;font-size:11px;overflow:hidden;text-overflow:ellipsis}
-.reference-lines-scroll .line-product{grid-column:3}
-.reference-lines-scroll .line-price{grid-column:4}
-.reference-lines-scroll .line-discount{grid-column:5;min-width:0;width:100%}
-.reference-lines-scroll .line-discount-amount{grid-column:6;font-size:11px}
-.reference-lines-scroll .reference-line-available{grid-column:7;font-size:11px}
-.reference-lines-scroll .line-qty{grid-column:8}
-.reference-lines-scroll .line-amount{grid-column:9}
-.reference-lines-scroll .line-lot{grid-column:10}
-.reference-lines-scroll .line-tax{grid-column:11}
-.reference-lines-scroll .line-remove{grid-column:12}
-.reference-lines-scroll .odoo-line>*:not([type="hidden"]){grid-row:1}
-.odoo-invoice-shell .odoo-due-field.has-payment-term #invoice-due-date{display:block}
-.reference-notes .payment-term-open{display:grid}
-.odoo-invoice-shell .odoo-add-row{margin:5px 5px 0;min-height:43px}
-.odoo-invoice-shell .odoo-add-row [hidden]{display:none}
-.odoo-invoice-shell .odoo-bottom{width:100%;display:grid;grid-template-columns:minmax(240px,1fr) minmax(275px,310px);gap:40px;padding:22px 0 12px}
-.reference-notes{display:grid;align-content:start;gap:10px;max-width:320px}
-.reference-notes>label{display:block;font-size:11px;font-weight:400;color:#193b50}
-.odoo-invoice-shell .reference-notes textarea,.odoo-invoice-shell .reference-notes input{display:block;width:100%;min-height:28px;height:28px;margin:9px 0 0;border:1px solid #cdd4df;border-radius:3px;background:#eef1f5;padding:5px 8px;font-size:11px;color:#193b50;resize:vertical}
-.reference-notes .payment-term-control{display:flex;width:100%;align-items:center}.reference-notes .payment-term-control input{border:0;background:#f2f5f8}.reference-notes .payment-term-open{margin-top:9px}
-.odoo-invoice-shell .odoo-totals{width:100%;padding:0}.odoo-invoice-shell .odoo-totals>div{margin:0 0 7px;padding:0;min-height:28px}.odoo-invoice-shell .odoo-totals b{width:65%;min-width:0}
-.reference-invoice-footer{padding:12px 0 0;background:white;position:relative;z-index:2}.reference-invoice-footer button,.reference-invoice-footer a{font-size:11px;min-width:80px;padding:10px 16px}
-.reference-customer-card{min-height:0;height:100%;padding:24px}.reference-customer-card h2{margin-bottom:26px;font-size:16px}.reference-customer-card dt{margin:0 0 8px}.reference-customer-card dd{min-height:8px;margin:0 0 18px}
-.reference-advanced{margin-top:12px;color:#64748b;font-size:11px}.reference-advanced summary{cursor:pointer;padding:5px}.reference-advanced .odoo-tabs{margin-top:8px}.reference-ledger-dialog{width:min(1050px,95vw);padding:18px}.reference-ledger-dialog>button{display:block;margin:0 0 15px auto;padding:8px 14px;background:#315f7b;color:white;border:0;border-radius:4px}
-@media(max-width:1150px){.odoo-invoice-shell .odoo-header-grid{column-gap:30px}.odoo-invoice-shell .invoice-workspace{grid-template-columns:minmax(0,1fr) 245px}.odoo-invoice-shell .odoo-bottom{gap:16px;grid-template-columns:1fr 1fr}}
-@media(max-width:900px){.odoo-invoice-shell .invoice-workspace{grid-template-columns:1fr}.reference-form-scroll{max-height:none;min-height:0;overflow:visible;padding:0}.reference-customer-card{min-height:240px}.odoo-invoice-shell .odoo-header-grid{column-gap:35px}}
-@media(max-width:600px){.odoo-invoice-shell .odoo-header-grid{display:flex;flex-direction:column;padding-left:0}.odoo-invoice-shell .odoo-header-grid .odoo-field{width:100%}.odoo-invoice-shell .odoo-bottom{grid-template-columns:1fr}.reference-notes{max-width:none}.reference-invoice-footer{flex-wrap:wrap}.odoo-invoice-shell .invoice-main{padding:15px}}
+/* Top Breadcrumb Bar */
+.invoice-breadcrumb {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 4px 16px 4px !important;
+    margin-bottom: 12px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.invoice-breadcrumb > span:first-child {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.02em !important;
+}
+.invoice-breadcrumb > span:last-child {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+}
+.invoice-breadcrumb b {
+    margin: 0 4px;
+    color: #cbd5e1;
+}
+
+/* Toast Notifications */
+.invoice-toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    animation: fadeIn 0.25s ease;
+}
+.invoice-toast.is-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+}
+.invoice-toast.is-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #be123c;
+}
+.invoice-toast p {
+    margin: 0;
+    flex: 1;
+}
+.invoice-toast button {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+.invoice-toast button:hover {
+    opacity: 1;
+}
+
+/* Two-Column Grid Layout */
+.odoo-invoice-shell {
+    color: #1e293b;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+.odoo-invoice-shell .invoice-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+    align-items: start;
+}
+@media (min-width: 1440px) {
+    .odoo-invoice-shell .invoice-workspace {
+        grid-template-columns: minmax(0, 1fr) 320px;
+    }
+}
+@media (max-width: 1080px) {
+    .odoo-invoice-shell .invoice-workspace {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Main Card */
+.odoo-invoice-shell .invoice-main {
+    background: #ffffff;
+    border-radius: 24px;
+    border: 2px solid #ede9fe;
+    padding: 28px 32px;
+    box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.08), 0 0 0 1px rgba(124, 58, 237, 0.04);
+    min-width: 0;
+    position: relative;
+}
+.odoo-invoice-shell .odoo-sheet {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 0;
+    padding: 0;
+}
+
+/* Hide legacy redundant headers */
+.odoo-invoice-shell .odoo-document-type,
+.odoo-invoice-shell .odoo-number,
+.odoo-invoice-shell .invoice-customer-details,
+.odoo-invoice-shell .odoo-or,
+.odoo-invoice-shell .odoo-arrow,
+.odoo-invoice-shell .odoo-spacer {
+    display: none !important;
+}
+
+/* Top Action Bar (for Locked / Existing Invoices) */
+.odoo-invoice-shell:not([data-invoice-locked]) .odoo-actionbar {
+    display: none;
+}
+.odoo-invoice-shell[data-invoice-locked] .odoo-actionbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
+    border: 1px solid #ddd6fe !important;
+    border-radius: 18px !important;
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.04);
+}
+.odoo-invoice-shell .invoice-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+.odoo-invoice-shell .invoice-action:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+.odoo-invoice-shell .invoice-action.primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3) !important;
+}
+.odoo-invoice-shell #open-payment {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+.odoo-invoice-shell .invoice-payment-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Status Badges */
+.odoo-invoice-shell .odoo-status {
+    display: flex !important;
+    gap: 6px;
+    align-items: center;
+    margin-left: auto;
+}
+.odoo-invoice-shell .odoo-status span {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+.odoo-invoice-shell .odoo-status span.active {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3) !important;
+}
+.odoo-invoice-shell .odoo-status span.active.paid {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+}
+.odoo-invoice-shell .odoo-status span.active.warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+.invoice-paid-ribbon {
+    display: inline-flex;
+    align-items: center;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    padding: 5px 14px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Heading Row: Invoice No & Orders Button */
+.reference-invoice-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 44px;
+    margin: 0 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.reference-invoice-heading .ref-heading-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.reference-invoice-heading .ref-heading-label,
+.reference-invoice-heading > span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    margin-right: 2px;
+}
+.reference-invoice-heading strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #ffffff;
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+    border: none;
+    padding: 7px 16px;
+    border-radius: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
+}
+.reference-invoice-heading strong::before {
+    content: "\F51B";
+    font-family: "bootstrap-icons";
+    font-size: 14px;
+    color: #ede9fe;
+    font-weight: normal;
+}
+.reference-invoice-heading .ref-heading-right {
+    margin-left: auto;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+.reference-invoice-heading button,
+.reference-invoice-heading .reference-orders-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    padding: 8px 18px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32) !important;
+    cursor: pointer;
+    transition: all 0.2s ease !important;
+}
+.reference-invoice-heading button:hover,
+.reference-invoice-heading .reference-orders-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.42) !important;
+    transform: translateY(-1px) !important;
+}
+.ref-order-selected-badge {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #475569;
+    text-align: right;
+    white-space: nowrap;
+}
+.ref-order-selected-badge a,
+.ref-order-selected-badge .ref-order-link {
+    color: #0284c7;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.ref-order-selected-badge a:hover,
+.ref-order-selected-badge .ref-order-link:hover {
+    color: #0369a1;
+}
+
+/* Form Fields Grid */
+.odoo-invoice-shell .odoo-header-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 32px;
+    row-gap: 12px;
+    padding: 0 0 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.odoo-invoice-shell .odoo-header-grid > .odoo-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field label {
+    min-width: 90px;
+    width: 90px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    text-transform: none;
+    letter-spacing: normal;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field input,
+.odoo-invoice-shell .odoo-header-grid .odoo-field select {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 6px 12px !important;
+    min-height: 36px;
+    font-size: 12px !important;
+    font-weight: 600;
+    color: #1e293b;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    transition: all 0.15s ease;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field input:focus,
+.odoo-invoice-shell .odoo-header-grid .odoo-field select:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+    outline: none !important;
+}
+.odoo-invoice-shell .odoo-header-grid .reference-field-type input {
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    color: #64748b !important;
+}
+.locked-customer-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Eliminate Artificial Nested Scrolling */
+.reference-form-scroll {
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    padding-right: 0 !important;
+}
+
+/* Order Summary Box (if from Sales Order) */
+.reference-order-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    padding: 16px 20px;
+    background: #fdfcff;
+    border: 1px solid #ede9fe;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    color: #475569;
+    font-size: 12px;
+}
+.reference-order-summary label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.reference-order-summary input {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* Tabs & Tax Switch */
+.odoo-invoice-shell .odoo-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: auto;
+    background: transparent;
+    border-bottom: 1.5px solid #f1f5f9;
+    padding: 0 0 12px;
+    margin-bottom: 16px;
+    position: relative;
+}
+.odoo-invoice-shell .odoo-tabs > button {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.odoo-invoice-shell .odoo-tabs > button:hover {
+    color: #1e293b;
+    background: #f8fafc;
+}
+.odoo-invoice-shell .odoo-tabs > button.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28) !important;
+}
+.odoo-invoice-shell .tax-switch {
+    margin-left: auto;
+    display: flex;
+    background: #eef2ff;
+    padding: 3px;
+    border-radius: 10px;
+    gap: 2px;
+    border: 1px solid #e0e7ff;
+}
+.odoo-invoice-shell .tax-switch button {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.odoo-invoice-shell .tax-switch button.active {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3) !important;
+}
+.reference-advanced {
+    margin-top: 14px;
+    color: #64748b;
+    font-size: 12px;
+}
+.reference-advanced summary {
+    cursor: pointer;
+    padding: 6px 10px;
+    font-weight: 700;
+    color: #6d28d9;
+    border-radius: 8px;
+    display: inline-block;
+}
+.reference-advanced summary:hover {
+    background: #faf5ff;
+}
+
+/* Lines Table Container */
+.odoo-invoice-shell #tab-lines {
+    border: 0;
+    overflow: visible;
+}
+.reference-lines-scroll {
+    overflow-x: auto;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 18px;
+    min-height: 140px;
+    margin: 16px 0 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+    scrollbar-color: #cbd5e1 #f8fafc;
+    scrollbar-width: thin;
+}
+.reference-lines-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+.reference-lines-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+}
+.reference-lines-scroll #invoice-lines {
+    min-height: 80px;
+}
+
+/* Table Head & Line Grid Layout - 10 Columns (Matching Reference System) */
+.odoo-invoice-shell .reference-lines-scroll .reference-table-inner {
+    display: block !important;
+    min-width: 100% !important;
+    width: max-content !important;
+    box-sizing: border-box !important;
+}
+
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head,
+.odoo-invoice-shell .reference-lines-scroll #invoice-lines,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line,
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 1140px !important;
+}
+
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line {
+    display: grid !important;
+    grid-template-columns: 65px 110px minmax(220px, 1fr) 105px 85px 110px 85px 75px 115px 60px !important;
+    padding: 10px 14px;
+    gap: 8px;
+    align-items: center;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head {
+    background: #1e1b4b !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: none !important;
+    letter-spacing: 0.01em !important;
+    border: none !important;
+    border-radius: 4px 4px 0 0 !important;
+    box-shadow: none !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(1) { text-align: left !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(2) { text-align: left !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(3) { text-align: left !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(4) { text-align: right !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(5) { text-align: right !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(6) { text-align: right !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(7) { text-align: right !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(8) { text-align: right !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(9) { text-align: right !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line-head span:nth-child(10) { text-align: center !important; }
+
+/* Explicit Grid Column Assignments for Row Cells (10 Columns) */
+.reference-lines-scroll .line-grip { display: none !important; }
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .line-grip,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .line-lot,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .line-tax,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .line-description,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .line-selected-serials {
+    display: none !important;
+}
+
+.reference-lines-scroll .reference-line-type,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .reference-line-type {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 2px !important;
+    box-shadow: none !important;
+    white-space: nowrap !important;
+    text-transform: none !important;
+}
+
+.reference-lines-scroll .reference-line-code,
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .reference-line-code {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    font-family: ui-monospace, SFMono-Regular, monospace !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 2px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.reference-lines-scroll .line-details-cell { grid-column: 3 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-product { grid-column: 3 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-price { grid-column: 4 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-discount { grid-column: 5 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-discount-amount { grid-column: 6 !important; grid-row: 1 !important; }
+.reference-lines-scroll .reference-line-available { grid-column: 7 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-qty { grid-column: 8 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-amount { grid-column: 9 !important; grid-row: 1 !important; }
+.reference-lines-scroll .line-lot { display: none !important; }
+.reference-lines-scroll .line-tax { display: none !important; }
+.reference-lines-scroll .line-actions-wrap { grid-column: 10 !important; grid-row: 1 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; }
+.reference-lines-scroll .line-remove { display: inline-flex !important; }
+.reference-lines-scroll .odoo-line > *:not([type="hidden"]) { grid-row: 1 !important; }
+
+/* Table line rows & cells - all 10 fields visible and functional */
+.odoo-invoice-shell .reference-lines-scroll .odoo-line {
+    border-bottom: 1px solid #f1f5f9;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line .line-details-cell {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 6px 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    gap: 6px !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-details-confirmed {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-details-title {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Ensure hidden elements are strictly hidden */
+.odoo-invoice-shell .reference-lines-scroll .line-product.hidden,
+.odoo-invoice-shell .reference-lines-scroll .line-lot-picker-wrap.hidden,
+.odoo-invoice-shell .reference-lines-scroll .line-details-confirmed.hidden,
+.odoo-invoice-shell .reference-lines-scroll .hidden {
+    display: none !important;
+}
+
+/* Details Cell, Lot Picker & Product Display (Photos 2, 3, 5) */
+.line-details-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    position: relative;
+    min-width: 0;
+}
+.line-details-cell .line-product {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 4px !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    outline: none !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+.line-details-cell .line-product:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Lot Picker matching Photos 2 & 5 */
+.line-lot-picker-wrap {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    animation: fadeIn 0.18s ease-in-out;
+}
+.line-lot-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #7c3aed !important;
+    background: #f5f3ff !important;
+    border: 1px solid #ddd6fe !important;
+    padding: 2px 7px !important;
+    border-radius: 12px !important;
+    white-space: nowrap !important;
+}
+.line-lot-picker, .ref-pill-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    display: inline-block !important;
+    width: 220px !important;
+    max-width: 240px !important;
+    min-width: 180px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    border-radius: 18px !important;
+    border: 1.5px solid #a78bfa !important;
+    background-color: #faf5ff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    background-size: 12px 12px !important;
+    color: #4c1d95 !important;
+    padding: 4px 36px 4px 14px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2) !important;
+    outline: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+.line-lot-picker:hover, .line-lot-picker:focus,
+.ref-pill-select:hover, .ref-pill-select:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25) !important;
+    background-color: #ffffff !important;
+}
+
+/* Confirmed Product display matching Photos 2 & 3 */
+.line-details-confirmed {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+.line-details-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: default !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.line-details-title:hover {
+    color: #1e293b !important;
+}
+
+/* (i) Item Info Button matching Photos 2, 3, 4 */
+.btn-item-info {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e0f2fe;
+    color: #0284c7;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 13px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.btn-item-info:hover {
+    background: #0284c7;
+    color: #ffffff;
+    transform: scale(1.08);
+}
+.btn-item-info::after {
+    content: "Item info";
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 50;
+}
+.btn-item-info:hover::after {
+    opacity: 1;
+}
+
+.btn-change-item {
+    display: none !important;
+}
+}
+.btn-change-item:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    opacity: 1;
+}
+
+/* Product Info Popup Card matching Photo 4 */
+.product-info-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 99998;
+    display: none;
+}
+.product-info-backdrop.open {
+    display: block;
+}
+.product-info-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 480px;
+    max-width: 92vw;
+    max-height: 90vh;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.08);
+    z-index: 99999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: popupScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-info-popup.open {
+    display: flex;
+}
+.product-info-head {
+    background: #23495d;
+    padding: 18px 24px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.product-info-head-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.product-info-head-icon {
+    font-size: 28px;
+    color: #ffffff;
+    opacity: 0.95;
+}
+.product-info-head-text h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+}
+.product-info-head-text .sku-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+.product-info-close-btn {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+}
+.product-info-close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+.product-info-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    max-height: calc(90vh - 80px);
+}
+.info-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 14px 0 8px 0;
+}
+.info-section-title:first-child {
+    margin-top: 0;
+}
+.info-kv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.info-kv-table td {
+    padding: 4px 0;
+}
+.info-kv-table td.kv-label {
+    color: #334155;
+    font-weight: 500;
+    width: 45%;
+}
+.info-kv-table td.kv-val {
+    color: #0f172a;
+    font-weight: 400;
+    text-align: right;
+}
+.info-pill-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 600;
+}
+.info-ledger-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+}
+.info-ledger-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.info-ledger-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-weight: 500;
+}
+.info-ledger-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.info-ledger-dot.orange { background: #f97316; }
+.info-ledger-dot.green { background: #22c55e; }
+.info-ledger-val {
+    color: #64748b;
+    font-size: 11px;
+    text-align: right;
+}
+.info-lots-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 6px;
+}
+.info-lots-table th {
+    text-align: left;
+    padding: 6px 4px;
+    border-bottom: 1.5px solid #cbd5e1;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+.info-lots-table td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+}
+.info-lots-table tr:hover td {
+    background: #f8fafc;
+}
+
+/* Table Row Elements Styling */
+.odoo-invoice-shell .reference-lines-scroll .odoo-line {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line:hover {
+    background: #faf8ff;
+}
+.odoo-invoice-shell .reference-lines-scroll .reference-line-type {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: #ede9fe;
+    color: #6d28d9;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: none;
+}
+.odoo-invoice-shell .reference-lines-scroll .reference-line-code {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.odoo-invoice-shell .reference-lines-scroll select,
+.odoo-invoice-shell .reference-lines-scroll input {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+.odoo-invoice-shell .reference-lines-scroll select:focus,
+.odoo-invoice-shell .reference-lines-scroll input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    outline: none;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-price,
+.odoo-invoice-shell .reference-lines-scroll .line-discount,
+.odoo-invoice-shell .reference-lines-scroll .line-qty {
+    text-align: right;
+    font-weight: 700;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-discount-amount {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-align: right;
+}
+.odoo-invoice-shell .reference-lines-scroll .reference-line-available {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: #ecfeff;
+    color: #0891b2;
+    font-size: 11px;
+    font-weight: 700;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-amount {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    text-align: right;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-remove button,
+.odoo-invoice-shell .reference-lines-scroll .line-remove {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 16px;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-remove button:hover,
+.odoo-invoice-shell .reference-lines-scroll .line-remove:hover {
+    color: #ef4444;
+}
+
+
+/* Text / Note Line in Lines Table */
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line {
+    display: grid !important;
+    box-sizing: border-box !important;
+    width: max-content !important;
+    min-width: 100% !important;
+    grid-template-columns: 65px 110px minmax(220px, 1fr) 105px 85px 110px 85px 75px 115px 60px !important;
+    padding: 8px 14px !important;
+    gap: 8px !important;
+    align-items: center !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    background: #ffffff !important;
+    min-height: 48px !important;
+    transition: background 0.15s ease !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line:hover {
+    background: #faf8ff !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .line-grip {
+    display: none !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .reference-line-type {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 2px !important;
+    box-shadow: none !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .reference-line-code {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 2px !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line input[data-name="description"],
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .text-line-desc {
+    grid-column: 3 / span 7 !important;
+    grid-row: 1 !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: rgba(248, 250, 252, 0.75) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    transition: all 0.15s ease !important;
+    outline: none !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line input[data-name="description"]::placeholder,
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .text-line-desc::placeholder {
+    color: #94a3b8 !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line input[data-name="description"]:focus,
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .text-line-desc:focus {
+    background: #ffffff !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+    color: #0f172a !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .line-remove {
+    grid-column: 10 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    padding: 6px !important;
+    transition: color 0.15s ease !important;
+}
+    grid-row: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    padding: 6px !important;
+    transition: color 0.15s ease !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-text-line .line-remove:hover {
+    color: #ef4444 !important;
+}
+
+/* Add Row Action Buttons */
+.odoo-invoice-shell .odoo-add-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    margin: 10px 0 20px;
+    padding: 0 0 16px;
+    height: auto;
+}
+.odoo-invoice-shell .odoo-add-row button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+.odoo-invoice-shell .odoo-add-row button:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05) !important;
+}
+/* Add Item Button (Primary Purple Gradient) */
+.odoo-invoice-shell .odoo-add-row [data-add="product"] {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    padding: 8px 18px !important;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
+    transition: all 0.2s ease !important;
+}
+.odoo-invoice-shell .odoo-add-row [data-add="product"]:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.48) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Add Service Button (Teal-Cyan Gradient) */
+.odoo-invoice-shell .odoo-add-row [data-add="product"] + button {
+    background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    padding: 8px 18px !important;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.32) !important;
+    transition: all 0.2s ease !important;
+}
+.odoo-invoice-shell .odoo-add-row [data-add="product"] + button:hover {
+    background: linear-gradient(135deg, #0f766e 0%, #0891b2 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Add Text & Add Section Buttons (Crisp Slate) */
+.odoo-invoice-shell .odoo-add-row [data-add="note"],
+.odoo-invoice-shell .odoo-add-row [data-add="section"] {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 8px 16px !important;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04) !important;
+    transition: all 0.2s ease !important;
+}
+.odoo-invoice-shell .odoo-add-row [data-add="note"]:hover,
+.odoo-invoice-shell .odoo-add-row [data-add="section"]:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Browse Products / Catalog Button (Royal Indigo Gradient) */
+.odoo-invoice-shell .odoo-add-row #open-catalog {
+    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    padding: 8px 18px !important;
+    box-shadow: 0 4px 14px rgba(67, 56, 202, 0.32) !important;
+    transition: all 0.2s ease !important;
+}
+.odoo-invoice-shell .odoo-add-row #open-catalog:hover {
+    background: linear-gradient(135deg, #3730a3 0%, #312e81 100%) !important;
+    box-shadow: 0 6px 18px rgba(67, 56, 202, 0.45) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Bottom Section: Notes & Totals */
+.odoo-invoice-shell .odoo-bottom {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.15fr) minmax(280px, 350px);
+    gap: 28px;
+    align-items: start;
+    padding: 0;
+    margin-bottom: 20px;
+}
+.reference-notes {
+    display: grid;
+    gap: 16px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+.reference-notes > label {
+    display: block;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    margin-bottom: 2px;
+}
+.odoo-invoice-shell .reference-notes textarea,
+.odoo-invoice-shell .reference-notes input {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    background: rgba(248, 250, 252, 0.6) !important;
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+    font-weight: 500;
+    color: #334155 !important;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+.odoo-invoice-shell .reference-notes textarea:focus,
+.odoo-invoice-shell .reference-notes input:focus {
+    background: #ffffff !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+    outline: none !important;
+}
+.reference-notes .payment-term-control {
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+.reference-notes .payment-term-control input {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+.reference-notes .payment-term-open {
+    display: grid;
+    place-items: center;
+    height: 38px;
+    width: 38px;
+    margin-top: 6px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    border-left: none;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.reference-notes .payment-term-open:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Totals Box - Clean Compact Box Matching Orders */
+.odoo-invoice-shell .odoo-totals {
+    width: 100%;
+    background: rgba(248, 250, 252, 0.6) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    box-sizing: border-box;
+}
+.odoo-invoice-shell .odoo-totals > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #334155;
+    font-weight: 700;
+}
+.odoo-invoice-shell .odoo-totals b {
+    display: inline-block;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 12px;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 7px 12px !important;
+    min-width: 130px;
+    text-align: right;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+.odoo-invoice-shell .odoo-totals .grand {
+    border-top: 1px solid #e2e8f0 !important;
+    padding-top: 12px !important;
+    margin-top: 8px !important;
+    font-size: 12px !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+}
+.odoo-invoice-shell .odoo-totals .grand b {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+.odoo-invoice-shell .odoo-totals .amount-due {
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-radius: 0 !important;
+    padding: 12px 0 0 0 !important;
+    margin-top: 8px !important;
+    color: #0f172a !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+.odoo-invoice-shell .odoo-totals .amount-due b {
+    color: #4338ca !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 7px 12px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+/* Footer Action Buttons - Exactly Matching Orders Save (#24526d) & Discard */
+.reference-invoice-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0 4px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: 20px;
+    background: #ffffff;
+}
+.reference-invoice-footer button,
+.reference-invoice-footer a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    min-width: 90px;
+    padding: 7px 22px !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+/* Preview Ledger */
+.reference-invoice-footer #reference-ledger {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+.reference-invoice-footer #reference-ledger:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+/* Save Button: exact #24526d dark blue matching Orders */
+.reference-invoice-footer .reference-save {
+    background: #24526d !important;
+    border: 1px solid #24526d !important;
+    color: #ffffff !important;
+    min-width: 95px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+.reference-invoice-footer .reference-save:hover {
+    opacity: 0.9 !important;
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08) !important;
+}
+/* Confirm Button */
+.reference-invoice-footer button[form="post-invoice-form"] {
+    background: #059669 !important;
+    border: 1px solid #059669 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2) !important;
+}
+/* Close / Discard */
+.reference-invoice-footer a {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+.reference-invoice-footer a:hover {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+/* Right-Hand Customer Details Card - Matching Orders */
+.odoo-invoice-shell .invoice-side {
+    min-width: 0;
+    position: sticky;
+    top: 24px;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.reference-customer-card {
+    background: #ffffff;
+    border: 2px solid #ede9fe !important;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.08), 0 0 0 1px rgba(124, 58, 237, 0.04) !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: sticky;
+    top: 24px;
+}
+
+#reference-customer-details {
+    max-height: none !important;
+    overflow: visible !important;
+}
+.reference-customer-card h2 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #4338ca;
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f5f3ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+}
+.reference-customer-card h2::before {
+    content: "\F4E1";
+    font-family: "bootstrap-icons";
+    font-size: 16px;
+    color: #7c3aed;
+    display: inline-flex !important;
+}
+.reference-customer-card dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 12px 0 2px;
+}
+.reference-customer-card dd {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #f1f5f9;
+    word-break: break-word;
+}
+.reference-customer-card dt:last-of-type + dd {
+    color: #e11d48;
+    font-size: 14px;
+    font-weight: 800;
+    border-bottom: none;
+}
+
+/* Communication / Chatter Panel */
+.odoo-invoice-shell:not([data-invoice-locked]) .invoice-communication {
+    display: none;
+}
+.invoice-communication {
+    background: #ffffff;
+    border: 1px solid #ede9fe;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.05);
+    overflow: hidden;
+}
+.invoice-communication .odoo-chatter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-bottom: 1px solid #ede9fe;
+}
+.invoice-communication .odoo-chatter button {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.invoice-communication .odoo-chatter button:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+.invoice-communication .odoo-chatter button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.invoice-communication .invoice-activity-feed {
+    padding: 16px;
+    min-height: 160px;
+}
+
+/* Modals & Dialogs */
+#orders-dialog {
+    width: min(850px, calc(100vw - 32px));
+    border-radius: 24px;
+    border: 1px solid #ede9fe;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3);
+    padding: 0;
+    overflow: hidden;
+    background: #ffffff;
+}
+#orders-dialog::backdrop,
+.invoice-payment-dialog::backdrop,
+.invoice-flow-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+#orders-dialog header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+#orders-dialog header h2 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+}
+#orders-dialog header small {
+    display: block;
+    color: #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+#orders-dialog header button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #cbd5e1;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+#orders-dialog header button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+#orders-dialog thead {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+#orders-dialog th {
+    padding: 12px 16px;
+    font-weight: 800;
+}
+#orders-dialog td {
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+}
+#orders-dialog tbody tr:hover {
+    background: #fdfcff;
+}
+#orders-dialog td a {
+    display: inline-block;
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 6px 16px !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25) !important;
+    text-decoration: none !important;
+}
+
+/* Payment Dialog */
+.invoice-payment-dialog {
+    width: min(520px, calc(100vw - 32px));
+    border-radius: 24px;
+    border: 1px solid #ede9fe;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3);
+    padding: 0;
+    overflow: hidden;
+    background: #ffffff;
+}
+.invoice-payment-dialog header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    color: #ffffff;
+}
+.invoice-payment-dialog header small {
+    color: #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.invoice-payment-dialog header h2 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+}
+.invoice-payment-dialog header button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #cbd5e1;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.invoice-payment-dialog .payment-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 22px;
+    background: #f5f3ff;
+    border-bottom: 1px solid #ede9fe;
+}
+.invoice-payment-dialog .payment-balance span {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+}
+.invoice-payment-dialog .payment-balance strong {
+    font-size: 18px;
+    font-weight: 800;
+    color: #4f46e5;
+}
+.invoice-payment-dialog .payment-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 20px 22px;
+}
+.invoice-payment-dialog .payment-form-grid label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+}
+.invoice-payment-dialog .payment-form-grid label.wide {
+    grid-column: 1 / -1;
+}
+.invoice-payment-dialog .payment-form-grid input,
+.invoice-payment-dialog .payment-form-grid select,
+.invoice-payment-dialog .payment-form-grid textarea {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #1e293b;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+.invoice-payment-dialog footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 22px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+.invoice-payment-dialog footer button {
+    padding: 9px 20px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.invoice-payment-dialog footer button:first-child {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    color: #64748b;
+}
+.invoice-payment-dialog footer .odoo-confirm {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Ledger Modal */
+.reference-ledger-dialog {
+    width: min(1050px, 95vw);
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid #ede9fe;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3);
+    background: #ffffff;
+}
+.reference-ledger-dialog > button {
+    display: block;
+    margin: 0 0 15px auto;
+    padding: 8px 18px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+}
+.reference-ledger-dialog > button:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Journal Table */
+.journal-table {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+.journal-head {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;
+    background: #f8fafc;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+}
+.journal-item {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;
+    padding: 10px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+}
+.journal-total {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1000px) {
+    .odoo-invoice-shell .invoice-workspace {
+        grid-template-columns: 1fr;
+    }
+    .reference-customer-card {
+        min-height: 0;
+        position: static;
+    }
+    .odoo-invoice-shell .odoo-header-grid {
+        column-gap: 24px;
+    }
+}
+@media (max-width: 680px) {
+    .odoo-invoice-shell .invoice-main {
+        padding: 16px;
+    }
+    .odoo-invoice-shell .odoo-header-grid {
+        grid-template-columns: 1fr;
+        padding: 0;
+    }
+    .odoo-invoice-shell .odoo-bottom {
+        grid-template-columns: 1fr;
+    }
+    .reference-notes {
+        max-width: none;
+    }
+    .reference-invoice-footer {
+        flex-wrap: wrap;
+    }
+    .reference-invoice-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .reference-invoice-heading button {
+        margin-left: 0;
+    }
+}
+
+/* VAT Customer Badge under Customer Dropdown */
+.customer-select-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.vat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    width: fit-content;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    animation: fadeIn 0.2s ease;
+    letter-spacing: 0.02em;
+    margin-top: 4px;
+}
+.vat-pill.is-vat {
+    background: #ecfdf5 !important;
+    color: #15803d !important;
+    border: 1.5px solid #a7f3d0 !important;
+}
+.vat-pill.is-non-vat {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    border: 1.5px solid #cbd5e1 !important;
+}
+
+/* Customer Details Rows */
+.customer-detail-row {
+    margin-bottom: 10px;
+    padding: 9px 14px;
+    background: #f8faff;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 12px;
+    transition: all 0.15s ease;
+}
+.customer-detail-row:hover {
+    background: #f5f3ff;
+    border-color: #c7d2fe;
+    transform: translateX(2px);
+}
+.customer-detail-row.is-name {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%) !important;
+    border: 1.5px solid #c4b5fd !important;
+}
+.customer-detail-row.is-name .customer-detail-value {
+    color: #4338ca !important;
+    font-size: 14.5px !important;
+    font-weight: 800 !important;
+}
+.customer-detail-row.is-limit {
+    background: #f0fdf4 !important;
+    border: 1.5px solid #bbf7d0 !important;
+}
+.customer-detail-row.is-limit .customer-detail-value {
+    color: #15803d !important;
+    font-weight: 800 !important;
+}
+.customer-detail-row.is-advance {
+    background: #ecfdf5 !important;
+    border: 1.5px solid #6ee7b7 !important;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15) !important;
+}
+.customer-detail-row.is-advance .customer-detail-label {
+    color: #047857 !important;
+}
+.customer-detail-row.is-advance .customer-detail-value {
+    color: #047857 !important;
+    font-size: 14.5px !important;
+    font-weight: 900 !important;
+}
+.customer-detail-row.is-due {
+    background: #fff1f2 !important;
+    border: 1.5px solid #fda4af !important;
+    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.12) !important;
+}
+.customer-detail-row.is-due .customer-detail-label {
+    color: #be123c !important;
+}
+.customer-detail-row.is-due .customer-detail-value {
+    color: #e11d48 !important;
+    font-size: 14.5px !important;
+    font-weight: 900 !important;
+}
+.customer-detail-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+}
+.customer-detail-value {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    word-break: break-word;
+}
+.customer-detail-value.advance {
+    color: #059669 !important;
+    font-weight: 800;
+}
+.customer-detail-value.due {
+    color: #e11d48 !important;
+    font-size: 14px;
+    font-weight: 800;
+}
+.customer-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 28px 16px;
+    color: #64748b;
+}
+.customer-empty-state .customer-empty-icon {
+    width: 52px;
+    height: 52px;
+    background: #f5f3ff;
+    border: 1px solid #ede9fe;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7c3aed;
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+.customer-empty-state h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px;
+}
+.customer-empty-state p {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Last 5 Invoices Section */
+.customer-last-invoices {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+.customer-last-invoices h3 {
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.customer-last-invoices h3::before { display: none !important; }
+.customer-invoice-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: all 0.15s ease;
+}
+.customer-invoice-item:hover {
+    background: #fdfcff;
+    border-color: #ddd6fe;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.06);
+}
+.customer-invoice-item strong {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.customer-invoice-item small {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+.customer-invoice-item .inv-amount {
+    font-size: 12px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+/* Product Select Pill - Exactly Matching Photo 2 & 5 */
+.odoo-invoice-shell .reference-lines-scroll .line-product {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    display: inline-block !important;
+    width: 220px !important;
+    max-width: 240px !important;
+    min-width: 180px !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    background-color: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    background-size: 13px 13px !important;
+    border: 1.5px solid #93c5fd !important;
+    border-radius: 20px !important;
+    padding: 6px 36px 6px 16px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-product:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    outline: none !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-product option[value=""] {
+    color: #94a3b8 !important;
+}
+
+/* Type Column - Matching Reference Photos */
+.odoo-invoice-shell .reference-lines-scroll .reference-line-type {
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 4px !important;
+    box-shadow: none !important;
+}
+
+/* Code Column - Matching Reference Photos */
+.odoo-invoice-shell .reference-lines-scroll .reference-line-code {
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    font-family: ui-monospace, SFMono-Regular, monospace !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 4px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Sales Price, Discount, Qty Inputs - Clean Slate Border with Purple Focus Glow */
+.odoo-invoice-shell .reference-lines-scroll .line-price,
+.odoo-invoice-shell .reference-lines-scroll .line-qty,
+.odoo-invoice-shell .reference-lines-scroll .line-discount {
+    min-height: 32px !important;
+    height: 32px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    text-align: right !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    transition: all 0.15s ease !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-price:hover,
+.odoo-invoice-shell .reference-lines-scroll .line-qty:hover,
+.odoo-invoice-shell .reference-lines-scroll .line-discount:hover {
+    border-color: #cbd5e1 !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-price:focus,
+.odoo-invoice-shell .reference-lines-scroll .line-qty:focus,
+.odoo-invoice-shell .reference-lines-scroll .line-discount:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
+    outline: none !important;
+}
+
+/* Available Qty */
+.odoo-invoice-shell .reference-lines-scroll .reference-line-available {
+    display: inline-flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    padding-right: 4px !important;
+    background: transparent !important;
+}
+
+/* Discount Amount & Total */
+.odoo-invoice-shell .reference-lines-scroll .line-discount-amount {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    text-align: right !important;
+    padding-right: 4px !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-amount {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    text-align: right !important;
+    padding-right: 4px !important;
+}
+
+/* Action Trash Icon - Matching Orders Design */
+.odoo-invoice-shell .reference-lines-scroll .line-remove,
+.odoo-invoice-shell .reference-lines-scroll .line-remove button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #cbd5e1 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    transition: all 0.15s ease !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .line-remove:hover,
+.odoo-invoice-shell .reference-lines-scroll .line-remove button:hover {
+    color: #f43f5e !important;
+    background: #fff1f2 !important;
+}
+
+/* ==========================================================================
+   CODEZA ERP - MODERN BROWSE PRODUCTS CATALOG WORKSPACE (COMPACT & POLISHED)
+   ========================================================================== */
+
+#catalog-workspace.odoo-catalog {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    padding: 20px 28px !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+}
+
+#catalog-workspace.hidden {
+    display: none !important;
+}
+
+/* Modern Top Nav Bar */
+#catalog-workspace .catalog-head {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: auto !important;
+    min-height: 58px !important;
+    padding: 10px 20px !important;
+    margin-bottom: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+    gap: 16px !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+#catalog-workspace .catalog-head > div.catalog-head-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 14px !important;
+    flex-wrap: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#catalog-workspace .catalog-back-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 8px 16px !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.22) !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap !important;
+}
+
+#catalog-workspace .catalog-back-button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3) !important;
+    filter: brightness(1.05) !important;
+}
+
+#catalog-workspace .catalog-head-divider {
+    display: block !important;
+    width: 1px !important;
+    height: 24px !important;
+    background: #e2e8f0 !important;
+    margin: 0 2px !important;
+}
+
+#catalog-workspace .catalog-title-block {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+#catalog-workspace .catalog-main-title {
+    margin: 0 !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.01em !important;
+    white-space: nowrap !important;
+}
+
+#catalog-workspace .catalog-invoice-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 3px 10px !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 9999px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+}
+
+#catalog-workspace .catalog-invoice-chip i {
+    color: #7c3aed !important;
+}
+
+/* Locked inside Nav Bar: Search Box */
+#catalog-workspace .catalog-search-box {
+    position: static !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: 300px !important;
+    height: 38px !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+}
+
+#catalog-workspace .catalog-search-box:focus-within {
+    background: #ffffff !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+#catalog-workspace .catalog-search-box i {
+    color: #94a3b8 !important;
+    font-size: 13.5px !important;
+    margin-right: 8px !important;
+    line-height: 1 !important;
+}
+
+#catalog-workspace .catalog-search-box input {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 12.5px !important;
+    color: #1e293b !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+#catalog-workspace .catalog-search-box input::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Two-column Catalog Body */
+#catalog-workspace .catalog-body {
+    display: grid !important;
+    grid-template-columns: 240px minmax(0, 1fr) !important;
+    gap: 18px !important;
+    align-items: start !important;
+}
+
+/* Left Sidebar Summary Card */
+#catalog-workspace aside.catalog-summary {
+    position: sticky !important;
+    top: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+}
+
+#catalog-workspace .catalog-summary h3 {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    color: #64748b !important;
+    margin: 0 0 10px 0 !important;
+}
+
+#catalog-workspace .catalog-summary > button.active {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+}
+
+#catalog-workspace .catalog-selected {
+    margin-top: 10px !important;
+    max-height: 180px !important;
+    overflow-y: auto !important;
+}
+
+#catalog-workspace .catalog-selected-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 2px 8px !important;
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    transition: background 0.15s ease !important;
+}
+
+#catalog-workspace .catalog-selected-row:hover {
+    background: #f8fafc !important;
+}
+
+#catalog-workspace .catalog-selected-row strong {
+    font-size: 12px !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#catalog-workspace .catalog-selected-row span {
+    font-size: 10.5px !important;
+    color: #64748b !important;
+}
+
+#catalog-workspace .catalog-selected-row b {
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+    align-self: center !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #7c3aed !important;
+}
+
+#catalog-workspace .catalog-running {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-top: 14px !important;
+    padding-top: 12px !important;
+    border-top: 1.5px dashed #e2e8f0 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+#catalog-workspace .catalog-running b {
+    color: #7c3aed !important;
+    font-size: 14.5px !important;
+}
+
+/* Category Filter Pills */
+#catalog-workspace .catalog-filter-group {
+    margin-top: 16px !important;
+    padding-top: 14px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+}
+
+#catalog-workspace .catalog-filter-group h3 {
+    margin-bottom: 6px !important;
+}
+
+#catalog-workspace .catalog-summary .catalog-filter {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-align: left !important;
+    padding: 7px 11px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    background: #f8fafc !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+#catalog-workspace .catalog-summary .catalog-filter:hover {
+    background: #f1f5f9 !important;
+    color: #7c3aed !important;
+    border-color: #e2e8f0 !important;
+}
+
+#catalog-workspace .catalog-summary .catalog-filter.active {
+    background: #ede9fe !important;
+    color: #6d28d9 !important;
+    border-color: #c4b5fd !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.1) !important;
+}
+
+/* Compact Products Grid */
+#catalog-workspace .catalog-products {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+    gap: 12px !important;
+    align-content: start !important;
+}
+
+/* Compact Product Cards */
+#catalog-workspace .catalog-products article {
+    display: flex !important;
+    flex-direction: column !important;
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    min-height: 0 !important;
+}
+
+#catalog-workspace .catalog-products article:hover {
+    border-color: #a78bfa !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 18px rgba(124, 58, 237, 0.1) !important;
+}
+
+#catalog-workspace .catalog-product-image {
+    height: 60px !important;
+    width: 100% !important;
+    display: grid !important;
+    place-items: center !important;
+    background: #f8fafc !important;
+    border-radius: 8px !important;
+    margin-bottom: 8px !important;
+    border: 1px solid #f1f5f9 !important;
+}
+
+#catalog-workspace .catalog-product-image img {
+    max-height: 52px !important;
+    max-width: 90% !important;
+    object-fit: contain !important;
+    border-radius: 4px !important;
+}
+
+#catalog-workspace .catalog-product-image i {
+    font-size: 26px !important;
+    color: #94a3b8 !important;
+}
+
+#catalog-workspace .catalog-products h4 {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin: 0 0 3px 0 !important;
+    line-height: 1.3 !important;
+    min-height: 32px !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+}
+
+#catalog-workspace .catalog-products small {
+    display: inline-block !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    background: #f1f5f9 !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    width: fit-content !important;
+    margin-bottom: 6px !important;
+}
+
+#catalog-workspace .catalog-products strong {
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    color: #7c3aed !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+#catalog-workspace .catalog-products article > div:last-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    margin-top: auto !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #f1f5f9 !important;
+}
+
+#catalog-workspace .catalog-products article button.catalog-minus {
+    width: 26px !important;
+    height: 26px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 6px !important;
+    border: 1.5px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+#catalog-workspace .catalog-products article button.catalog-minus:hover {
+    background: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    color: #ef4444 !important;
+}
+
+#catalog-workspace .catalog-products article output {
+    min-width: 22px !important;
+    text-align: center !important;
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+}
+
+#catalog-workspace .catalog-products article button.catalog-plus {
+    width: 26px !important;
+    height: 26px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 6px !important;
+    border: none !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
+    color: #ffffff !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.22) !important;
+    transition: all 0.15s ease !important;
+}
+
+#catalog-workspace .catalog-products article button.catalog-plus:hover {
+    transform: scale(1.08) !important;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.32) !important;
+}
+
+/* Empty States */
+#catalog-workspace .catalog-filter-empty {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    gap: 8px !important;
+    place-content: center !important;
+    min-height: 200px !important;
+    background: #ffffff !important;
+    border: 1.5px dashed #cbd5e1 !important;
+    border-radius: 14px !important;
+    padding: 24px !important;
+    text-align: center !important;
+    color: #64748b !important;
+}
+
+#catalog-workspace .catalog-filter-empty i {
+    font-size: 28px !important;
+    color: #a78bfa !important;
+}
+
+#catalog-workspace .catalog-filter-empty b {
+    font-size: 15px !important;
+    color: #0f172a !important;
+}
+
+#catalog-workspace .catalog-filter-empty span {
+    font-size: 12px !important;
+    color: #64748b !important;
+}
+
+
+/* Ensure hidden state on filter empty is strictly hidden */
+#catalog-workspace .catalog-filter-empty.hidden,
+#catalog-workspace #catalog-filter-empty.hidden {
+    display: none !important;
+}
+
+
+/* Ensure hidden articles in catalog products are strictly hidden */
+#catalog-workspace .catalog-products article.hidden,
+#catalog-workspace .catalog-products article[hidden],
+#catalog-workspace article.hidden {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   CODEZA ERP - REFERENCE CUSTOMER SEARCHABLE DROPDOWN & QUICK CREATE MODAL
+   ========================================================================== */
+
+/* Dropdown Container */
+.reference-customer-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+/* The Input Box */
+.reference-customer-input-box {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 0 12px;
+    height: 38px !important;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    cursor: text;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+.reference-customer-input-box:hover {
+    border-color: #94a3b8 !important;
+}
+
+.reference-customer-input-box:focus-within {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18) !important;
+}
+
+.reference-customer-search-input {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    outline: none !important;
+    box-shadow: none !important;
+    min-width: 0;
+}
+
+.reference-customer-search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.reference-customer-arrow-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 0 0 8px;
+    transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.reference-customer-arrow-btn:hover {
+    color: #7c3aed;
+}
+
+/* Floating Dropdown Menu Panel */
+.reference-customer-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 520px;
+    max-width: 640px;
+    width: max-content;
+    z-index: 9999;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.reference-customer-menu.hidden {
+    display: none !important;
+}
+
+/* Create New Customer Button (Matching Reference Photo!) */
+.reference-create-customer-wrap {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 6px;
+}
+
+.reference-create-customer-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 14px;
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 8px;
+    color: #0284c7;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.reference-create-customer-btn i {
+    font-size: 15px;
+}
+
+.reference-create-customer-btn:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    color: #0369a1;
+    transform: translateY(-1px);
+}
+
+/* Customer Rows List */
+.reference-customer-list {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.reference-customer-item {
+    display: grid;
+    grid-template-columns: 180px 125px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 12px;
+    border-radius: 6px;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    font-size: 12.5px;
+    transition: background 0.12s ease;
+}
+
+.reference-customer-item:hover {
+    background: #f8fafc;
+}
+
+.reference-customer-item.is-selected {
+    background: #f3e8ff;
+    color: #6d28d9;
+}
+
+.reference-customer-item .ref-cust-name {
+    font-weight: 700;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reference-customer-item.is-selected .ref-cust-name {
+    color: #6d28d9;
+}
+
+.reference-customer-item .ref-cust-mobile {
+    font-weight: 500;
+    color: #475569;
+}
+
+.reference-customer-item .ref-cust-address {
+    font-weight: 400;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Empty Search State */
+.reference-customer-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 12px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.reference-customer-empty.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   QUICK CREATE CUSTOMER MODAL DIALOG
+   ========================================================================== */
+
+dialog.quick-customer-modal,
+.quick-customer-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    border: none !important;
+    border-radius: 16px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    max-width: 540px !important;
+    width: 95% !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    z-index: 100000 !important;
+}
+
+.quick-customer-modal::backdrop {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3px);
+}
+
+.quick-customer-modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.quick-customer-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #faf5ff;
+    border-bottom: 1px solid #ede9fe;
+}
+
+.quick-customer-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quick-customer-modal-title i {
+    font-size: 18px;
+    color: #7c3aed;
+}
+
+.quick-customer-modal-title h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.quick-customer-modal-close {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.quick-customer-modal-close:hover {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+
+.quick-customer-modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.quick-cust-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.quick-cust-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.quick-cust-field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.quick-cust-field label .req {
+    color: #ef4444;
+}
+
+.quick-cust-field input {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    color: #0f172a !important;
+    outline: none !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+.quick-cust-field input:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+.quick-cust-field .qc-hint {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.quick-customer-feedback {
+    margin: 12px 20px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.quick-customer-feedback.is-error {
+    background: #fef2f2;
+    border: 1px solid #fecdd3;
+    color: #e11d48;
+}
+
+.quick-customer-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-qc-cancel {
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #475569;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-qc-cancel:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.btn-qc-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    transition: all 0.15s;
+}
+
+.btn-qc-save:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+    filter: brightness(1.05);
+}
+
+
+/* ==========================================================================
+   Custom Modals: Error Dialog (Photo 3), Confirm Dialog (Photo 4), Ledger (Photo 1 & 2)
+   ========================================================================== */
+
+.reference-custom-dialog {
+    border: none !important;
+    border-radius: 16px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25) !important;
+}
+
+.reference-custom-dialog::backdrop,
+.reference-ledger-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.45) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+/* Photo 3: Error Dialog */
+.reference-error-card {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 38px 40px 32px !important;
+    width: 440px !important;
+    max-width: 90vw !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.reference-dialog-icon.error {
+    width: 72px;
+    height: 72px;
+    border: 3.5px solid #f87171;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    font-size: 32px;
+}
+
+.reference-dialog-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    margin: 0 0 10px !important;
+}
+
+.reference-dialog-msg {
+    font-size: 14.5px !important;
+    color: #475569 !important;
+    margin: 0 0 24px !important;
+    line-height: 1.5 !important;
+}
+
+.reference-btn-ok {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 9px 36px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease, transform 0.1s ease !important;
+}
+
+.reference-btn-ok:hover {
+    background: #4f46e5 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Photo 4: Confirm Dialog */
+.reference-confirm-card {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 28px 24px 22px !important;
+    width: 380px !important;
+    max-width: 90vw !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.14) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.reference-confirm-card .reference-dialog-msg {
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    color: #1e293b !important;
+    margin: 0 0 22px !important;
+    text-align: center !important;
+}
+
+.reference-dialog-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 14px !important;
+}
+
+.reference-btn-yes {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    border-radius: 6px !important;
+    padding: 6px 28px !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.reference-btn-yes:hover {
+    background: #e2e8f0 !important;
+}
+
+.reference-btn-no {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    border-radius: 6px !important;
+    padding: 6px 28px !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.reference-btn-no:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Photo 1 & 2: Ledger Preview Modal */
+.reference-ledger-dialog {
+    width: min(1080px, 95vw) !important;
+    max-width: 1080px !important;
+    padding: 0 !important;
+    border-radius: 12px !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.28) !important;
+}
+
+.reference-ledger-modal-card {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 24px 28px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-sizing: border-box !important;
+}
+
+.reference-ledger-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-bottom: 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    margin-bottom: 20px !important;
+}
+
+.reference-ledger-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+.reference-ledger-close {
+    background: none !important;
+    border: none !important;
+    font-size: 16px !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
+    transition: color 0.15s !important;
+}
+
+.reference-ledger-close:hover {
+    color: #0f172a !important;
+}
+
+.reference-ledger-cards {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+}
+
+.reference-ledger-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 18px 16px !important;
+    text-align: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.ref-card-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+}
+
+.ref-card-icon.debit {
+    border: 2px solid #10b981 !important;
+    color: #10b981 !important;
+}
+
+.ref-card-icon.credit {
+    border: 2px solid #0284c7 !important;
+    color: #0284c7 !important;
+}
+
+.ref-card-icon.balance {
+    border: none !important;
+    color: #0284c7 !important;
+    font-size: 26px !important;
+}
+
+.ref-card-label {
+    font-size: 12.5px !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    margin-bottom: 6px !important;
+}
+
+.ref-card-value {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #0284c7 !important;
+}
+
+.reference-ledger-table-wrap {
+    overflow-x: auto !important;
+    margin-bottom: 16px !important;
+}
+
+.reference-ledger-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 13.5px !important;
+    text-align: left !important;
+}
+
+.reference-ledger-table thead th {
+    padding: 12px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    background: #ffffff !important;
+}
+
+.reference-ledger-table tbody td {
+    padding: 13px 14px !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #f8fafc !important;
+    vertical-align: middle !important;
+}
+
+.reference-ledger-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+.reference-ledger-table .ref-acc-name {
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+.reference-ledger-table .ref-pill-badge {
+    color: #ffffff !important;
+    border-radius: 4px !important;
+    padding: 4px 14px !important;
+    font-weight: 600 !important;
+    display: inline-block !important;
+    min-width: 68px !important;
+    text-align: center !important;
+    font-size: 12.5px !important;
+}
+
+.reference-ledger-table .ref-pill-badge.debit {
+    background: #10b981 !important;
+}
+
+.reference-ledger-table .ref-pill-badge.credit {
+    background: #0284c7 !important;
+}
+
+.reference-ledger-table .ref-pill-dash {
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+    display: inline-block !important;
+    min-width: 68px !important;
+    text-align: center !important;
+}
+
+.reference-ledger-table tfoot tr {
+    border-top: 2.5px solid #3b82f6 !important;
+}
+
+.reference-ledger-table tfoot td {
+    padding: 14px 14px !important;
+    font-size: 14px !important;
+    color: #1e293b !important;
+}
+
+.reference-ledger-balanced-banner {
+    background: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+    border-radius: 8px !important;
+    padding: 14px 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    margin-top: 14px !important;
+}
+
+.reference-ledger-balanced-banner i {
+    color: #10b981 !important;
+    font-size: 22px !important;
+    flex-shrink: 0 !important;
+}
+
+.reference-ledger-balanced-banner h4 {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #047857 !important;
+    margin: 0 0 2px !important;
+}
+
+.reference-ledger-balanced-banner p {
+    font-size: 12px !important;
+    color: #065f46 !important;
+    margin: 0 !important;
+}
+
+.reference-ledger-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-top: 18px !important;
+}
+
+.btn-ref-ledger-close {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #334155 !important;
+    padding: 6px 16px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: background 0.15s ease !important;
+}
+
+.btn-ref-ledger-close:hover {
+    background: #e2e8f0 !important;
+}
+
+
+/* ==========================================================================
+   Invoice Type Trigger & Modal (Photo 1 & 2)
+   ========================================================================== */
+
+.inv-type-trigger-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.inv-type-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f3ff !important;
+    border: 1.5px solid #ddd6fe !important;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #4f46e5;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(99, 102, 241, 0.05);
+    transition: all 0.2s ease;
+}
+
+.inv-type-trigger-btn:hover {
+    background: #ede9fe !important;
+    border-color: #c4b5fd !important;
+    color: #4338ca !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(99, 102, 241, 0.12);
+}
+
+.inv-type-trigger-btn i {
+    font-size: 13.5px;
+    color: #7c3aed;
+}
+
+.inv-type-trigger-btn:hover i {
+    color: #6d28d9;
+}
+
+/* Modal Popup - Perfectly Centered in Viewport (Photo 1) */
+dialog.invoice-types-modal,
+.invoice-types-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35) !important;
+    z-index: 100000 !important;
+    width: auto !important;
+    max-width: 92vw !important;
+}
+
+dialog.invoice-types-modal::backdrop,
+.invoice-types-modal::backdrop {
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+.invoice-types-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+    width: 480px;
+    max-width: 92vw;
+    box-sizing: border-box;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.2);
+}
+
+.invoice-types-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.invoice-types-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2563eb;
+    margin: 0;
+}
+
+.invoice-types-close {
+    background: none;
+    border: none;
+    font-size: 15px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 2px;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.invoice-types-close:hover {
+    color: #0f172a;
+}
+
+.invoice-types-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.invoice-types-row {
+    display: grid;
+    grid-template-columns: 125px 1fr;
+    align-items: center;
+    gap: 14px;
+}
+
+.invoice-types-row label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    margin: 0;
+}
+
+.invoice-types-select-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.invoice-types-select {
+    width: 100%;
+    padding: 7px 12px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.invoice-types-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.invoice-types-input {
+    width: 100%;
+    padding: 7px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #334155;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.invoice-types-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.btn-inv-type-set {
+    background: #274b69;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn-inv-type-set:hover {
+    background: #1b364d;
+}
+
+.btn-inv-type-close {
+    background: transparent;
+    color: #ef4444;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn-inv-type-close:hover {
+    background: #fef2f2;
+}
+
+/* ==========================================================================
+   Reference UI Matching Photos 1, 2, 3, 4 (CodezaERP / Anterp reference)
+   ========================================================================== */
+
+/* Top Right Toast Notification (Photo 2) */
+.ref-toast-success {
+    position: fixed;
+    top: 20px;
+    right: 28px;
+    background: #28a745;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.35);
+    z-index: 9999999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: toastSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.ref-toast-success.hidden {
+    display: none !important;
+}
+@keyframes toastSlideDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Photo 1: Header Grid Fields & Stock Type */
+.odoo-invoice-shell .odoo-header-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    column-gap: 50px !important;
+    row-gap: 14px !important;
+    padding: 10px 0 20px !important;
+    margin-bottom: 20px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+.odoo-invoice-shell .odoo-header-grid > .odoo-field {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 38px !important;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field label {
+    min-width: 95px !important;
+    width: 95px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field input,
+.odoo-invoice-shell .odoo-header-grid .odoo-field select {
+    flex: 1 !important;
+    min-width: 0 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 7px 12px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field input:hover,
+.odoo-invoice-shell .odoo-header-grid .odoo-field select:hover {
+    border-color: #94a3b8 !important;
+}
+.odoo-invoice-shell .odoo-header-grid .odoo-field input:focus,
+.odoo-invoice-shell .odoo-header-grid .odoo-field select:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18) !important;
+    outline: none !important;
+}
+.reference-field-stock-type .stock-type-select-container,
+.reference-field-payment-method .payment-method-select-container {
+    flex: 1;
+    min-width: 0;
+}
+.reference-stock-type-dropdown {
+    width: 100% !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 7px 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    transition: all 0.2s ease !important;
+}
+.reference-stock-type-dropdown:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
+}
+
+/* Photo 2, 3, 4: Bottom Section (Two Columns) */
+.reference-bottom-section {
+    display: grid !important;
+    grid-template-columns: minmax(320px, 1.15fr) minmax(300px, 390px) !important;
+    gap: 40px !important;
+    align-items: start !important;
+    padding: 16px 0 !important;
+    margin-top: 14px !important;
+}
+@media (max-width: 960px) {
+    .reference-bottom-section {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Left Column: Remark, Terms & Conditions, Payment Terms */
+.reference-notes-column {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+}
+.ref-field-card {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+}
+.ref-card-label {
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+}
+.ref-textarea-container {
+    position: relative !important;
+    width: 100% !important;
+}
+.ref-custom-textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 9px 34px 9px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    resize: vertical !important;
+    min-height: 56px !important;
+    font-family: inherit !important;
+    line-height: 1.4 !important;
+    transition: all 0.2s ease !important;
+}
+.ref-custom-textarea:hover {
+    border-color: #94a3b8 !important;
+}
+.ref-custom-textarea:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
+    outline: none !important;
+}
+.ref-textarea-pencil {
+    position: absolute !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    color: #7c3aed !important;
+    font-size: 13.5px !important;
+    pointer-events: none !important;
+}
+
+/* Payment Terms Widget (Photos 2 & 3) */
+.ref-payment-terms-widget {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 6px !important;
+    padding: 12px 16px !important;
+    background: #f8faff !important;
+    border: 1.5px solid #e0e7ff !important;
+    border-radius: 12px !important;
+}
+.ref-pt-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+.ref-pt-title {
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    color: #4338ca !important;
+}
+.ref-pt-icon-btn {
+    border: none !important;
+    background: #ede9fe !important;
+    color: #7c3aed !important;
+    cursor: pointer !important;
+    padding: 3px 8px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+.ref-pt-icon-btn:hover {
+    color: #ffffff !important;
+    background: #7c3aed !important;
+}
+.ref-pt-sentence {
+    font-size: 13px !important;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+    min-height: 32px !important;
+}
+.ref-pt-sentence strong {
+    color: #4338ca !important;
+    font-weight: 900 !important;
+}
+.ref-pt-sentence.hidden {
+    display: none !important;
+}
+.ref-pt-inline-input {
+    width: 65px !important;
+    height: 28px !important;
+    text-align: center !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 4px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    padding: 2px 4px !important;
+    outline: none !important;
+}
+.ref-pt-inline-input:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Right Column: Totals Summary Card & Action Buttons (Photo 4) */
+.reference-summary-column {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+}
+.reference-totals-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #e0e7ff !important;
+    border-radius: 16px !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.06) !important;
+}
+.ref-summary-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    min-height: 36px !important;
+}
+.ref-summary-label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    min-width: 80px;
+}
+.ref-discount-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    background: #fffbeb !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    cursor: default !important;
+    margin-right: auto !important;
+}
+.ref-summary-box {
+    width: 145px !important;
+    height: 36px !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-align: right !important;
+    font-family: ui-monospace, SFMono-Regular, monospace !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+}
+.ref-summary-box.readonly {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+.ref-summary-box.readonly.highlight {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%) !important;
+    border: 2px solid #7c3aed !important;
+    color: #4338ca !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15) !important;
+}
+.ref-summary-box.editable {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+.ref-summary-box.editable:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18) !important;
+    outline: none !important;
+}
+
+/* Action Buttons Bar below Totals (Photo 4) */
+.reference-action-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+    padding-top: 6px !important;
+}
+.btn-ref-preview-ledger {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    background: #eef2ff !important;
+    color: #4338ca !important;
+    border: 1.5px solid #c7d2fe !important;
+    border-radius: 10px !important;
+    padding: 9px 20px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 3px rgba(67, 56, 202, 0.08) !important;
+    transition: all 0.2s ease !important;
+}
+.btn-ref-preview-ledger:hover {
+    background: #e0e7ff !important;
+    border-color: #a5b4fc !important;
+    color: #3730a3 !important;
+    transform: translateY(-1px) !important;
+}
+.btn-ref-main-save {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 9px 32px !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4) !important;
+    transition: all 0.2s ease !important;
+}
+.btn-ref-main-save:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%) !important;
+    box-shadow: 0 6px 22px rgba(124, 58, 237, 0.52) !important;
+    transform: translateY(-2px) !important;
+}
+.btn-ref-close-window {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    padding: 9px 22px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+.btn-ref-close-window:hover {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    border-color: #94a3b8 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Hide legacy bottom & redundant footer */
+.odoo-invoice-shell .odoo-bottom,
+.odoo-invoice-shell .reference-notes,
+.odoo-invoice-shell .odoo-totals {
+    display: none !important;
+}
+
+.odoo-invoice-shell .odoo-header-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px 16px !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-customer { grid-area: 1 / 1 !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-type { grid-area: 2 / 1 !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-reference { grid-area: 3 / 1 !important; align-self: start !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-date { grid-area: 1 / 2 !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-due { grid-area: 2 / 2 !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-salesperson { grid-area: 3 / 2 !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-location { grid-area: 4 / 2 !important; }
+.odoo-invoice-shell .odoo-header-grid > .reference-field-agent { grid-area: 4 / 1 !important; }
+
+@media (max-width: 900px) {
+    .odoo-invoice-shell .invoice-workspace {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .odoo-invoice-shell {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    .odoo-invoice-shell .invoice-workspace {
+        grid-template-columns: 1fr !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    .odoo-invoice-shell .invoice-main {
+        padding: 12px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    .odoo-invoice-shell .odoo-sheet {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    .odoo-invoice-shell .odoo-tab-panel {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    .odoo-invoice-shell .odoo-add-row {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        max-width: 100% !important;
+    }
+    .odoo-invoice-shell .odoo-add-row button {
+        padding: 6px 12px !important;
+        font-size: 11px !important;
+    }
+    .reference-lines-scroll {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    .odoo-invoice-shell .odoo-header-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 !important;
+        grid-template-columns: 1fr !important;
+        column-gap: 0 !important;
+    }
+    .odoo-invoice-shell .odoo-header-grid .odoo-field {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    .odoo-invoice-shell .odoo-header-grid .odoo-field input,
+    .odoo-invoice-shell .odoo-header-grid .odoo-field select {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    .reference-form-scroll {
+        padding-right: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .odoo-invoice-shell #tab-lines {
+        border: 0 !important;
+    }
+}
+
+/* ==========================================================================
+   Action Buttons in Invoice Lines Table (Photo 3)
+   ========================================================================== */
+.line-actions-wrap {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+}
+
+.line-serial-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #0284c7 !important;
+    font-size: 17px !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease !important;
+}
+
+.line-serial-btn:hover {
+    color: #0369a1 !important;
+    background: #f0f9ff !important;
+    transform: scale(1.15) !important;
+}
+
+.line-serial-btn.has-serials {
+    color: #0284c7 !important;
+    background: #e0f2fe !important;
+    font-weight: 800 !important;
+}
+
+.odoo-invoice-shell .reference-lines-scroll .line-remove {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #0284c7 !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: transform 0.15s ease, color 0.15s ease !important;
+}
+
+.odoo-invoice-shell .reference-lines-scroll .line-remove:hover {
+    color: #ef4444 !important;
+    transform: scale(1.15) !important;
+}
+
+/* ==========================================================================
+   Select Serial Numbers Modal (Photo 4)
+   ========================================================================== */
+dialog.select-serials-modal,
+.select-serials-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    box-shadow: 0 30px 70px -15px rgba(15, 23, 42, 0.35) !important;
+    z-index: 100001 !important;
+    width: 780px !important;
+    max-width: 95vw !important;
+}
+
+dialog.select-serials-modal::backdrop,
+.select-serials-modal::backdrop {
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+.select-serials-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 22px 26px 20px;
+    box-sizing: border-box;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.select-serials-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 4px;
+}
+
+.select-serials-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.select-serials-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 6px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.select-serials-close:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+/* Light Blue Info Banner (Photo 4) */
+.serials-product-banner {
+    background: #e0f2fe;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #0369a1;
+}
+
+.serials-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.serials-banner-left strong {
+    color: #0284c7;
+    font-weight: 700;
+}
+
+.serials-banner-mid {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.serials-banner-mid strong {
+    color: #0284c7;
+    font-weight: 800;
+}
+
+.serials-banner-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.serials-selected-badge {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    min-width: 22px;
+    text-align: center;
+}
+
+/* Search Bar (Photo 4) */
+.serials-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.serials-search-bar input {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.serials-search-bar input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.btn-serials-action {
+    background: #ffffff;
+    color: #2563eb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-serials-action:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+}
+
+/* Serials Table (Photo 4) */
+.serials-table-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    max-height: 250px;
+    min-height: 140px;
+    overflow-y: auto;
+    background: #ffffff;
+    scrollbar-color: #cbd5e1 #f8fafc;
+    scrollbar-width: thin;
+}
+
+.serials-table-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.serials-table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+}
+
+.serials-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.serials-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-bottom: 1.5px solid #e2e8f0;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.serials-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.serials-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.serials-table tbody tr:hover {
+    background-color: #f0f9ff;
+}
+
+.serials-table tbody tr.is-selected {
+    background-color: #e0f2fe;
+}
+
+.badge-status-avail {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.serials-empty-state {
+    padding: 35px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.serials-empty-state i {
+    font-size: 26px;
+    color: #94a3b8;
+}
+
+/* Footer Controls (Photo 4) */
+.select-serials-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.serials-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.serials-file-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 10px;
+    background: #f8fafc;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.serials-file-input {
+    display: none;
+}
+
+.btn-serials-choose {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-serials-choose:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.serials-file-chosen {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-serials-upload {
+    background: #0f2942;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn-serials-upload:hover {
+    background: #1b3d60;
+}
+
+.serials-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.btn-serials-cancel {
+    background: transparent;
+    color: #334155;
+    border: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.btn-serials-cancel:hover {
+    color: #0f172a;
+}
+
+.btn-serials-confirm {
+    background: #0f2942;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-serials-confirm:hover {
+    background: #1b3d60;
+    box-shadow: 0 4px 12px rgba(15, 41, 66, 0.25);
+}
+
+/* Service Autocomplete & Dropdown */
+.service-autocomplete-box {
+    position: relative;
+    width: 220px;
+    max-width: 240px;
+    min-width: 180px;
+}
+.service-placeholder-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 220px !important;
+    max-width: 240px !important;
+    min-width: 180px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    border-radius: 20px !important;
+    border: 1.5px solid #7dd3fc !important;
+    background-color: #f0f9ff !important;
+    color: #0369a1 !important;
+    padding: 6px 16px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.25) !important;
+    outline: none !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    box-sizing: border-box !important;
+}
+.service-placeholder-btn:hover, .service-placeholder-btn:focus {
+    background-color: #e0f2fe !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25) !important;
+}
+.service-placeholder-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.service-placeholder-arrow {
+    font-size: 11px;
+    color: #0284c7;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+.service-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #0284c7;
+    border-radius: 20px;
+    height: 36px;
+    width: 220px;
+    max-width: 240px;
+    min-width: 180px;
+    padding: 0 12px;
+    gap: 6px;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+.service-input-wrap:focus-within {
+    border-color: #0369a1;
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.35);
+}
+.service-input-wrap .service-icon {
+    color: #0284c7;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.service-search-input {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    padding: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    min-width: 0;
+}
+.service-search-input::placeholder {
+    color: #94a3b8;
+    font-size: 11.5px;
+    font-weight: 500;
+}
+.service-dropdown-arrow {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: all 0.15s;
+    font-size: 11px;
+}
+.service-dropdown-arrow:hover {
+    color: #0284c7;
+    background: #f1f5f9;
+}
+.service-dropdown-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 380px;
+    max-width: 90vw;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 4px;
+}
+.service-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+    gap: 8px;
+}
+.service-dropdown-item:hover {
+    background: #f0f9ff;
+}
+.service-dropdown-item:active {
+    background: #e0f2fe;
+}
+.service-item-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+.service-item-code {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+.service-item-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.service-item-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 2px 8px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.service-dropdown-empty {
+    padding: 12px 14px;
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+}
+.service-dropdown-empty span {
+    display: block;
+    margin-bottom: 2px;
+}
+.service-dropdown-empty small {
+    display: block;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+
+
+
+.odoo-invoice-shell .reference-lines-scroll {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    min-height: 280px !important;
+    overflow-x: auto !important;
+    margin-bottom: 16px !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line {
+    border-bottom: 1px solid #f1f5f9 !important;
+    transition: background 0.15s ease !important;
+}
+.odoo-invoice-shell .reference-lines-scroll .odoo-line:hover {
+    background: rgba(248, 250, 252, 0.7) !important;
+}
+
+/* ==========================================================================
+   Order Conflict Warning Modal (Photo 2 Reference Matching)
+   ========================================================================== */
+dialog.order-conflict-dialog {
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    max-width: 480px !important;
+    width: 90% !important;
+    margin: auto !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+}
+
+dialog.order-conflict-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.order-conflict-card {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 38px 28px 30px !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.order-conflict-icon-wrap {
+    width: 82px !important;
+    height: 82px !important;
+    border: 3.5px solid #f8bb86 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 20px !important;
+}
+
+.order-conflict-icon-exclamation {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+    font-size: 52px !important;
+    font-weight: 300 !important;
+    color: #f8bb86 !important;
+    line-height: 1 !important;
+    margin-top: -2px !important;
+    user-select: none !important;
+}
+
+.order-conflict-title {
+    font-size: 21px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    margin: 0 0 14px 0 !important;
+    font-family: inherit !important;
+}
+
+.order-conflict-text {
+    font-size: 13.5px !important;
+    color: #64748b !important;
+    line-height: 1.6 !important;
+    margin: 0 0 8px 0 !important;
+    max-width: 410px !important;
+    text-align: center !important;
+}
+
+.order-conflict-text strong {
+    color: #1e293b !important;
+    font-weight: 700 !important;
+}
+
+.order-conflict-subtext {
+    font-size: 13.5px !important;
+    color: #64748b !important;
+    line-height: 1.6 !important;
+    margin: 0 0 24px 0 !important;
+    text-align: center !important;
+}
+
+.order-conflict-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.btn-conflict-clear-add {
+    background: #dc2626 !important;
+    background: linear-gradient(135deg, #f43f5e 0%, #dc2626 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 10px 24px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25) !important;
+    transition: all 0.15s ease !important;
+}
+
+.btn-conflict-clear-add:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-conflict-cancel {
+    background: #475569 !important;
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 10px 24px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(71, 85, 105, 0.2) !important;
+    transition: all 0.15s ease !important;
+}
+
+.btn-conflict-cancel:hover {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+    box-shadow: 0 4px 12px rgba(71, 85, 105, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ==========================================================================
+   Already on this Invoice Warning Modal (Photo 1 Reference Matching)
+   ========================================================================== */
+dialog.duplicate-item-dialog {
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    max-width: 500px !important;
+    width: 90% !important;
+    margin: auto !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+}
+
+dialog.duplicate-item-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.duplicate-item-card {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 38px 28px 30px !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.duplicate-item-icon-wrap {
+    width: 82px !important;
+    height: 82px !important;
+    border: 3.5px solid #38bdf8 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 18px !important;
+}
+
+.duplicate-item-icon-question {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+    font-size: 52px !important;
+    font-weight: 300 !important;
+    color: #38bdf8 !important;
+    line-height: 1 !important;
+    margin-top: -2px !important;
+    user-select: none !important;
+}
+
+.duplicate-item-title {
+    font-size: 21px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    margin: 0 0 10px 0 !important;
+    font-family: inherit !important;
+}
+
+.duplicate-item-subtitle {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    margin: 0 0 10px 0 !important;
+}
+
+.duplicate-item-text {
+    font-size: 13px !important;
+    color: #64748b !important;
+    line-height: 1.5 !important;
+    margin: 0 0 24px 0 !important;
+    max-width: 420px !important;
+    text-align: center !important;
+}
+
+.duplicate-item-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+}
+
+.btn-dup-paid {
+    background: #315f7b !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(49, 95, 123, 0.25) !important;
+    transition: all 0.15s ease !important;
+}
+
+.btn-dup-paid:hover {
+    background: #254a61 !important;
+    box-shadow: 0 4px 10px rgba(49, 95, 123, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-dup-free {
+    background: #2e7d32 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.25) !important;
+    transition: all 0.15s ease !important;
+}
+
+.btn-dup-free:hover {
+    background: #1b5e20 !important;
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-dup-cancel {
+    background: #5c6b73 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(92, 107, 115, 0.2) !important;
+    transition: all 0.15s ease !important;
+}
+
+.btn-dup-cancel:hover {
+    background: #475569 !important;
+    box-shadow: 0 4px 10px rgba(92, 107, 115, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Free Issue Badge */
+.badge-free-issue {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    margin-left: 6px;
+    vertical-align: middle;
+}

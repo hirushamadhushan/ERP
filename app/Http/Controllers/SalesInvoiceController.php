@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceCreditNote;
 use App\Models\SalesOrder;
+use App\Models\Service;
 use App\Models\TaxRate;
 use App\Models\User;
 use App\Services\CreditNotePdf;
@@ -83,19 +84,57 @@ class SalesInvoiceController extends Controller
 
             // Pre-fill fields if initiated from a specific sales order
             if ($request->filled('order')) {
-                $order = SalesOrder::with('lines')->where('status', 'open')->findOrFail($request->integer('order'));
+                $order = SalesOrder::with(['lines.product', 'lines.service', 'customer', 'salesperson'])
+                    ->where('status', 'open')
+                    ->findOrFail($request->integer('order'));
+
                 $invoice->fill([
                     'sales_order_id' => $order->id,
                     'customer_id' => $order->customer_id,
-                    'location_id' => $order->location_id,
+                    'location_id' => $order->location_id ?: 1,
                     'salesperson_id' => $order->salesperson_id,
                     'commission_agent_id' => $order->commission_agent_id,
                     'delivery_date' => $order->delivery_date,
-                    'terms' => $order->terms,
+                    'terms' => $order->terms ?: '1',
+                    'customer_reference' => $order->reference,
+                    'payment_reference' => $order->title ?: 'You can exchange or return finished goods only within 3 days.',
+                    'payment_term' => $order->payment_terms ?: '30 Days',
+                    'discount_percent' => (float) ($order->discount_percentage ?? 0),
+                    'discount_amount' => (float) ($order->discount_amount ?? 0),
+                    'untaxed_amount' => (float) ($order->total_amount ?? 0),
+                    'total_amount' => (float) ($order->net_total ?? 0),
                 ]);
-                $preset = $order->lines->map(fn ($line) => $line->only([
-                    'product_id', 'product_lot_id', 'tax_rate_id', 'description', 'quantity', 'unit_price',
-                ]) + ['line_type' => 'product'])->all();
+
+                $invoice->setRelation('salesOrder', $order);
+                if ($order->customer) {
+                    $invoice->setRelation('customer', $order->customer);
+                }
+                if ($order->salesperson) {
+                    $invoice->setRelation('salesperson', $order->salesperson);
+                }
+
+                $preset = $order->lines->map(function ($line) {
+                    $lineType = 'product';
+                    if ($line->item_type === 'service' || $line->service_id) {
+                        $lineType = 'service';
+                    } elseif ($line->item_type === 'text' || $line->item_type === 'note') {
+                        $lineType = (float) $line->unit_price > 0 ? 'service' : 'note';
+                    } elseif (! $line->product_id && (float) $line->unit_price > 0) {
+                        $lineType = 'service';
+                    }
+
+                    return [
+                        'line_type' => $lineType,
+                        'product_id' => $line->product_id,
+                        'service_id' => $line->service_id,
+                        'product_lot_id' => $line->product_lot_id,
+                        'description' => $line->description ?: ($line->product?->name ?? ($line->service?->name ?? '')),
+                        'quantity' => (float) ($line->quantity ?? 1),
+                        'unit_price' => (float) ($line->unit_price ?? 0),
+                        'discount_percent' => (float) ($line->discount_percentage ?? 0),
+                        'tax_rate_id' => $line->tax_rate_id,
+                    ];
+                })->all();
             }
 
             return $this->form($invoice, $preset);
@@ -502,8 +541,8 @@ class SalesInvoiceController extends Controller
             ->join('product_stock_items', 'product_stock_items.id', '=', 'product_lots.product_stock_item_id')
             ->join('inventory_movements', 'inventory_movements.product_lot_id', '=', 'product_lots.id')
             ->join('locations', 'locations.id', '=', 'inventory_movements.location_id')
-            ->selectRaw('product_lots.id, product_lots.lot_number, product_lots.expires_at, product_stock_items.product_id, locations.id as location_id, locations.name as location_name, SUM(inventory_movements.quantity_delta) as available')
-            ->groupBy('product_lots.id', 'product_lots.lot_number', 'product_lots.expires_at', 'product_stock_items.product_id', 'locations.id', 'locations.name')
+            ->selectRaw('product_lots.id, product_lots.lot_number, product_lots.supplier_lot_code, product_lots.unit_cost, product_lots.selling_price, product_lots.expires_at, product_stock_items.product_id, locations.id as location_id, locations.name as location_name, SUM(inventory_movements.quantity_delta) as available')
+            ->groupBy('product_lots.id', 'product_lots.lot_number', 'product_lots.supplier_lot_code', 'product_lots.unit_cost', 'product_lots.selling_price', 'product_lots.expires_at', 'product_stock_items.product_id', 'locations.id', 'locations.name')
             ->havingRaw('SUM(inventory_movements.quantity_delta) > 0')
             ->orderBy('product_lots.expires_at')
             ->orderBy('product_lots.lot_number')
@@ -512,6 +551,9 @@ class SalesInvoiceController extends Controller
             ->map(fn ($lots) => $lots->map(fn ($lot) => [
                 'id' => (int) $lot->id,
                 'number' => $lot->lot_number,
+                'batch' => $lot->supplier_lot_code ?: '01',
+                'cost' => (float) ($lot->unit_cost ?? 0),
+                'price' => (float) ($lot->selling_price ?? 0),
                 'location_id' => (int) $lot->location_id,
                 'location' => $lot->location_name,
                 'available' => (float) $lot->available,
@@ -524,7 +566,7 @@ class SalesInvoiceController extends Controller
             'customers' => Contact::whereIn('type', ['customer', 'both'])->where('status', 'active')->orderBy('name')->get(),
             'agents' => Contact::where('type', 'commission')->where('status', 'active')->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
-            'products' => Product::with(['applicableTax', 'locations', 'variants.locationStocks'])->where('is_active', true)->where('not_for_selling', false)->orderBy('name')->get(),
+            'products' => Product::with(['unit', 'applicableTax', 'locations', 'variants.locationStocks'])->where('is_active', true)->where('not_for_selling', false)->orderBy('name')->get(),
             'taxes' => TaxRate::availableForProducts()->orderBy('name')->get(),
             'salespeople' => User::where('status', 'active')->orderBy('name')->get(['id', 'name']),
             'availableLots' => $availableLots,
@@ -539,6 +581,7 @@ class SalesInvoiceController extends Controller
             'presetLines' => $presetLines,
             'invoiceNumberPreviews' => $invoiceNumberPreviews,
             'openOrders' => SalesOrder::with(['customer', 'salesperson'])->where('status', 'open')->latest()->get(),
+            'services' => Service::where('is_active', true)->orderBy('name')->get(),
             'bankAccounts' => PaymentAccount::orderBy('name')->get(['id', 'name']),
             'paymentAccounts' => PaymentAccount::where('is_active', true)->orderBy('name')->get(['id', 'name', 'account_number']),
         ]);

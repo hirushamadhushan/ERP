@@ -5,7 +5,7 @@
 @php
     $isCategory = $kind === 'categories';
     $prefix = 'products.'.$kind;
-    $input = 'w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all';
+    $input = 'w-full px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all h-8';
 @endphp
 <div id="reference-toast" class="reference-toast hidden" role="status"><div class="flex items-center gap-3"><i id="reference-toast-icon" class="bi bi-shield-exclamation text-2xl"></i><p id="reference-toast-message" class="m-0 leading-5"></p></div></div>
 
@@ -17,17 +17,17 @@
         </h1>
     </div>
     @if($isCategory)
-        <button id="add-reference" type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">
+        <button id="add-reference" type="button" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-500/20 transition-all h-8">
             <i class="bi bi-plus-lg text-sm" aria-hidden="true"></i> Add
         </button>
     @endif
 </div>
 
-<section class="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 sm:p-6">
+<section class="bg-white rounded border border-purple-100 shadow-sm p-4 sm:p-6" style="border-radius:4px;border-top:3px solid #7c3aed;">
     @if(!$isCategory)
         <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
             <h2 class="text-base font-bold text-slate-800">All your brands</h2>
-            <button id="add-reference" type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">
+            <button id="add-reference" type="button" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-500/20 transition-all h-8">
                 <i class="bi bi-plus-lg text-sm" aria-hidden="true"></i> Add
             </button>
         </div>
@@ -62,13 +62,13 @@
                         <td class="whitespace-pre-wrap text-slate-600">{{ $record->description }}</td>
                         <td>
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <button type="button" class="edit-reference inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-record="{{ json_encode($record->only(['id', 'name', 'code', 'description', 'parent_id'])) }}" data-url="{{ route($prefix.'.update', $record) }}">
+                                <button type="button" class="edit-reference inline-flex items-center gap-1.5 px-3 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-record="{{ json_encode($record->only(['id', 'name', 'code', 'description', 'parent_id'])) }}" data-url="{{ route($prefix.'.update', $record) }}">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
                                 </button>
                                 <form data-async-form class="delete-reference" method="POST" action="{{ route($prefix.'.destroy', $record) }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all">
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all">
                                         <i class="bi bi-trash" aria-hidden="true"></i> Delete
                                     </button>
                                 </form>
@@ -82,7 +82,7 @@
     @endif
 </section>
 
-<dialog id="reference-dialog" aria-labelledby="reference-title" class="bg-white shadow-2xl text-slate-800 rounded-2xl p-0 overflow-hidden border-0">
+<dialog id="reference-dialog" aria-labelledby="reference-title" class="bg-white shadow-2xl text-slate-800 rounded p-0 overflow-hidden border-0" style="border-radius:4px">
     <div class="flex justify-between items-center px-6 py-4 bg-purple-50 border-b border-purple-100">
         <h2 id="reference-title" class="text-base font-bold text-slate-800">Add {{ $singular }}</h2>
         <button type="button" data-close-reference aria-label="Close form" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100 flex items-center justify-center transition-colors">
@@ -141,8 +141,8 @@
         </div>
 
         <div class="flex justify-end gap-2 px-6 py-4 border-t border-purple-100 bg-slate-50/50">
-            <button id="save-reference" type="submit" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">Save</button>
-            <button type="button" data-close-reference class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold transition-all">Close</button>
+            <button id="save-reference" type="submit" class="px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-500/20 transition-all h-8">Save</button>
+            <button type="button" data-close-reference class="px-4 py-1.5 rounded bg-transparent text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all h-8">Close</button>
         </div>
     </form>
 </dialog>
@@ -151,8 +151,8 @@
 @push('scripts')
 <style>
     .category-branch{display:flex;align-items:center;gap:8px;min-height:38px}.tree-toggle,.tree-leaf{width:24px;flex-shrink:0;color:#9333ea}.add-child{width:26px;height:26px;border-radius:7px;background:#faf5ff;color:#9333ea;font-weight:700}.add-child:hover{background:#f3e8ff}
-    #reference-table tr[hidden]{display:none}#reference-table td,#reference-table th{padding:10px;border-bottom:1px solid #f1f5f9}
-    #reference-dialog { margin:auto; padding:0; border:0; border-radius:1rem; width:calc(100% - 2rem); max-width:32rem; max-height:calc(100dvh - 2rem); }
+    #reference-table thead th{background:#1e1b4b!important;color:#ffffff!important;font-size:11px!important;font-weight:700!important;text-transform:uppercase!important;border-right:1px solid rgba(255,255,255,0.2)!important;padding:8px 10px!important}#reference-table tr[hidden]{display:none}#reference-table td{padding:9px 10px;border-bottom:1px solid #f1f5f9;font-size:12px}
+    #reference-dialog { margin:auto; padding:0; border:1px solid #e2e8f0; border-radius:4px; width:calc(100% - 2rem); max-width:32rem; max-height:calc(100dvh - 2rem); box-shadow:0 15px 40px rgba(0,0,0,0.22); }
     #reference-dialog::backdrop { background:rgb(15 23 42 / .5); backdrop-filter:blur(3px); }
     #reference-table_wrapper .dt-buttons { display:flex; flex-wrap:wrap; gap:.25rem; }
     #reference-table_wrapper .dataTables_filter, #reference-table_wrapper .dataTables_length { float:none; text-align:left; }

@@ -23,13 +23,15 @@
         </div>
 
         <!-- Active Users -->
-        <div class="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm flex items-center justify-between">
+        <div class="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm flex items-center justify-between transition-all hover:shadow-md hover:border-cyan-200/80">
             <div>
                 <span class="text-xs font-medium text-slate-500">Active Users</span>
                 <h3 class="text-3xl font-bold text-slate-900 mt-1">{{ $activeUsers }}</h3>
-                <span class="text-[11px] font-semibold text-emerald-600 mt-1 inline-block">Online Now</span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200/70 mt-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span> Online Now
+                </span>
             </div>
-            <div class="p-3.5 rounded-2xl bg-emerald-50 text-emerald-600 shrink-0">
+            <div class="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-50 to-cyan-100/60 text-cyan-600 border border-cyan-100 shrink-0">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
@@ -77,8 +79,8 @@
                 <h2 class="text-sm font-bold text-slate-900">Recently Added Users</h2>
                 <p class="text-xs text-slate-400 mt-0.5">Last 5 users registered in the system</p>
             </div>
-            <a href="{{ route('users.index') }}" class="text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors">
-                View All →
+            <a href="{{ route('users.index') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200/70 px-3 py-1.5 rounded-xl transition-all shadow-2xs">
+                View All &rarr;
             </a>
         </div>
 
@@ -111,8 +113,8 @@
                             </td>
                             <td class="py-3.5 px-6">
                                 @if($user->status === 'active')
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200/70">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span> Active
                                     </span>
                                 @elseif($user->status === 'offline')
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">

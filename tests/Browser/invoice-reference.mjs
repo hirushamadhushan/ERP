@@ -12,7 +12,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
     const page = await browser.newPage({ viewport: { width: 1365, height: 768 } });
     const errors = [];
-    page.on('pageerror', error => errors.push(error.message));
+    page.on('pageerror', error => { console.error('BROWSER ERROR:', error.message); errors.push(error.message); });
     await page.setContent(`<style>*{box-sizing:border-box}.hidden{display:none!important}body{margin:0;padding:80px 24px 24px 90px;background:#f4f4fa}${styles}</style>
       <div class="odoo-invoice-shell"><div class="invoice-workspace">
       <div class="invoice-main"><div class="odoo-sheet">
@@ -37,7 +37,7 @@ try {
     }, row);
     await page.addScriptTag({ path: 'public/js/invoice-reference.js' });
     assert.deepEqual(await page.locator('.odoo-line-head span').allTextContents(),
-        ['Type','Code','Details','Sales Price','Discount (%)','Discount Amt.','Available Qty','Qty','Total','Lot','Taxes','Action']);
+        ['Type', 'Code', 'Details', 'Sales Price', 'Discount (%)', 'Discount Amt.', 'Available Qty', 'Qty', 'Total', 'Action']);
     assert.equal(await page.locator('#invoice-due-date').isVisible(), true);
     assert.equal(await page.locator('.reference-order-summary').isVisible(), false);
     const customer = await page.locator('[name="customer_id"]').boundingBox();
@@ -58,7 +58,7 @@ try {
         document.body.insertAdjacentHTML('beforeend', '<input id="tax-display" value="exclusive"><b id="untaxed-total"></b><b id="tax-total"></b><b id="grand-total"></b><b id="amount-due"></b>');
         new Function('host', 'invoiceLocked', 'renderDraftJournal', 'updateCatalogTotal', calculate + ';calc();')(host, false, () => {}, () => {});
     }, calculate);
-    assert.equal(await page.locator('.line-discount-amount').textContent(), '20.00 Rs');
+    assert.equal(await page.locator('.line-discount-amount').textContent(), 'LKR 20.00');
     assert.equal(await page.locator('#grand-total').textContent(), '212.40 Rs');
     assert.ok(await page.locator('.reference-lines-scroll').evaluate(el => el.scrollWidth > el.clientWidth));
     await page.getByRole('button', { name: 'Preview Ledger' }).click();
@@ -68,7 +68,8 @@ try {
     assert.equal(await page.locator('.reference-invoice-footer').evaluate(el => !!el.closest('.reference-form-scroll')), false);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.addStyleTag({content:'body{padding:20px}'});
-    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= 390), 'Mobile layout must not overflow the page');
+    const docW = await page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(docW <= 390, 'Mobile layout must not overflow the page');
     assert.deepEqual(errors, []);
     console.log('Invoice reference layout, services, scrolling, ledger and mobile checks passed.');
 } finally {

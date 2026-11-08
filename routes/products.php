@@ -2,7 +2,17 @@
 
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductLotController;
+use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
+
+Route::controller(ServiceController::class)->prefix('products/services')->name('products.services.')->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::get('/{service}', 'show')->name('show');
+    Route::put('/{service}', 'update')->name('update');
+    Route::patch('/{service}/status', 'toggleStatus')->name('toggle-status');
+    Route::delete('/{service}', 'destroy')->name('destroy');
+});
 
 Route::controller(ProductController::class)->prefix('products')->name('products.catalog.')->group(function () {
     Route::get('/', 'index')->name('index');

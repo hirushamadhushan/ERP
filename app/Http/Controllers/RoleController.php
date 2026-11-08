@@ -44,14 +44,14 @@ class RoleController extends Controller
                 ->addColumn('action', function ($row) {
                     $isSystemRole = strtolower($row->name) === 'admin';
 
-                    $btn = '<div class="flex items-center gap-2">';
-                    $btn .= '<button type="button" class="edit-role-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 2px 8px rgba(124,58,237,.35);" data-id="'.$row->id.'"><i class="bi bi-pencil-fill"></i> Edit</button>';
+                    $btn = '<div class="flex items-center gap-1.5">';
+                    $btn .= '<button type="button" class="edit-role-btn inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all" style="border-radius: 4px;" data-id="'.$row->id.'"><i class="bi bi-pencil-fill"></i> Edit</button>';
 
                     if ($isSystemRole) {
-                        // Admin role â€” no delete allowed
-                        $btn .= '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-100 border border-amber-200 cursor-not-allowed select-none" title="System role cannot be deleted"><i class="bi bi-shield-lock-fill"></i> Protected</span>';
+                        // Admin role — no delete allowed
+                        $btn .= '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 cursor-not-allowed select-none" style="border-radius: 4px;" title="System role cannot be deleted"><i class="bi bi-shield-lock-fill"></i> Protected</span>';
                     } else {
-                        $btn .= '<button type="button" class="delete-role-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 2px 8px rgba(239,68,68,.35);" data-id="'.$row->id.'"><i class="bi bi-trash-fill"></i> Delete</button>';
+                        $btn .= '<button type="button" class="delete-role-btn inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all" style="border-radius: 4px;" data-id="'.$row->id.'"><i class="bi bi-trash-fill"></i> Delete</button>';
                     }
 
                     $btn .= '</div>';

@@ -1,0 +1,645 @@
+/* ==========================================================================
+   Codeza ERP - System Unified Design Theme
+   Harmonized with Reference Photo Design (Underline inputs, compact 4px buttons,
+   clean ribbon banners, and seamless dialogs) combined with Codeza Purple Identity.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Buttons - Photo-matched compact styling (border-radius: 4px, height: 30-32px)
+   -------------------------------------------------------------------------- */
+
+/* Primary Save / Submit Action Buttons */
+button[type="submit"]:not(.btn-modal-close):not([class*="delete"]):not([class*="trash"]):not([class*="cancel"]):not([class*="rose"]):not([class*="red"]):not(.btn-remove-consumable),
+.btn-primary,
+.btn-save,
+button[id^="save-"],
+button#save-unit,
+button#save-variation,
+button#save-warranty,
+button#save-tax,
+.btn-modal-save,
+.odoo-confirm {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 16px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 2px rgba(124, 58, 237, 0.22) !important;
+    transition: all 0.15s ease !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+
+button[type="submit"]:not(.btn-modal-close):not([class*="delete"]):not([class*="trash"]):not([class*="cancel"]):not([class*="rose"]):not([class*="red"]):not(.btn-remove-consumable):hover,
+.btn-primary:hover,
+.btn-save:hover,
+button[id^="save-"]:hover,
+.btn-modal-save:hover,
+.odoo-confirm:hover {
+    background: #6d28d9 !important;
+    box-shadow: 0 2px 5px rgba(124, 58, 237, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+button[type="submit"]:not(.btn-modal-close):not([class*="delete"]):not([class*="trash"]):not([class*="cancel"]):not([class*="rose"]):not([class*="red"]):not(.btn-remove-consumable):active,
+.btn-primary:active,
+.btn-save:active,
+button[id^="save-"]:active,
+.btn-modal-save:active,
+.odoo-confirm:active {
+    transform: translateY(0);
+}
+
+/* Secondary Actions / Save and New Buttons */
+.btn-secondary,
+.btn-modal-save-new,
+button[name="action_type"][value="save_and_new"],
+button.bg-slate-800,
+button.bg-slate-900 {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    background: #1e1b4b !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 16px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.15s ease !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+
+.btn-secondary:hover,
+.btn-modal-save-new:hover,
+button[name="action_type"][value="save_and_new"]:hover {
+    background: #0f172a !important;
+    transform: translateY(-1px);
+}
+
+/* Cancel / Close Buttons - Coral/Salmon Text on Transparent Background (Exact Photo 5) */
+button[data-close],
+button[data-close-unit],
+button[data-close-variation],
+button[data-close-warranty],
+button[data-close-dialog],
+button[data-close-payment],
+button[data-close-orders],
+button[data-cancel-delete],
+button#close-cancel,
+.btn-modal-close,
+dialog footer button[type="button"]:not([class*="purple"]):not([class*="emerald"]):not([class*="primary"]):not(.odoo-confirm),
+dialog div.flex.justify-end button[type="button"]:not([class*="purple"]):not([class*="emerald"]):not([class*="primary"]):not(.odoo-confirm) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    color: #e06d63 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+
+button[data-close]:hover,
+button[data-close-unit]:hover,
+button[data-close-variation]:hover,
+button[data-close-warranty]:hover,
+button[data-close-dialog]:hover,
+button[data-close-payment]:hover,
+button[data-close-orders]:hover,
+button[data-cancel-delete]:hover,
+button#close-cancel:hover,
+.btn-modal-close:hover,
+dialog footer button[type="button"]:not([class*="purple"]):not([class*="emerald"]):not([class*="primary"]):not(.odoo-confirm):hover,
+dialog div.flex.justify-end button[type="button"]:not([class*="purple"]):not([class*="emerald"]):not([class*="primary"]):not(.odoo-confirm):hover {
+    background: #fff1f2 !important;
+    color: #dc2626 !important;
+}
+
+/* Top-Level Add / Create / New Buttons (Top Right of Sections) */
+button[id^="add-"],
+button#add-unit,
+button#add-variation,
+button#add-warranty,
+button#add-tax,
+.btn-add-service,
+a[href*="/create"]:is(.bg-purple-600, .btn-primary, [class*="rounded-xl"]) {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 6px 16px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+
+button[id^="add-"]:hover,
+button#add-unit:hover,
+button#add-variation:hover,
+button#add-warranty:hover,
+button#add-tax:hover,
+.btn-add-service:hover,
+a[href*="/create"]:is(.bg-purple-600, .btn-primary, [class*="rounded-xl"]):hover {
+    background: #6d28d9 !important;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+/* Compact Table Row Action Buttons */
+.edit-unit,
+.edit-variation,
+.edit-warranty,
+button[class*="edit-"],
+a[class*="edit-"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    background: #f5f3ff !important;
+    color: #6d28d9 !important;
+    border: 1px solid #ede9fe !important;
+    border-radius: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    transition: all 0.15s ease !important;
+}
+.edit-unit:hover,
+.edit-variation:hover,
+.edit-warranty:hover,
+button[class*="edit-"]:hover,
+a[class*="edit-"]:hover {
+    background: #ede9fe !important;
+    color: #5b21b6 !important;
+}
+
+.delete-unit button,
+.delete-variation button,
+.delete-warranty button,
+form[class*="delete-"] button,
+button[class*="delete-"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    background: #fff1f2 !important;
+    color: #e11d48 !important;
+    border: 1px solid #ffe4e6 !important;
+    border-radius: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    transition: all 0.15s ease !important;
+}
+.delete-unit button:hover,
+.delete-variation button:hover,
+.delete-warranty button:hover,
+form[class*="delete-"] button:hover,
+button[class*="delete-"]:hover {
+    background: #ffe4e6 !important;
+    color: #be123c !important;
+}
+
+.btn-service-view,
+button[class*="view-"],
+a[class*="view-"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    background: #ede9fe !important;
+    color: #4338ca !important;
+    border: 1px solid #ddd6fe !important;
+    border-radius: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    transition: all 0.15s ease !important;
+}
+.btn-service-view:hover,
+button[class*="view-"]:hover,
+a[class*="view-"]:hover {
+    background: #ddd6fe !important;
+    color: #312e81 !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. Modals & Dialogs (Photo 4 & 5 Architecture)
+   -------------------------------------------------------------------------- */
+dialog,
+.modal-card,
+.service-modal-card {
+    background: #ffffff !important;
+    border-radius: 4px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.22) !important;
+    overflow: hidden !important;
+}
+
+dialog::backdrop,
+.service-modal-backdrop {
+    background-color: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+/* Dialog Header - Seamless White with Slate/Dark Title */
+dialog > div.flex.justify-between.items-center:first-child,
+dialog > header,
+.service-modal-head {
+    background: #ffffff !important;
+    border-bottom: none !important;
+    padding: 20px 28px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+dialog > div.flex.justify-between.items-center:first-child h2,
+dialog > header h2,
+dialog > header span[id$="-heading"],
+.service-modal-title {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: #1e3a5f !important;
+    margin: 0 !important;
+    letter-spacing: -0.01em !important;
+}
+
+/* Close 'x' icon at top right of dialogs */
+dialog > div.flex.justify-between.items-center:first-child button,
+dialog > header button,
+.service-modal-close {
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 1.35rem !important;
+    cursor: pointer !important;
+    padding: 0.25rem !important;
+    font-weight: 300 !important;
+    line-height: 1 !important;
+    transition: color 0.15s ease !important;
+}
+
+dialog > div.flex.justify-between.items-center:first-child button:hover,
+dialog > header button:hover,
+.service-modal-close:hover {
+    color: #0f172a !important;
+    background: transparent !important;
+}
+
+/* Dialog Body */
+dialog > form > div.p-6,
+dialog > form > div.p-5,
+dialog > div.p-6,
+.service-modal-body {
+    padding: 8px 28px 16px !important;
+}
+
+/* Dialog Footer */
+dialog > form > div.flex.justify-end,
+dialog > form > footer,
+dialog > div.flex.justify-end,
+.service-modal-footer {
+    background: #ffffff !important;
+    border-top: none !important;
+    padding: 14px 28px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Fields & Form Controls (Photo 4 Underline Style inside Dialogs/Modals)
+   -------------------------------------------------------------------------- */
+
+/* Labels inside dialogs */
+dialog label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+}
+
+/* Inputs inside dialogs - Underline dashed border */
+dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]),
+dialog select,
+dialog textarea,
+.modal-input,
+.modal-select {
+    width: 100% !important;
+    border: none !important;
+    border-bottom: 1px dashed #b0bec5 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 6px 0 6px !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+    outline: none !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease !important;
+    min-height: auto !important;
+}
+
+dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):focus,
+dialog select:focus,
+dialog textarea:focus,
+.modal-input:focus,
+.modal-select:focus {
+    border-bottom: 1px solid #7c3aed !important;
+    box-shadow: none !important;
+}
+
+dialog input::placeholder,
+dialog textarea::placeholder,
+.modal-input::placeholder {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+}
+
+/* Select Dropdown Triangle Chevron (Photo 4) */
+dialog select,
+.modal-select {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6' viewBox='0 0 8 6' fill='%231e293b'%3E%3Cpath d='M0 0l4 5 4-5z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0px center !important;
+    padding-right: 16px !important;
+    cursor: pointer !important;
+}
+
+/* Checkboxes and Radios inside dialogs */
+dialog input[type="checkbox"],
+dialog input[type="radio"] {
+    accent-color: #7c3aed !important;
+    cursor: pointer !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. Ribbon Tab / Banner Style (Photo 4)
+   -------------------------------------------------------------------------- */
+.consumables-header-tab,
+.ribbon-tab,
+.form-section-ribbon {
+    display: inline-block;
+    padding: 8px 30px 8px 16px;
+    background: #ede9fe;
+    color: #4338ca;
+    font-size: 13px;
+    font-weight: 700;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Tables & Cards Architecture
+   -------------------------------------------------------------------------- */
+section.bg-white.rounded-2xl:not(#delivery-list),
+.services-card,
+.erp-card-container {
+    background: #ffffff !important;
+    border: 1px solid #eee7ff !important;
+    border-top: 3px solid #8b5cf6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 20px rgba(71, 45, 115, 0.04) !important;
+}
+
+/* Table Headers (Photo 4 Exact Style: Dark Navy Header with white text and thin dividers) */
+table.dataTable:not(#delivery-consignments-table) thead th,
+table[data-async-table] thead th,
+.services-table thead th,
+table.serial-table:not(#delivery-consignments-table) thead th,
+#usersTable thead th,
+#rolesTable thead th,
+table.table:not(#delivery-consignments-table) thead th,
+.sticky-table-host:not(#delivery-list) thead th,
+table.tax-table thead th,
+.sticky-data-table-header table thead th {
+    background: #1e1b4b !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 8px 12px !important;
+    border-bottom: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    white-space: nowrap !important;
+}
+
+table.dataTable thead th:last-child,
+table[data-async-table] thead th:last-child,
+.services-table thead th:last-child,
+table.serial-table thead th:last-child,
+#usersTable thead th:last-child,
+#rolesTable thead th:last-child,
+table.table thead th:last-child,
+.sticky-table-host thead th:last-child,
+table.tax-table thead th:last-child,
+.sticky-data-table-header table thead th:last-child {
+    border-right: none !important;
+}
+
+table.dataTable tbody td,
+table[data-async-table] tbody td,
+.services-table tbody td {
+    padding: 9px 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    color: #334155 !important;
+    font-size: 13px !important;
+    vertical-align: middle !important;
+}
+
+table.dataTable tbody tr:hover,
+table[data-async-table] tbody tr:hover,
+.services-table tbody tr:hover {
+    background-color: #faf5ff !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. DataTables Controls & Search Inputs
+   -------------------------------------------------------------------------- */
+.dataTables_wrapper .dataTables_filter input,
+.services-search-input {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    height: 30px !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    outline: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus,
+.services-search-input:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.services-entries-select {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    height: 30px !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    outline: none !important;
+}
+
+/* DataTable Export Buttons */
+.dt-buttons .dt-button {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 5px 10px !important;
+    height: 28px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.15s ease !important;
+}
+.dt-buttons .dt-button:hover {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    border-color: #7c3aed !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. System-wide Header Subnav Tabs (Sleek Compact Rectangles, NOT Round Pills)
+   -------------------------------------------------------------------------- */
+.app-main-shell header nav a {
+    border-radius: 4px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 5px 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.15s ease !important;
+}
+.app-main-shell header nav a.bg-purple-600,
+.app-main-shell header nav a[aria-current="page"] {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25) !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Overriding Bubbly Rounded Classes System-Wide
+   -------------------------------------------------------------------------- */
+button:is(.rounded-xl, .rounded-2xl, .rounded-lg):not(#sidebar-toggle),
+a:is(.rounded-xl, .rounded-2xl, .rounded-lg):is([class*="bg-purple"], [class*="btn"], [id^="add"]) {
+    border-radius: 4px !important;
+}
+
+/* All Card Containers in ERP */
+section:is(.rounded-2xl, .rounded-xl),
+div.bg-white:is(.rounded-2xl, .rounded-xl),
+.services-card,
+.erp-card-container,
+.catalog-card,
+.serial-card {
+    border-radius: 4px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-top: 3px solid #7c3aed !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Modal Dialogs System Wide */
+dialog,
+.modal-card,
+.service-modal-card,
+#addUserModal > div,
+#fullUserModal > div,
+#editUserModal > div,
+#viewUserModal > div,
+#addRoleModal > div,
+#editRoleModal > div,
+#confirm-dialog {
+    border-radius: 4px !important;
+}
+
+/* System Wide Inputs in forms & dialogs */
+input:is(.rounded-xl, .rounded-2xl, .rounded-lg):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select:is(.rounded-xl, .rounded-2xl, .rounded-lg),
+textarea:is(.rounded-xl, .rounded-2xl, .rounded-lg) {
+    border-radius: 4px !important;
+    font-size: 12px !important;
+}
+
+input:is(.rounded-xl, .rounded-2xl, .rounded-lg):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([rows]),
+select:is(.rounded-xl, .rounded-2xl, .rounded-lg) {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+/* Row Action Buttons in Tables */
+table button:is(.rounded-lg, .rounded-xl),
+table a:is(.rounded-lg, .rounded-xl) {
+    border-radius: 4px !important;
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+}
+
+/* Table Wrappers */
+.sticky-table-host,
+.services-table-wrap {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 2px !important;
+}
+
+/* Status Badges */
+.badge-service-status,
+[class*="badge-"]:not(.notification-badge),
+span.rounded-full[class*="bg-emerald"],
+span.rounded-full[class*="bg-rose"],
+span.rounded-full[class*="bg-amber"],
+span.rounded-full[class*="bg-purple"],
+span.rounded-full[class*="bg-blue"],
+span.rounded-full[class*="bg-slate"] {
+    border-radius: 4px !important;
+    font-size: 11px !

@@ -7,7 +7,7 @@
 <div class="space-y-6">
 
     <!-- Card Container -->
-    <div class="bg-white rounded-2xl border border-purple-100 p-6 shadow-sm">
+    <div class="bg-white rounded border border-purple-100 p-6 shadow-sm" style="border-radius: 4px; border-top: 3px solid #7c3aed;">
 
         <!-- Card Header -->
         <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
@@ -16,8 +16,7 @@
                 <p class="text-xs text-slate-400">View, add and manage system user permissions and roles</p>
             </div>
             <button id="openAddRoleBtn" type="button"
-                class="inline-flex items-center gap-2 px-4 py-2 text-white text-xs font-bold rounded-xl shadow-md transition-all duration-200 hover:scale-105 cursor-pointer"
-                style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 4px 12px rgba(124,58,237,.35);">
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded shadow-sm transition-all h-8 cursor-pointer" style="border-radius: 4px;">
                 <i class="bi bi-plus-lg text-sm"></i> Add
             </button>
         </div>
@@ -39,12 +38,12 @@
 
 <!-- ==================== ADD ROLE MODAL ==================== -->
 <div id="addRoleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" style="display:none;">
-    <div class="bg-white rounded-2xl border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-purple-100" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <i class="bi bi-shield-plus"></i> Add New Role
+    <div class="bg-white rounded border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden" style="border-radius: 4px;">
+        <div class="flex items-center justify-between px-6 py-4 bg-purple-50 border-b border-purple-100">
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i class="bi bi-shield-plus text-purple-600"></i> Add New Role
             </h3>
-            <button type="button" class="closeModalBtn text-white/70 hover:text-white text-xl font-bold leading-none">&times;</button>
+            <button type="button" class="closeModalBtn text-slate-400 hover:text-slate-600 text-xl font-bold leading-none">&times;</button>
         </div>
 
         <form id="addRoleForm" class="p-6 space-y-4">
@@ -52,7 +51,7 @@
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Role Name <span class="text-rose-500">*</span></label>
                 <input type="text" name="name"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
+                    class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition h-8"
                     placeholder="e.g. Cashier" required>
                 <span class="text-xs text-rose-500 error-text add_name_error"></span>
             </div>
@@ -60,15 +59,15 @@
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Description</label>
                 <textarea name="description"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
+                    class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition"
                     rows="3" placeholder="Brief description of this role..."></textarea>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button type="button" class="closeModalBtn px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Cancel</button>
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <button type="button" class="closeModalBtn px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition h-8" style="border-radius: 4px;">Cancel</button>
                 <button type="submit"
-                    class="px-5 py-2 text-white text-xs font-bold rounded-xl shadow-md transition-all hover:scale-105"
-                    style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 4px 12px rgba(124,58,237,.35);">Save Role</button>
+                    class="px-4 py-1.5 text-white text-xs font-semibold rounded bg-purple-600 hover:bg-purple-700 shadow-sm transition-all h-8"
+                    style="border-radius: 4px;">Save Role</button>
             </div>
         </form>
     </div>
@@ -76,14 +75,14 @@
 
 <!-- ==================== EDIT ROLE MODAL WITH PERMISSIONS ==================== -->
 <div id="editRoleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto" style="display:none;">
-    <div class="bg-white rounded-2xl border border-purple-100 shadow-2xl w-full max-w-2xl overflow-hidden my-4">
+    <div class="bg-white rounded border border-purple-100 shadow-2xl w-full max-w-2xl overflow-hidden my-4" style="border-radius: 4px;">
 
         <!-- Modal Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-purple-100" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <i class="bi bi-shield-check"></i> Edit Role
+        <div class="flex items-center justify-between px-6 py-4 bg-purple-50 border-b border-purple-100">
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i class="bi bi-shield-check text-purple-600"></i> Edit Role
             </h3>
-            <button type="button" class="closeModalBtn text-white/70 hover:text-white text-xl font-bold leading-none">&times;</button>
+            <button type="button" class="closeModalBtn text-slate-400 hover:text-slate-600 text-xl font-bold leading-none">&times;</button>
         </div>
 
         <form id="editRoleForm" class="p-6">
@@ -93,9 +92,9 @@
 
             <!-- Role Name -->
             <div class="mb-5">
-                <label class="block text-sm font-bold text-slate-700 mb-1">Role Name <span class="text-rose-500">*</span></label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Role Name <span class="text-rose-500">*</span></label>
                 <input type="text" id="edit_role_name" name="name"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
+                    class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition h-8"
                     required>
                 <span class="text-xs text-rose-500 error-text edit_name_error"></span>
             </div>
@@ -235,11 +234,11 @@
             </div>
 
             <!-- Form Footer -->
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button type="button" class="closeModalBtn px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Cancel</button>
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <button type="button" class="closeModalBtn px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition h-8" style="border-radius: 4px;">Cancel</button>
                 <button type="submit"
-                    class="px-5 py-2 text-white text-xs font-bold rounded-xl shadow-md transition-all hover:scale-105"
-                    style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 4px 12px rgba(124,58,237,.35);">Update Role</button>
+                    class="px-4 py-1.5 text-white text-xs font-semibold rounded bg-purple-600 hover:bg-purple-700 shadow-sm transition-all h-8"
+                    style="border-radius: 4px;">Update Role</button>
             </div>
         </form>
     </div>

@@ -35,7 +35,7 @@
 <iframe id="serial-generator-frame" title="Serial number generator" data-src="{{ route('products.serials.create', ['embedded'=>1,'product_id'=>request('product_id')]) }}"></iframe>
 </dialog>
 <style>
-#serial-generator-dialog{position:fixed;inset:0;margin:auto;padding:0;border:0;border-radius:16px;width:min(1000px,calc(100vw - 24px));height:min(850px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);overflow:hidden;box-shadow:0 24px 70px #0004}
+#serial-generator-dialog{position:fixed;inset:0;margin:auto;padding:0;border:1px solid #cbd5e1;border-radius:4px;width:min(1000px,calc(100vw - 24px));height:min(850px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);overflow:hidden;box-shadow:0 24px 70px #0004}
 #serial-generator-dialog[open]{display:flex;flex-direction:column}
 #serial-generator-dialog::backdrop{background:rgb(15 23 42 / .5);backdrop-filter:blur(3px)}
 #serial-generator-frame{width:100%;flex:1;min-height:0;border:0;background:white}

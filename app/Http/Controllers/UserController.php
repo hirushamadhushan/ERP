@@ -44,18 +44,18 @@ class UserController extends Controller
                 ->addColumn('action', function ($row) {
                     $isAdmin = strtolower($row->role) === 'admin';
 
-                    $btn = '<div class="flex items-center gap-2">';
+                    $btn = '<div class="flex items-center gap-1.5">';
 
-                    // View â€” always visible
-                    $btn .= '<button type="button" class="view-full-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);box-shadow:0 2px 8px rgba(124,58,237,.35);" data-url="'.route('users.view', $row->id).'"><i class="bi bi-eye-fill"></i> View</button>';
+                    // View — always visible
+                    $btn .= '<button type="button" class="view-full-user-btn inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all" style="border-radius: 4px;" data-url="'.route('users.view', $row->id).'"><i class="bi bi-eye-fill"></i> View</button>';
 
                     if ($isAdmin) {
-                        // Admin row â€” locked badge instead of Edit/Delete
-                        $btn .= '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-100 border border-amber-200 cursor-not-allowed select-none" title="Admin account is protected"><i class="bi bi-shield-lock-fill"></i> Protected</span>';
+                        // Admin row — locked badge instead of Edit/Delete
+                        $btn .= '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 cursor-not-allowed select-none" style="border-radius: 4px;" title="Admin account is protected"><i class="bi bi-shield-lock-fill"></i> Protected</span>';
                     } else {
-                        // Normal users â€” show Edit & Delete
-                        $btn .= '<button type="button" class="edit-full-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 2px 8px rgba(124,58,237,.35);" data-url="'.route('users.edit', $row->id).'"><i class="bi bi-pencil-fill"></i> Edit</button>';
-                        $btn .= '<button type="button" class="delete-user-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 hover:scale-105" style="background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 2px 8px rgba(239,68,68,.35);" data-id="'.$row->id.'"><i class="bi bi-trash-fill"></i> Delete</button>';
+                        // Normal users — show Edit & Delete
+                        $btn .= '<button type="button" class="edit-full-user-btn inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-all" style="border-radius: 4px;" data-url="'.route('users.edit', $row->id).'"><i class="bi bi-pencil-fill"></i> Edit</button>';
+                        $btn .= '<button type="button" class="delete-user-btn inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all" style="border-radius: 4px;" data-id="'.$row->id.'"><i class="bi bi-trash-fill"></i> Delete</button>';
                     }
 
                     $btn .= '</div>';
@@ -68,10 +68,10 @@ class UserController extends Controller
                 ->editColumn('role', function ($row) {
                     $isAdmin = strtolower($row->role) === 'admin';
                     if ($isAdmin) {
-                        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200"><i class="bi bi-shield-fill text-[10px]"></i> '.$row->role.'</span>';
+                        return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200" style="border-radius: 4px;"><i class="bi bi-shield-fill text-[10px]"></i> '.$row->role.'</span>';
                     }
 
-                    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">'.$row->role.'</span>';
+                    return '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200" style="border-radius: 4px;">'.$row->role.'</span>';
                 })
                 ->rawColumns(['action', 'role'])
                 ->make(true);

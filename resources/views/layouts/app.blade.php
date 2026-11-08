@@ -110,41 +110,136 @@
         .sticky-data-table-scrollbar::-webkit-scrollbar-thumb { background: #737b86; border: 3px solid #eef2f7; border-radius: 999px; }
 
         @media (min-width: 1024px) {
-            #main-sidebar { width: 5rem; }
-            .app-main-shell { margin-left: 5rem; }
-            #main-sidebar .sidebar-brand { justify-content: center; padding-left: .75rem; padding-right: .75rem; }
+            #main-sidebar {
+                width: 5rem;
+                overflow: visible !important;
+            }
+            .app-main-shell {
+                margin-left: 5rem;
+            }
+            #main-sidebar .sidebar-brand {
+                position: relative;
+                justify-content: center;
+                padding-left: .75rem;
+                padding-right: .75rem;
+                overflow: visible !important;
+            }
             #main-sidebar .sidebar-brand-copy,
             #main-sidebar .sidebar-brand-chevron,
             #main-sidebar .sidebar-section-label,
             #main-sidebar .sidebar-label,
-            #main-sidebar .sidebar-user-copy { display: none; }
-            #main-sidebar .sidebar-navigation { padding-left: .75rem; padding-right: .75rem; overflow: visible; }
-            #main-sidebar .sidebar-link { position: relative; justify-content: center; padding-left: .75rem; padding-right: .75rem; }
+            #main-sidebar .sidebar-user-copy {
+                display: none;
+            }
+            #main-sidebar .sidebar-navigation {
+                padding-left: .75rem;
+                padding-right: .75rem;
+                overflow-x: visible !important;
+                overflow-y: visible !important;
+            }
+
+            /* Brand logo hover flyout (same corporate drawer style) */
+            #main-sidebar .sidebar-brand::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                left: calc(100% - 1px);
+                top: 50%;
+                transform: translateY(-50%) translateX(-6px);
+                display: flex;
+                align-items: center;
+                height: 44px;
+                padding: 0 1.25rem 0 0.85rem;
+                background: #4f46e5;
+                color: #ffffff;
+                font-size: 0.8rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                white-space: nowrap;
+                border-radius: 0 0.65rem 0.65rem 0;
+                box-shadow: 0 10px 25px -3px rgba(79, 70, 229, 0.45), 0 4px 6px -4px rgba(79, 70, 229, 0.25);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 100;
+            }
+            #main-sidebar .sidebar-brand:hover::after,
+            #main-sidebar .sidebar-brand:focus-visible::after {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+
+            /* Sidebar menu links - seamless drawer design matching reference */
+            #main-sidebar .sidebar-link {
+                position: relative;
+                justify-content: center;
+                padding-left: .75rem;
+                padding-right: .75rem;
+                overflow: visible !important;
+                transition: background-color 0.15s ease, color 0.15s ease, border-radius 0.15s ease;
+            }
+
+            /* When hovering over the link, turn into the solid deep-teal bar */
+            #main-sidebar .sidebar-link:hover,
+            #main-sidebar .sidebar-link:focus-visible {
+                background-color: #4f46e5 !important;
+                color: #ffffff !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+                border-top-left-radius: 0.65rem !important;
+                border-bottom-left-radius: 0.65rem !important;
+                box-shadow: none !important;
+                z-index: 80;
+            }
+            #main-sidebar .sidebar-link:hover i,
+            #main-sidebar .sidebar-link:focus-visible i {
+                color: #ffffff !important;
+            }
+
+            /* Extending name badge attached seamlessly on the right */
             #main-sidebar .sidebar-link::after {
                 content: attr(data-tooltip);
                 position: absolute;
-                left: calc(100% + .65rem);
-                top: 50%;
-                z-index: 70;
-                padding: .45rem .7rem;
-                border-radius: .55rem;
-                background: #0f172a;
-                color: #fff;
-                font-size: .75rem;
+                left: calc(100% - 1px);
+                top: 0;
+                bottom: 0;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                padding: 0 1.25rem 0 0.5rem;
+                background: #4f46e5;
+                color: #ffffff;
+                font-size: 0.78rem;
                 font-weight: 700;
-                line-height: 1;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
                 white-space: nowrap;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+                border-top-right-radius: 0.65rem;
+                border-bottom-right-radius: 0.65rem;
+                box-shadow: 0 10px 25px -3px rgba(79, 70, 229, 0.45), 0 4px 6px -4px rgba(79, 70, 229, 0.25);
                 opacity: 0;
                 pointer-events: none;
-                transform: translate(.25rem, -50%);
-                transition: opacity .15s ease, transform .15s ease;
-                box-shadow: 0 8px 20px rgb(15 23 42 / .2);
+                transform: translateX(-6px);
+                transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 100;
             }
             #main-sidebar .sidebar-link:hover::after,
-            #main-sidebar .sidebar-link:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
-            #main-sidebar .sidebar-user-card { justify-content: center; padding-left: .5rem; padding-right: .5rem; }
+            #main-sidebar .sidebar-link:focus-visible::after {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            #main-sidebar .sidebar-user-card {
+                justify-content: center;
+                padding-left: .5rem;
+                padding-right: .5rem;
+            }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/system-unified-design.css') }}?v={{ file_exists(public_path('css/system-unified-design.css')) ? filemtime(public_path('css/system-unified-design.css')) : time() }}">
+    @stack('styles')
 </head>
 <body class="h-full bg-slate-50 font-sans text-slate-800 antialiased selection:bg-purple-500 selection:text-white">
 
@@ -158,7 +253,7 @@
                 $hasCustomBrandLogo = filled($businessSetting->logo_path ?? null);
                 $brandLogo = $businessSetting->logo_path ?? asset('images/codeza-logo.png');
             @endphp
-            <a href="{{ route('home') }}" class="sidebar-brand group flex min-h-[68px] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 transition hover:bg-slate-50" aria-label="{{ $businessSetting->business_name ?? 'Codeza ERP' }} dashboard" title="{{ $businessSetting->business_name ?? 'Codeza ERP' }}">
+            <a href="{{ route('home') }}" data-tooltip="{{ $businessSetting->business_name ?? 'Codeza ERP' }}" class="sidebar-brand group flex min-h-[68px] items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 transition hover:bg-slate-50" aria-label="{{ $businessSetting->business_name ?? 'Codeza ERP' }} dashboard" title="{{ $businessSetting->business_name ?? 'Codeza ERP' }}">
                 <span class="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-950 shadow-sm ring-1 ring-slate-900/10 transition group-hover:shadow-md">
                     @if($hasCustomBrandLogo)
                         <img id="business-brand-logo" src="{{ $brandLogo }}" alt="" class="h-8 w-8 object-contain">
@@ -174,7 +269,7 @@
             </a>
 
             <!-- Navigation -->
-            <nav class="sidebar-navigation flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+            <nav class="sidebar-navigation flex-1 px-3 py-4 space-y-1 lg:overflow-visible overflow-y-auto overflow-x-hidden">
                 <p class="sidebar-section-label px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Main Menu</p>
 
                 <!-- Home -->
@@ -199,9 +294,9 @@
                     <span class="sidebar-label">Contacts</span>
                 </a>
 
-                <a href="{{ route('products.catalog.index') }}" data-tooltip="Products"
-                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs('products.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
-                    <i class="bi bi-boxes text-base" aria-hidden="true"></i><span class="sidebar-label">Products</span>
+                <a href="{{ route('products.catalog.index') }}" data-tooltip="PRODUCTS AND SERVICES"
+                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {{ request()->routeIs(['products.*']) ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                    <i class="bi bi-globe text-base" aria-hidden="true"></i><span class="sidebar-label">Products and Services</span>
                 </a>
 
                 <a href="{{ route('sales.index') }}" data-tooltip="Transactions"
@@ -272,35 +367,35 @@
                             <i class="bi bi-list text-xl" aria-hidden="true"></i>
                         </button>
                     @if(request()->routeIs(['users.*', 'roles.*']))
-                    <nav aria-label="User Management" class="flex items-center gap-1 sm:gap-2">
+                    <nav aria-label="User Management" class="flex items-center gap-1.5">
                         <a href="{{ route('users.index') }}"
                            @if(request()->routeIs('users.*')) aria-current="page" @endif
-                           class="inline-flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2
-                                  {{ request()->routeIs('users.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                           class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all duration-200 h-8
+                                  {{ request()->routeIs('users.*') ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;">
                             <i class="bi bi-person-fill" aria-hidden="true"></i>
                             Users
                         </a>
                         <a href="{{ route('roles.index') }}"
                            @if(request()->routeIs('roles.*')) aria-current="page" @endif
-                           class="inline-flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2
-                                  {{ request()->routeIs('roles.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                           class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all duration-200 h-8
+                                  {{ request()->routeIs('roles.*') ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;">
                             <i class="bi bi-shield-check" aria-hidden="true"></i>
                             Roles
                         </a>
                     </nav>
                     @elseif(request()->routeIs(['invoices.*', 'sales.*']))
-                    <nav aria-label="Transactions" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                    <nav aria-label="Transactions" class="flex items-center gap-1.5 min-w-0 overflow-x-auto py-1">
                         @foreach([
                             ['sales.index', 'Sales', 'bi-cart-check', request()->routeIs(['sales.*', 'invoices.*'])],
                         ] as [$transactionRoute, $transactionLabel, $transactionIcon, $isActive])
-                            <a href="{{ route($transactionRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $transactionIcon }}" aria-hidden="true"></i>{{ $transactionLabel }}</a>
+                            <a href="{{ route($transactionRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap h-8 transition-all {{ $isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;"><i class="bi {{ $transactionIcon }}" aria-hidden="true"></i>{{ $transactionLabel }}</a>
                         @endforeach
                     </nav>
                     @elseif(request()->routeIs('products.*'))
-                    <nav aria-label="Products" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                    <nav aria-label="Products" class="flex items-center gap-1.5 min-w-0 overflow-x-auto py-1">
                         @foreach([
-                            ['products.catalog.index', 'List Products', 'bi-boxes', request()->routeIs('products.catalog.index')],
-                            ['products.catalog.create', 'Add Product', 'bi-plus-circle', request()->routeIs(['products.catalog.create', 'products.catalog.edit'])],
+                            ['products.catalog.index', 'Products', 'bi-boxes', request()->routeIs(['products.catalog.index', 'products.catalog.create', 'products.catalog.edit'])],
+                            ['products.services.index', 'Services', 'bi-tools', request()->routeIs('products.services.*')],
                             ['products.serials.index', 'Serial Numbers', 'bi-upc-scan', request()->routeIs('products.serials.*')],
                             ['products.units.index', 'Units', 'bi-rulers', request()->routeIs('products.units.*')],
                             ['products.categories.index', 'Categories', 'bi-grid', request()->routeIs('products.categories.*')],
@@ -308,47 +403,47 @@
                             ['products.variations.index', 'Variations', 'bi-layers', request()->routeIs('products.variations.*')],
                             ['products.warranties.index', 'Warranties', 'bi-shield-check', request()->routeIs('products.warranties.*')],
                         ] as [$productRoute, $productLabel, $productIcon, $isActive])
-                            <a href="{{ route($productRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $productIcon }}" aria-hidden="true"></i>{{ $productLabel }}</a>
+                            <a href="{{ route($productRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap h-8 transition-all {{ $isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;"><i class="bi {{ $productIcon }}" aria-hidden="true"></i>{{ $productLabel }}</a>
                         @endforeach
                     </nav>
                     @elseif(request()->routeIs('delivery.*'))
                     @include('delivery.nav')
                     @elseif(request()->routeIs('contacts.*'))
-                    <nav aria-label="Contacts" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                    <nav aria-label="Contacts" class="flex items-center gap-1.5 min-w-0 overflow-x-auto py-1">
                         @foreach(['customer' => ['Customers', 'bi-person-fill'], 'supplier' => ['Suppliers', 'bi-truck'], 'commission' => ['Commission', 'bi-percent']] as $contactType => [$contactLabel, $contactIcon])
                             <a href="{{ route('contacts.index', $contactType) }}"
-                               @if(request()->route('type') === $contactType) aria-current="page" @endif
-                               class="inline-flex shrink-0 items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset
-                                      {{ request()->route('type') === $contactType ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                                @if(request()->route('type') === $contactType) aria-current="page" @endif
+                                class="inline-flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all duration-200 h-8
+                                       {{ request()->route('type') === $contactType ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;">
                                 <i class="bi {{ $contactIcon }}" aria-hidden="true"></i>
                                 {{ $contactLabel }}
                             </a>
                         @endforeach
                         <a href="{{ route('contacts.groups.index') }}"
                            @if(request()->routeIs('contacts.groups.*')) aria-current="page" @endif
-                           class="inline-flex shrink-0 items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ request()->routeIs('contacts.groups.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                           class="inline-flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all duration-200 h-8 {{ request()->routeIs('contacts.groups.*') ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;">
                             <i class="bi bi-people-fill" aria-hidden="true"></i>Customer Groups
                         </a>
                         <a href="{{ route('contacts.import.index') }}"
                            @if(request()->routeIs('contacts.import.*')) aria-current="page" @endif
-                           class="inline-flex shrink-0 items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ request()->routeIs('contacts.import.*') ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}">
+                           class="inline-flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all duration-200 h-8 {{ request()->routeIs('contacts.import.*') ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;">
                             <i class="bi bi-upload" aria-hidden="true"></i>Import Contacts
                         </a>
                     </nav>
                     @elseif(request()->routeIs('business.*'))
-                    <nav aria-label="Settings" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
+                    <nav aria-label="Settings" class="flex items-center gap-1.5 min-w-0 overflow-x-auto py-1">
                         @foreach([
                             ['business.settings.index', 'Business Settings', 'bi-sliders', request()->routeIs('business.settings.*')],
                             ['business.locations.index', 'Business Locations', 'bi-geo-alt', request()->routeIs('business.locations.*')],
                             ['business.invoice-settings.index', 'Invoice Settings', 'bi-receipt', request()->routeIs('business.invoice-settings.*')],
                             ['business.tax-rates.index', 'Tax Rates', 'bi-percent', request()->routeIs('business.tax-rates.*')],
                         ] as [$settingsRoute, $settingsLabel, $settingsIcon, $isActive])
-                            <a href="{{ route($settingsRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset {{ $isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"><i class="bi {{ $settingsIcon }}" aria-hidden="true"></i>{{ $settingsLabel }}</a>
+                            <a href="{{ route($settingsRoute) }}" @if($isActive) aria-current="page" @endif class="inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap h-8 transition-all {{ $isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}" style="border-radius: 4px;"><i class="bi {{ $settingsIcon }}" aria-hidden="true"></i>{{ $settingsLabel }}</a>
                         @endforeach
                     </nav>
                     @elseif(request()->routeIs('payment-accounts.*'))
-                    <nav aria-label="Payment Accounts" class="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto py-1">
-                        <a href="{{ route('payment-accounts.index') }}" class="inline-flex shrink-0 items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap bg-purple-600 text-white shadow-md shadow-purple-500/30"><i class="bi bi-credit-card-2-front-fill" aria-hidden="true"></i>List Accounts</a>
+                    <nav aria-label="Payment Accounts" class="flex items-center gap-1.5 min-w-0 overflow-x-auto py-1">
+                        <a href="{{ route('payment-accounts.index') }}" class="inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap h-8 bg-purple-600 text-white shadow-sm" style="border-radius: 4px;"><i class="bi bi-credit-card-2-front-fill" aria-hidden="true"></i>List Accounts</a>
                     </nav>
                     @else
                     <div>
@@ -357,9 +452,12 @@
                     </div>
                     @endif
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="sr-only sm:not-sr-only text-xs font-medium text-slate-500">System Online</span>
+                    <div class="flex items-center gap-2 shrink-0 px-3 py-1 rounded-full bg-cyan-50/80 border border-cyan-200/70 shadow-xs">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                        </span>
+                        <span class="sr-only sm:not-sr-only text-xs font-semibold text-cyan-800">System Online</span>
                     </div>
                 </div>
             </header>

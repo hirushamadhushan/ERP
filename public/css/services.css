@@ -1,0 +1,745 @@
+/* ==========================================================================
+   Codeza ERP - Services Module Styles
+   System-harmonized palette: Purple (#7c3aed, #8b5cf6, #9333ea), Slate, and Emerald/Rose
+   ========================================================================== */
+
+.services-container {
+    padding: 1.5rem 1.5rem 3rem;
+    min-height: calc(100vh - 4rem);
+    font-family: inherit;
+}
+
+/* Page Header & Breadcrumbs */
+.services-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.services-title-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+.services-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+.services-subtitle {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+}
+.services-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+}
+.services-breadcrumbs span.active {
+    color: #6d28d9;
+    font-weight: 700;
+}
+
+/* Add New Button (System Purple Style - Compact 4px Rectangular) */
+.btn-add-service {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 6px 14px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+.btn-add-service:hover {
+    background: #6d28d9 !important;
+    box-shadow: 0 2px 5px rgba(124, 58, 237, 0.35) !important;
+    transform: translateY(-1px);
+}
+.btn-add-service:active {
+    transform: translateY(0);
+}
+
+/* Card Wrapper (System Architecture Card: Border-top purple highlight, 4px border-radius) */
+.services-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-top: 3px solid #7c3aed;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 1.25rem 1.5rem 1.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Table Controls: Entries & Search */
+.services-table-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.services-entries-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 600;
+}
+.services-entries-select {
+    appearance: none;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6' viewBox='0 0 8 6' fill='%231e293b'%3E%3Cpath d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 1.5rem 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    height: 30px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+.services-entries-select:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.services-search-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.services-search-input {
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 2rem 4px 10px;
+    font-size: 12px;
+    color: #1e293b;
+    width: 220px;
+    height: 30px;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.15s ease;
+}
+.services-search-input:focus {
+    border-color: #7c3aed;
+    width: 250px;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+.services-search-icon {
+    position: absolute;
+    right: 0.65rem;
+    color: #94a3b8;
+    pointer-events: none;
+    font-size: 0.8rem;
+}
+
+/* Services Table (Photo 4 Exact Style: Dark Navy Header with white text and thin dividers) */
+.services-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 2px;
+    background: #ffffff;
+}
+.services-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+.services-table thead th {
+    background-color: #1e1b4b;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 12px;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+}
+.services-table thead th:last-child {
+    border-right: none;
+}
+.services-table thead th .sort-icon {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.6;
+    font-size: 0.65rem;
+}
+.services-table thead th:hover .sort-icon {
+    opacity: 1;
+}
+
+.services-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+}
+.services-table tbody tr {
+    transition: background-color 0.12s ease;
+}
+.services-table tbody tr:hover {
+    background-color: #faf5ff;
+}
+
+/* Column Specific Styles */
+.col-id {
+    font-weight: 700;
+    color: #64748b;
+    width: 50px;
+}
+.col-code {
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+}
+.col-name {
+    font-weight: 600;
+    color: #0f172a;
+}
+.col-desc {
+    color: #64748b;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.col-unit {
+    color: #475569;
+    font-weight: 500;
+}
+.col-rate {
+    font-weight: 700;
+    color: #047857;
+    white-space: nowrap;
+}
+.col-cost {
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* Action Cell */
+.services-action-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+.btn-service-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #ede9fe;
+    color: #4338ca;
+    border: 1px solid #ddd6fe;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-service-view:hover {
+    background: #ddd6fe;
+    color: #312e81;
+}
+
+/* Status Badges (Photo 4 Exact Rectangular 4px Badges) */
+.badge-service-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+.badge-service-status.is-active {
+    background-color: #059669;
+    color: #ffffff;
+}
+.badge-service-status.is-active:hover {
+    background-color: #047857;
+}
+.badge-service-status.is-inactive {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+.badge-service-status.is-inactive:hover {
+    background-color: #b91c1c;
+}
+
+/* Empty State */
+.services-empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.services-empty-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 4px;
+    background: #faf5ff;
+    border: 1px solid #ede9fe;
+    color: #7c3aed;
+    display: grid;
+    place-items: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+}
+.services-empty-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.35rem;
+}
+.services-empty-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    max-width: 420px;
+    line-height: 1.45;
+    margin-bottom: 1.25rem;
+}
+
+/* Pagination Row */
+.services-pagination-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.services-pagination-row .pagination {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0.25rem;
+}
+.services-pagination-row .page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.services-pagination-row .page-item.active .page-link {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+}
+.services-pagination-row .page-item .page-link:hover:not(.active) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+/* ==========================================================================
+   Modals (Exact Photo 4 & 5 Layout with Codeza ERP System Colors)
+   ========================================================================== */
+.service-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    opacity: 0;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.service-modal-backdrop.is-open {
+    display: flex !important;
+    opacity: 1 !important;
+}
+
+.service-modal-card {
+    background: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.22);
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    max-width: 880px;
+    max-height: calc(100vh - 2.5rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.97) translateY(8px);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.service-modal-backdrop.is-open .service-modal-card {
+    transform: scale(1) translateY(0);
+}
+
+.service-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px 10px;
+    background: #ffffff;
+    border-bottom: none;
+}
+.service-modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin: 0;
+}
+.service-modal-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0.25rem;
+    cursor: pointer;
+    font-weight: 300;
+    transition: color 0.15s ease;
+}
+.service-modal-close:hover {
+    color: #0f172a;
+}
+
+.service-modal-body {
+    padding: 6px 28px 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+.modal-form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.2rem;
+}
+.modal-form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.8rem;
+}
+@media (max-width: 640px) {
+    .modal-form-row-2, .modal-form-row-3 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.modal-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.modal-form-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* Distinctive Underline Input Style (Photo 4) */
+.modal-input, .modal-select {
+    width: 100% !important;
+    border: none !important;
+    border-bottom: 1px dashed #b0bec5 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 6px 0 6px !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+    outline: none !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease !important;
+}
+.modal-input:focus, .modal-select:focus {
+    border-bottom: 1px solid #7c3aed !important;
+}
+.modal-input::placeholder {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+}
+.modal-select {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6' viewBox='0 0 8 6' fill='%231e293b'%3E%3Cpath d='M0 0l4 5 4-5z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0px center !important;
+    padding-right: 16px !important;
+    cursor: pointer !important;
+}
+
+/* Service Consumables Ribbon & Controls (Photo 4 & 5) */
+.service-consumables-section {
+    margin-top: 0.5rem;
+    padding-top: 0.25rem;
+}
+.consumables-ribbon-wrap {
+    margin-bottom: 1.25rem;
+}
+.consumables-header-tab {
+    display: block;
+    width: 320px;
+    text-align: center;
+    padding: 8px 30px 8px 16px;
+    background: #ede9fe;
+    color: #4338ca;
+    font-size: 13px;
+    font-weight: 700;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+.consumables-add-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    justify-content: flex-start;
+}
+.consumables-item-col {
+    width: 270px;
+    flex: none;
+}
+.consumables-qty-col {
+    width: 90px;
+    flex: none;
+}
+.consumables-btn-col {
+    flex: none;
+    padding-bottom: 2px;
+}
+@media (max-width: 640px) {
+    .consumables-add-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .consumables-item-col, .consumables-qty-col {
+        width: 100%;
+    }
+}
+.btn-add-consumable {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 5px 14px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25) !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+    height: 28px !important;
+}
+.btn-add-consumable:hover {
+    background: #6d28d9 !important;
+}
+
+/* Consumables Table (Photo 4 & 5) */
+.consumables-table-wrap {
+    border: 1px solid #cbd5e1;
+    border-radius: 2px;
+    overflow: hidden;
+    background: #ffffff;
+}
+.consumables-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.consumables-table thead th {
+    background: #1e1b4b;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 6px 14px;
+    text-align: left;
+    border-bottom: none;
+}
+.consumables-table thead th.th-item {
+    width: 75%;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+.consumables-table thead th.th-qty {
+    width: 25%;
+}
+.consumables-table tbody td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+.consumables-empty {
+    text-align: center !important;
+    padding: 42px 16px !important;
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+.btn-remove-consumable {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+.btn-remove-consumable:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Modal Footer Buttons (Exact Photo 5 Design & Sizing) */
+.service-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 28px 20px;
+    background: #ffffff;
+    border-top: none;
+}
+.btn-modal-save {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 16px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    cursor: pointer !important;
+    height: 30px !important;
+    box-shadow: 0 1px 2px rgba(124, 58, 237, 0.2) !important;
+    transition: all 0.15s ease !important;
+}
+.btn-modal-save:hover {
+    background: #6d28d9 !important;
+}
+.btn-modal-save-new {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #1e1b4b !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 16px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    cursor: pointer !important;
+    height: 30px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.15s ease !important;
+}
+.btn-modal-save-new:hover {
+    background: #0f172a !important;
+}
+.btn-modal-close {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    color: #e06d63 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    height: 30px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+.btn-modal-close:hover {
+    background: #fff1f2 !important;
+    color: #dc2626 !important;
+}
+
+/* View Service Details Grid */
+.service-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+.service-detail-card {
+    background: #faf8ff;
+    border: 1px solid #ede9fe;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+.service-detail-card dt {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #7c3aed;
+    margin-bottom: 0.25rem;
+}
+.service-detail-card dd {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+}

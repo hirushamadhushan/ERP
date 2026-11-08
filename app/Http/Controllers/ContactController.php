@@ -72,6 +72,29 @@ class ContactController extends Controller
                 'contact_id'
             );
 
+            if ($request->wantsJson() || $request->ajax()) {
+                $address = collect([$contact->address_line_1, $contact->address_line_2, $contact->city, $contact->state, $contact->country])->filter()->implode(', ');
+                return response()->json([
+                    'success' => true,
+                    'contact' => [
+                        'id' => (string)$contact->id,
+                        'name' => $contact->name,
+                        'business' => $contact->business_name,
+                        'contact_id' => $contact->contact_id,
+                        'address' => $address ?: 'N/A',
+                        'delivery' => $contact->shipping_address ?: ($address ?: 'N/A'),
+                        'mobile' => $contact->mobile ?: 'N/A',
+                        'email' => $contact->email ?: 'N/A',
+                        'tax_number' => $contact->tax_number,
+                        'is_vat' => !empty(trim($contact->tax_number ?? '')),
+                        'credit_limit' => number_format((float)($contact->credit_limit ?? 0), 2),
+                        'advance_balance' => number_format((float)($contact->advance_balance ?? 0), 2),
+                        'due_balance' => number_format((float)($contact->due_balance ?? 0), 2),
+                        'last_invoices' => [],
+                    ]
+                ]);
+            }
+
             return redirect()->route('contacts.index', $contact->type === 'both' ? 'customer' : $contact->type)->with('success', 'Contact added successfully.');
         } catch (ValidationException $e) {
             throw $e;

@@ -1,4 +1,4 @@
-<dialog id="contact-dialog" aria-labelledby="contact-dialog-title" class="bg-white text-slate-800 shadow-2xl">
+<dialog id="contact-dialog" aria-labelledby="contact-dialog-title" class="bg-white text-slate-800 shadow-2xl rounded" style="border-radius:4px;border:1px solid #e2e8f0">
     <div class="flex items-center justify-between px-6 py-4 border-b border-purple-100 bg-purple-50 sticky top-0 z-10">
         <h2 id="contact-dialog-title" class="text-base font-bold text-slate-900">Add a new contact</h2>
         <button type="button" data-close-contact class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100" aria-label="Close contact form"><i class="bi bi-x-lg" aria-hidden="true"></i></button>

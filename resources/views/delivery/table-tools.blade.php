@@ -8,31 +8,54 @@ AppPage.ready(() => {
         return /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
     }}});
     const exportButtons = (columns, title) => [
-        {extend:'csvHtml5', text:'<i class="bi bi-filetype-csv"></i> Export to CSV', title, exportOptions:exportOptions(columns)},
-        {extend:'excelHtml5', text:'<i class="bi bi-file-earmark-excel"></i> Export to Excel', title, exportOptions:exportOptions(columns)},
+        {extend:'csvHtml5', text:'<i class="bi bi-download"></i> Export CSV', title, exportOptions:exportOptions(columns)},
+        {extend:'excelHtml5', text:'<i class="bi bi-file-earmark-excel"></i> Export Excel', title, exportOptions:exportOptions(columns)},
         {extend:'print', text:'<i class="bi bi-printer"></i> Print', title, exportOptions:exportOptions(columns)},
-        {extend:'colvis', text:'<i class="bi bi-layout-three-columns"></i> Column visibility'},
-        {extend:'pdfHtml5', text:'<i class="bi bi-file-earmark-pdf"></i> Export to PDF', title, orientation:'landscape', exportOptions:exportOptions(columns)},
+        {extend:'colvis', text:'<i class="bi bi-layout-three-columns"></i> Column Visibility <i class="bi bi-chevron-down text-[10px] ml-0.5"></i>'},
+        {extend:'pdfHtml5', text:'<i class="bi bi-file-earmark-pdf"></i> Export PDF', title, orientation:'landscape', exportOptions:exportOptions(columns)},
     ];
     tables.forEach(config => {
         const table = document.getElementById(config.id);
         if (!table || $.fn.dataTable.isDataTable(table)) return;
+        const searching = config.searching !== undefined ? config.searching : false;
         const api = $(table).DataTable({
-            dom:'<"delivery-table-toolbar flex flex-wrap items-center justify-between gap-4 mb-5"Bf>rt',
-            buttons:exportButtons(config.exportColumns, config.title), paging:false, info:false,
-            searching:true, order:config.order || [], autoWidth:false,
-            columnDefs:config.nonOrderable?.length ? [{orderable:false, targets:config.nonOrderable}] : [],
-            language:{search:'Search this page:', emptyTable:config.emptyTable || 'No records available'},
+            dom: '<"delivery-table-toolbar flex flex-wrap items-center justify-between gap-3 mb-2"B>rt',
+            buttons: exportButtons(config.exportColumns, config.title),
+            paging: false,
+            info: false,
+            searching: searching,
+            order: config.order || [],
+            autoWidth: false,
+            columnDefs: config.nonOrderable?.length ? [{orderable:false, targets:config.nonOrderable}] : [],
+            language: {search:'Search this page:', emptyTable:config.emptyTable || 'No records available'},
         });
         window.StickyDataTables?.install(api);
     });
 });
 </script>
 <style>
-.delivery-table-toolbar .dt-buttons{display:flex;flex-wrap:wrap;gap:.25rem;float:none!important}
-.delivery-table-toolbar .dataTables_filter{float:none!important;margin:0 0 0 auto!important;text-align:left!important;color:#0f172a!important;font-size:14px!important;white-space:nowrap}
-.delivery-table-toolbar .dataTables_filter input{width:165px!important;height:34px!important;min-width:0!important;margin-left:.35rem!important;padding:.4rem .7rem!important;border:1px solid #cbd5e1!important;border-radius:.6rem!important;background:#fff!important;box-shadow:none!important;outline:none!important}
-.delivery-table-toolbar .dataTables_filter input:focus{border-color:#9333ea!important;box-shadow:0 0 0 2px rgb(147 51 234 / .12)!important}
-@media(max-width:640px){.delivery-table-toolbar{align-items:stretch}.delivery-table-toolbar .dataTables_filter{width:100%}.delivery-table-toolbar .dataTables_filter input{width:calc(100% - 7rem)!important}}
+.delivery-table-toolbar { margin-bottom: 0.75rem !important; }
+.delivery-table-toolbar .dt-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; float: none !important; }
+.delivery-table-toolbar .dt-buttons button.dt-button {
+    font-size: 12px !important;
+    padding: 6px 13px !important;
+    border-radius: 9px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    line-height: 1.4 !important;
+    transition: all .15s ease !important;
+}
+.delivery-table-toolbar .dt-buttons button.dt-button:hover {
+    background: #f8fafc !important;
+    color: #1e1b4b !important;
+    border-color: #cbd5e1 !important;
+}
+.delivery-table-toolbar .dataTables_filter { display: none !important; }
 </style>
 @endpush

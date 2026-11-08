@@ -3,7 +3,7 @@
 @section('subtitle', 'Manage your units')
 @section('content')
 @php
-    $input = 'w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all';
+    $input = 'w-full px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all h-8';
 @endphp
 <div id="unit-toast" class="unit-toast hidden" role="status"><div class="flex items-center gap-3"><i id="unit-toast-icon" class="bi bi-shield-exclamation text-2xl"></i><p id="unit-toast-message" class="m-0 leading-5"></p></div></div>
 
@@ -14,12 +14,12 @@
             <span class="text-xs font-medium text-slate-400">Manage your units</span>
         </h1>
     </div>
-    <button id="add-unit" type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">
+    <button id="add-unit" type="button" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-500/20 transition-all h-8">
         <i class="bi bi-plus-lg text-sm" aria-hidden="true"></i> Add
     </button>
 </div>
 
-<section class="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 sm:p-6">
+<section class="bg-white rounded border border-purple-100 shadow-sm p-4 sm:p-6" style="border-radius:4px;border-top:3px solid #7c3aed;">
     <div class="sticky-table-host">
         <table data-async-table id="units-table" class="w-full text-left" style="width:100%">
             <thead><tr><th>Name</th><th>Short name</th><th>Allow decimal <button type="button" data-unit-help="unit-decimal-help" aria-describedby="unit-decimal-help" aria-label="About decimal quantities" class="text-purple-600 hover:text-purple-700"><i class="bi bi-info-circle-fill" aria-hidden="true"></i></button></th><th>Action</th></tr></thead>
@@ -29,8 +29,8 @@
                     <td class="text-slate-600">{{ $unit->short_name }}</td>
                     <td class="text-slate-600">{{ $unit->allow_decimal ? 'Yes' : 'No' }}</td>
                     <td><div class="flex items-center gap-2 whitespace-nowrap">
-                        <button type="button" class="edit-unit inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-unit="{{ json_encode($unit->only(['id', 'name', 'short_name', 'allow_decimal', 'base_unit_id', 'base_unit_multiplier'])) }}" data-url="{{ route('products.units.update', $unit) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Edit</button>
-                        <form data-async-form class="delete-unit" method="POST" action="{{ route('products.units.destroy', $unit) }}">@csrf @method('DELETE')<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all" type="submit"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
+                        <button type="button" class="edit-unit inline-flex items-center gap-1.5 px-3 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all" data-unit="{{ json_encode($unit->only(['id', 'name', 'short_name', 'allow_decimal', 'base_unit_id', 'base_unit_multiplier'])) }}" data-url="{{ route('products.units.update', $unit) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Edit</button>
+                        <form data-async-form class="delete-unit" method="POST" action="{{ route('products.units.destroy', $unit) }}">@csrf @method('DELETE')<button class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all" type="submit"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
                     </div></td>
                 </tr>
             @endforeach</tbody>
@@ -38,7 +38,7 @@
     </div>
 </section>
 
-<dialog id="unit-dialog" aria-labelledby="unit-title" class="bg-white shadow-2xl text-slate-800 rounded-2xl p-0 overflow-hidden border-0">
+<dialog id="unit-dialog" aria-labelledby="unit-title" class="bg-white shadow-2xl text-slate-800 rounded p-0 overflow-hidden border-0" style="border-radius:4px">
     <div class="flex justify-between items-center px-6 py-4 bg-purple-50 border-b border-purple-100"><h2 id="unit-title" class="text-base font-bold text-slate-800">Add Unit</h2><button type="button" data-close-unit aria-label="Close unit form" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100 flex items-center justify-center transition-colors"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
     <form data-async-form id="unit-form" method="POST" action="{{ old('_unit_id') ? route('products.units.update', old('_unit_id')) : route('products.units.store') }}">
         @csrf
@@ -62,7 +62,7 @@
                 @if($units->whereNull('base_unit_id')->isEmpty())<p class="text-xs text-slate-500">Create a base unit first, with the multiple option unchecked.</p>@endif
             </div>
         </div>
-        <div class="flex justify-end gap-2 px-6 py-4 border-t border-purple-100 bg-slate-50/50"><button id="save-unit" type="submit" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 transition-all">Save</button><button type="button" data-close-unit class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold transition-all">Close</button></div>
+        <div class="flex justify-end gap-2 px-6 py-4 border-t border-purple-100 bg-slate-50/50"><button id="save-unit" type="submit" class="px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-500/20 transition-all h-8">Save</button><button type="button" data-close-unit class="px-4 py-1.5 rounded bg-transparent text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all h-8">Close</button></div>
     </form>
     <div role="tooltip" id="unit-multiple-help" class="unit-tip" hidden>Define this unit as the multiple of other units<br><strong>Ex: 1 dozen = 12 pieces</strong></div>
 </dialog>
@@ -70,7 +70,7 @@
 @endsection
 @push('scripts')
 <style>
-    #unit-dialog { margin:auto; padding:0; border:0; border-radius:1rem; width:calc(100% - 2rem); max-width:38rem; max-height:calc(100dvh - 2rem); }
+    #unit-dialog { margin:auto; padding:0; border:1px solid #e2e8f0; border-radius:4px; width:calc(100% - 2rem); max-width:38rem; max-height:calc(100dvh - 2rem); box-shadow:0 15px 40px rgba(0,0,0,0.22); }
     #unit-dialog::backdrop { background:rgb(15 23 42 / .5); backdrop-filter:blur(3px); }
     .unit-tip { position:fixed; margin:0; width:17rem; padding:1rem; background:white; color:#334155; border:1px solid #e2e8f0; border-radius:.5rem; box-shadow:0 8px 20px #0002; font-size:.8125rem; line-height:1.5; font-weight:400; text-transform:none; z-index:100; }
     #units-table_wrapper .dt-buttons { display:flex; flex-wrap:wrap; gap:.25rem; }

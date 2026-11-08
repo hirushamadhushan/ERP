@@ -1,15 +1,411 @@
-.sales-dashboard{color:#163d56;max-width:1600px;margin:auto}
-.sales-breadcrumb{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fff;border-radius:5px;padding:13px 18px;margin-bottom:26px}
-.sales-breadcrumb h1{font-size:17px;font-weight:500;margin:0}.sales-breadcrumb>span{font-size:12px;color:#8390a0}.sales-breadcrumb b{margin:0 14px;font-weight:400}
-.sales-dashboard-panel{background:white;border-radius:6px;overflow:hidden}.sales-actions-wrap{padding:24px 36px;border-bottom:1px solid #e7e9ef}
-.sales-actions{position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6.5%;padding:32px 4.5%;border-radius:7px;background:radial-gradient(ellipse at 50% 90%,#71d3e180,transparent 65%),linear-gradient(120deg,#527f92,#164b66 50%,#718b99);overflow:hidden}
-.sales-actions:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;background:repeating-linear-gradient(90deg,transparent 0 75px,#a5efff55 76px 78px,transparent 79px 125px),repeating-linear-gradient(0deg,transparent 0 40px,#a5efff44 41px 43px,transparent 44px 80px);transform:perspective(450px) rotateY(-15deg) scale(1.3)}
-.sales-action-card{position:relative;text-align:center;border-radius:18px;background:#d8e6e9e8;min-height:218px;padding:48px 22px 20px;box-shadow:0 8px 20px #14394b15}
-.sales-card-icon{display:grid;place-items:center;position:absolute;top:-27px;left:50%;transform:translateX(-50%);width:57px;height:57px;border:3px solid white;background:#174a68;color:white;border-radius:50%;box-shadow:0 4px 7px #102f4866;font-size:25px}
-.sales-action-card h2{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 9px;color:#184b68;text-shadow:0 2px 3px #24577235}
-.sales-action-card p{font-size:12px;color:#4d5d65;line-height:1.4;max-width:240px;min-height:34px;margin:0 auto 19px}
-.sales-primary{display:inline-flex;gap:4px;align-items:center;justify-content:center;min-width:120px;padding:11px 18px;background:#174966;color:#fff;font-size:12px;font-weight:800;border-radius:5px;box-shadow:0 3px 6px #153c4940;transition:background .15s,transform .15s}
-.sales-primary:hover{background:#0b354f;transform:translateY(-1px)}.sales-primary:focus-visible,.sales-list-link:focus-visible{outline:3px solid #1b98c7;outline-offset:4px}.sales-list-link{display:block;width:max-content;margin:9px auto 0;font-size:11px;text-decoration:underline;color:#345b70}.sales-unavailable{display:inline-block;font-size:12px;padding:11px;color:#576d7a}
-.sales-recents{padding:25px 36px 48px}.sales-recents h2{font-size:16px;font-weight:500;margin:0 0 10px}.sales-table-scroll{overflow-x:auto;padding:0 12px}.sales-recents table{width:100%;border-collapse:collapse;font-size:12px;min-width:780px}.sales-recents th,.sales-recents td{border:1px solid #d9e0e9;padding:14px 9px;vertical-align:middle}.sales-recents th{background:#d8edf7;color:#0d2332;font-weight:700;text-align:center}.sales-recents th:first-child{width:27%}.sales-recents th:nth-child(2){width:9%}.sales-recents th:nth-child(3),.sales-recents th:nth-child(4){width:19%}.sales-recents th:nth-child(5){width:16%}.sales-recents td:nth-child(n+3){text-align:center}.sales-recents tbody tr:hover{background:#f5fafc}.sales-recents a:hover{text-decoration:underline;color:#1177a3}.sales-status{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;white-space:nowrap;font-size:10px;font-weight:700;color:#5f5c4d}.sales-status i{width:10px;height:10px;border-radius:50%;background:#ffbe0b}.sales-status.is-success{background:#ffedb5}.sales-status.is-follow-up{background:#ffd1cc}.sales-status.is-follow-up i{background:#ff5752}.sales-status.is-draft{background:#e8edf5}.sales-status.is-draft i{background:#8796ad}.sales-empty{padding:48px!important;text-align:center!important;color:#718096}.sales-notice{padding:14px;background:#ecfdf5;color:#047857;margin-bottom:20px;border-radius:6px}
-@media(max-width:1000px){.sales-actions{gap:22px;padding:38px 22px 24px}.sales-action-card{padding-inline:12px}.sales-actions-wrap,.sales-recents{padding-inline:20px}}
-@media(max-width:700px){.sales-actions{grid-template-columns:1fr;gap:46px;padding:40px 22px 24px}.sales-action-card{min-height:200px}.sales-breadcrumb>span{font-size:10px}.sales-actions-wrap,.sales-recents{padding-inline:12px}.sales-table-scroll{padding:0}}
+/* ==========================================================================
+   Codeza ERP - Modern Sales & Transactions Dashboard
+   Ultra-premium, cohesive with the Purple-Indigo-Cyan design system.
+   ========================================================================== */
+
+.sales-dashboard {
+    max-width: 1600px;
+    margin: 0 auto;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Breadcrumb Bar */
+.sales-breadcrumb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #f3e8ff;
+    border-radius: 16px;
+    padding: 14px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.sales-breadcrumb h1 {
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.sales-breadcrumb > span {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.sales-breadcrumb b {
+    margin: 0 10px;
+    font-weight: 400;
+    color: #cbd5e1;
+}
+
+/* Success Notice */
+.sales-notice {
+    padding: 14px 20px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    margin-bottom: 24px;
+    border-radius: 14px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+/* Main Dashboard Panel */
+.sales-dashboard-panel {
+    background: #ffffff;
+    border: 1px solid #f3e8ff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px -2px rgba(124, 58, 237, 0.05);
+}
+
+.sales-actions-wrap {
+    padding: 28px 32px;
+    border-bottom: 1px solid #f8fafc;
+}
+
+/* Modern Gradient Hero Panel for Actions */
+.sales-actions {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+    padding: 44px 36px 36px;
+    border-radius: 20px;
+    background: radial-gradient(circle at 15% 25%, rgba(124, 58, 237, 0.55) 0%, transparent 45%),
+                radial-gradient(circle at 85% 75%, rgba(6, 182, 212, 0.4) 0%, transparent 40%),
+                linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #0f172a 100%);
+    box-shadow: 0 15px 35px -5px rgba(30, 27, 75, 0.35);
+    overflow: hidden;
+}
+
+/* Subtle Modern Dot-Matrix Overlay instead of 90s 3D grid */
+.sales-actions:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.18;
+    background-image: radial-gradient(#ffffff 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+/* Glassmorphism Action Cards */
+.sales-action-card {
+    position: relative;
+    text-align: center;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    min-height: 220px;
+    padding: 46px 24px 24px;
+    box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sales-action-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 35px -8px rgba(124, 58, 237, 0.22), 0 0 0 1px rgba(255, 255, 255, 1);
+}
+
+/* Circular Top Icons - Gradient-filled */
+.sales-card-icon {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    border: 3.5px solid #ffffff;
+    color: #ffffff;
+    border-radius: 50%;
+    font-size: 24px;
+    transition: transform 0.25s ease;
+}
+
+.sales-action-card:hover .sales-card-icon {
+    transform: translateX(-50%) scale(1.08);
+}
+
+/* Individual Card Icon Gradients */
+.sales-action-card:nth-child(1) .sales-card-icon {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    box-shadow: 0 8px 18px rgba(124, 58, 237, 0.4);
+}
+
+.sales-action-card:nth-child(2) .sales-card-icon {
+    background: linear-gradient(135deg, #06b6d4, #0284c7);
+    box-shadow: 0 8px 18px rgba(6, 182, 212, 0.4);
+}
+
+.sales-action-card:nth-child(3) .sales-card-icon {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.4);
+}
+
+.sales-action-card h2 {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    color: #0f172a;
+}
+
+.sales-action-card p {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.5;
+    max-width: 250px;
+    min-height: 36px;
+    margin: 0 auto 20px;
+}
+
+/* Action Primary Buttons - Modern Rounded Pill Gradients */
+.sales-primary {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    min-width: 125px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    text-decoration: none;
+}
+
+.sales-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.45);
+    filter: brightness(1.05);
+    color: #ffffff;
+}
+
+.sales-action-card:nth-child(2) .sales-primary {
+    background: linear-gradient(135deg, #06b6d4, #0284c7);
+    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+}
+
+.sales-action-card:nth-child(2) .sales-primary:hover {
+    box-shadow: 0 8px 20px rgba(6, 182, 212, 0.45);
+}
+
+.sales-action-card:nth-child(3) .sales-primary {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
+
+.sales-action-card:nth-child(3) .sales-primary:hover {
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.45);
+}
+
+.sales-list-link {
+    display: inline-block;
+    width: max-content;
+    margin: 10px auto 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: #0284c7;
+    transition: color 0.15s ease;
+}
+
+.sales-list-link:hover {
+    color: #0369a1;
+    text-decoration: underline;
+}
+
+.sales-unavailable {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 10px 16px;
+    color: #94a3b8;
+    background: #f1f5f9;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Recent Sales Table - Modern SaaS styling
+   ========================================================================== */
+
+.sales-recents {
+    padding: 28px 36px 44px;
+    background: #ffffff;
+}
+
+.sales-recents h2 {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #0f172a;
+    margin: 0 0 16px;
+}
+
+.sales-table-scroll {
+    overflow-x: auto;
+    border: 1px solid #f1f5f9;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.sales-recents table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.78rem;
+    min-width: 780px;
+}
+
+.sales-recents th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 12px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    text-align: left;
+}
+
+.sales-recents td {
+    padding: 14px 18px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    color: #334155;
+    font-weight: 500;
+}
+
+.sales-recents tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.sales-recents tbody tr:hover {
+    background-color: rgba(250, 245, 255, 0.5);
+}
+
+.sales-recents tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.sales-recents a {
+    color: #7c3aed;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.sales-recents a:hover {
+    color: #6d28d9;
+    text-decoration: underline;
+}
+
+/* Modern Status Badges */
+.sales-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.sales-status i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.sales-status.is-success {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.sales-status.is-success i {
+    background: #10b981;
+}
+
+.sales-status.is-follow-up {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.sales-status.is-follow-up i {
+    background: #f59e0b;
+}
+
+.sales-status.is-draft {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.sales-status.is-draft i {
+    background: #94a3b8;
+}
+
+.sales-empty {
+    padding: 48px !important;
+    text-align: center !important;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .sales-actions {
+        gap: 24px;
+        padding: 40px 24px 28px;
+    }
+    .sales-action-card {
+        padding-inline: 16px;
+    }
+    .sales-actions-wrap,
+    .sales-recents {
+        padding-inline: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sales-actions {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        padding: 44px 20px 28px;
+    }
+    .sales-action-card {
+        min-height: 190px;
+    }
+    .sales-breadcrumb > span {
+        font-size: 0.68rem;
+    }
+    .sales-actions-wrap,
+    .sales-recents {
+        padding-inline: 14px;
+    }
+}

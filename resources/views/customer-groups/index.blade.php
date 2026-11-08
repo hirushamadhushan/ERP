@@ -3,12 +3,12 @@
 @section('subtitle', 'Manage customer groups')
 @section('content')
 @php
-    $inputClass = 'w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-500';
-    $buttonClass = 'inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20 transition-colors';
+    $inputClass = 'w-full px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-slate-800 placeholder-slate-400 transition-all h-8';
+    $buttonClass = 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded shadow-sm transition-colors h-8';
 @endphp
 @if(session('success'))<div role="status" class="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm">{{ session('success') }}</div>@endif
 @if(session('group_error'))<div role="alert" class="mb-6 p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">{{ session('group_error') }}</div>@endif
-<section class="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 sm:p-6">
+<section class="bg-white rounded border border-purple-100 shadow-sm p-4 sm:p-6" style="border-radius: 4px; border-top: 3px solid #7c3aed;">
     <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
         <h1 class="text-lg font-bold text-slate-900">All Customer Groups</h1>
         <button id="add-group" type="button" class="{{ $buttonClass }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</button>
@@ -21,8 +21,8 @@
                     <tr>
                         <td>{{ $group->name }}</td><td>{{ $group->calculation_type === 'percentage' ? $group->calculation_percentage : '—' }}</td><td>{{ $group->selling_price_group ?? '—' }}</td>
                         <td><div class="flex items-center gap-2 whitespace-nowrap">
-                            <button type="button" class="edit-group px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold" data-id="{{ $group->id }}" data-name="{{ $group->name }}" data-type="{{ $group->calculation_type }}" data-price-group="{{ $group->selling_price_group }}" data-percentage="{{ $group->calculation_percentage }}" data-url="{{ route('contacts.groups.update', $group) }}"><i class="bi bi-pencil" aria-hidden="true"></i> Edit</button>
-                            <form data-async-form method="POST" action="{{ route('contacts.groups.destroy', $group) }}" class="delete-group">@csrf @method('DELETE')<button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
+                            <button type="button" class="edit-group px-2.5 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-semibold" style="border-radius: 4px;" data-id="{{ $group->id }}" data-name="{{ $group->name }}" data-type="{{ $group->calculation_type }}" data-price-group="{{ $group->selling_price_group }}" data-percentage="{{ $group->calculation_percentage }}" data-url="{{ route('contacts.groups.update', $group) }}"><i class="bi bi-pencil" aria-hidden="true"></i> Edit</button>
+                            <form data-async-form method="POST" action="{{ route('contacts.groups.destroy', $group) }}" class="delete-group">@csrf @method('DELETE')<button type="submit" class="px-2.5 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold" style="border-radius: 4px;"><i class="bi bi-trash" aria-hidden="true"></i> Delete</button></form>
                         </div></td>
                     </tr>
                 @endforeach
@@ -30,10 +30,10 @@
         </table>
     </div>
 </section>
-<dialog id="group-dialog" aria-labelledby="group-dialog-title" class="bg-white text-slate-800 shadow-2xl">
+<dialog id="group-dialog" aria-labelledby="group-dialog-title" class="bg-white text-slate-800 shadow-2xl rounded border border-slate-200" style="border-radius: 4px;">
     <div class="flex items-center justify-between px-6 py-4 bg-purple-50 border-b border-purple-100">
         <h2 id="group-dialog-title" class="text-base font-bold">Add Customer Group</h2>
-        <button type="button" data-close-group aria-label="Close customer group form" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-purple-100"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <button type="button" data-close-group aria-label="Close customer group form" class="w-8 h-8 rounded text-slate-500 hover:bg-purple-100 flex items-center justify-center"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>
     <form data-async-form id="group-form" method="POST" action="{{ old('_group_id') ? route('contacts.groups.update', old('_group_id')) : route('contacts.groups.store') }}">
         @csrf
@@ -60,14 +60,14 @@
         </div>
         <div class="flex justify-end gap-2 px-6 py-4 border-t border-purple-100">
             <button id="save-group" type="submit" class="{{ $buttonClass }}">Save</button>
-            <button type="button" data-close-group class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600">Close</button>
+            <button type="button" data-close-group class="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-600 h-8" style="border-radius: 4px;">Close</button>
         </div>
     </form>
 </dialog>
 @endsection
 @push('scripts')
 <style>
-    #group-dialog { border: 0; margin: auto; padding: 0; width: calc(100% - 2rem); max-width: 38rem; max-height: calc(100dvh - 2rem); border-radius: 1rem; }
+    #group-dialog { border: 0; margin: auto; padding: 0; width: calc(100% - 2rem); max-width: 38rem; max-height: calc(100dvh - 2rem); border-radius: 4px; }
     #group-dialog::backdrop { background: rgb(15 23 42 / .5); backdrop-filter: blur(3px); }
     .percentage-tooltip { display: none; position: absolute; z-index: 20; bottom: 100%; left: 0; width: 17rem; max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; line-height: 1.5; }
     .percentage-info:hover .percentage-tooltip, .percentage-info:focus-within .percentage-tooltip { display: block; }

@@ -7,7 +7,7 @@
 <div class="space-y-6">
 
     <!-- Card Container -->
-    <div class="bg-white rounded-2xl border border-purple-100 p-6 shadow-sm">
+    <div class="bg-white rounded border border-purple-100 p-6 shadow-sm" style="border-radius: 4px; border-top: 3px solid #7c3aed;">
 
         <!-- Card Header -->
         <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
@@ -15,7 +15,7 @@
                 <h2 class="text-lg font-bold text-slate-900">All users</h2>
                 <p class="text-xs text-slate-400">View, add, edit and manage system user accounts</p>
             </div>
-            <button id="openFullUserBtn" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20 transition-all duration-200 cursor-pointer">
+            <button id="openFullUserBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded shadow-sm transition-all h-8 cursor-pointer" style="border-radius: 4px;">
                 <i class="bi bi-plus-lg text-sm"></i> Add
             </button>
         </div>
@@ -121,10 +121,10 @@
 
 <!-- Full Add User form: the shell opens immediately and AJAX supplies the form. -->
 <div id="fullUserModal" class="fixed inset-0 z-50 hidden bg-slate-950/55 p-3 backdrop-blur-sm sm:p-5" role="dialog" aria-modal="true" aria-labelledby="full-user-title">
-    <div class="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl">
+    <div class="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded bg-slate-50 shadow-2xl" style="border-radius: 4px;">
         <div class="flex shrink-0 items-center justify-between border-b border-purple-100 bg-white px-5 py-3.5">
             <div><h2 id="full-user-title" class="text-base font-bold text-slate-900"><i class="bi bi-person-plus-fill mr-2 text-purple-600"></i>Add user</h2><p class="mt-0.5 text-[11px] text-slate-400">Create the account, role and access rules</p></div>
-            <button id="closeFullUserModal" type="button" class="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label="Close add user form">&times;</button>
+            <button id="closeFullUserModal" type="button" class="grid h-8 w-8 place-items-center rounded bg-slate-100 text-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600" style="border-radius: 4px;" aria-label="Close add user form">&times;</button>
         </div>
         <div id="fullUserModalBody" class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
             <div id="fullUserLoading" class="flex min-h-72 items-center justify-center">
@@ -136,7 +136,7 @@
 
 <!-- ==================== EDIT USER IN-PAGE AJAX MODAL ==================== -->
 <div id="editUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl border border-purple-100 shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+    <div class="bg-white rounded border border-purple-100 shadow-2xl w-full max-w-lg overflow-hidden transform transition-all" style="border-radius: 4px;">
         <div class="flex items-center justify-between px-6 py-4 bg-purple-50 border-b border-purple-100">
             <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-pencil-square text-purple-600"></i> Edit User
@@ -151,19 +151,19 @@
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Username</label>
-                <input type="text" id="edit_username" name="username" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" required>
+                <input type="text" id="edit_username" name="username" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:border-purple-600 h-8" required>
                 <span class="text-xs text-rose-500 error-text username_error"></span>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name</label>
-                <input type="text" id="edit_name" name="name" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" required>
+                <input type="text" id="edit_name" name="name" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:border-purple-600 h-8" required>
                 <span class="text-xs text-rose-500 error-text name_error"></span>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
-                <input type="email" id="edit_email" name="email" autocapitalize="none" pattern="[a-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}" title="Use a valid email address with lowercase letters only." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" required>
+                <input type="email" id="edit_email" name="email" autocapitalize="none" pattern="[a-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}" title="Use a valid email address with lowercase letters only." class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:border-purple-600 h-8" required>
                 <span class="text-xs text-rose-500 error-text email_error"></span>
             </div>
 
@@ -171,7 +171,7 @@
                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password <span class="text-slate-400 font-normal lowercase">(leave blank to keep current)</span></label>
                 <div class="relative">
                     <input type="password" name="password" id="edit_password"
-                        class="w-full px-3 py-2 pr-10 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600" placeholder="••••••••">
+                        class="w-full px-3 py-1.5 pr-10 border border-slate-300 rounded text-xs focus:outline-none focus:border-purple-600 h-8" placeholder="••••••••">
                     <button type="button" onclick="togglePwd('edit_password', this)"
                         class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition">
                         <i class="bi bi-eye-fill text-sm"></i>
@@ -184,7 +184,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Role</label>
-                    <select id="edit_role" name="role" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600">
+                    <select id="edit_role" name="role" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:border-purple-600 h-8">
                         @foreach($roles->unique('name') as $r)
                             <option value="{{ $r->name }}">{{ $r->name }}</option>
                         @endforeach
@@ -193,7 +193,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Status</label>
-                    <select id="edit_status" name="status" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-purple-600">
+                    <select id="edit_status" name="status" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:border-purple-600 h-8">
                         <option value="active">Active</option>
                         <option value="offline">Offline</option>
                         <option value="suspended">Suspended</option>
@@ -201,9 +201,9 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button type="button" class="closeModalBtn px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-500/20">Update User</button>
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <button type="button" class="closeModalBtn px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded h-8" style="border-radius: 4px;">Cancel</button>
+                <button type="submit" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded shadow-sm h-8" style="border-radius: 4px;">Update User</button>
             </div>
         </form>
     </div>
@@ -211,7 +211,7 @@
 
 <!-- ==================== VIEW USER IN-PAGE AJAX MODAL ==================== -->
 <div id="viewUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-    <div class="bg-white rounded-2xl border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="bg-white rounded border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden" style="border-radius: 4px;">
         <div class="flex items-center justify-between px-6 py-4 bg-purple-50 border-b border-purple-100">
             <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-person-badge text-purple-600"></i> User Details
@@ -243,7 +243,7 @@
         </div>
 
         <div class="flex justify-end p-4 bg-slate-50 border-t border-slate-100">
-            <button type="button" class="closeModalBtn px-4 py-2 text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl">Close</button>
+            <button type="button" class="closeModalBtn px-3 py-1.5 text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded h-8" style="border-radius: 4px;">Close</button>
         </div>
     </div>
 </div>
