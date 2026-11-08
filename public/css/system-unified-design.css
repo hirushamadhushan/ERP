@@ -642,4 +642,6 @@ span.rounded-full[class*="bg-purple"],
 span.rounded-full[class*="bg-blue"],
 span.rounded-full[class*="bg-slate"] {
     border-radius: 4px !important;
-    font-size: 11px !
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
