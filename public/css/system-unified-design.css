@@ -200,6 +200,7 @@ a[class*="edit-"] {
     font-weight: 600 !important;
     transition: all 0.15s ease !important;
 }
+
 .edit-unit:hover,
 .edit-variation:hover,
 .edit-warranty:hover,
@@ -226,6 +227,7 @@ button[class*="delete-"] {
     font-weight: 600 !important;
     transition: all 0.15s ease !important;
 }
+
 .delete-unit button:hover,
 .delete-variation button:hover,
 .delete-warranty button:hover,
@@ -250,6 +252,7 @@ a[class*="view-"] {
     font-weight: 600 !important;
     transition: all 0.15s ease !important;
 }
+
 .btn-service-view:hover,
 button[class*="view-"]:hover,
 a[class*="view-"]:hover {
@@ -277,8 +280,8 @@ dialog::backdrop,
 }
 
 /* Dialog Header - Seamless White with Slate/Dark Title */
-dialog > div.flex.justify-between.items-center:first-child,
-dialog > header,
+dialog>div.flex.justify-between.items-center:first-child,
+dialog>header,
 .service-modal-head {
     background: #ffffff !important;
     border-bottom: none !important;
@@ -288,9 +291,9 @@ dialog > header,
     justify-content: space-between !important;
 }
 
-dialog > div.flex.justify-between.items-center:first-child h2,
-dialog > header h2,
-dialog > header span[id$="-heading"],
+dialog>div.flex.justify-between.items-center:first-child h2,
+dialog>header h2,
+dialog>header span[id$="-heading"],
 .service-modal-title {
     font-size: 1.15rem !important;
     font-weight: 700 !important;
@@ -300,8 +303,8 @@ dialog > header span[id$="-heading"],
 }
 
 /* Close 'x' icon at top right of dialogs */
-dialog > div.flex.justify-between.items-center:first-child button,
-dialog > header button,
+dialog>div.flex.justify-between.items-center:first-child button,
+dialog>header button,
 .service-modal-close {
     background: transparent !important;
     border: none !important;
@@ -314,25 +317,25 @@ dialog > header button,
     transition: color 0.15s ease !important;
 }
 
-dialog > div.flex.justify-between.items-center:first-child button:hover,
-dialog > header button:hover,
+dialog>div.flex.justify-between.items-center:first-child button:hover,
+dialog>header button:hover,
 .service-modal-close:hover {
     color: #0f172a !important;
     background: transparent !important;
 }
 
 /* Dialog Body */
-dialog > form > div.p-6,
-dialog > form > div.p-5,
-dialog > div.p-6,
+dialog>form>div.p-6,
+dialog>form>div.p-5,
+dialog>div.p-6,
 .service-modal-body {
     padding: 8px 28px 16px !important;
 }
 
 /* Dialog Footer */
-dialog > form > div.flex.justify-end,
-dialog > form > footer,
-dialog > div.flex.justify-end,
+dialog>form>div.flex.justify-end,
+dialog>form>footer,
+dialog>div.flex.justify-end,
 .service-modal-footer {
     background: #ffffff !important;
     border-top: none !important;
@@ -540,6 +543,7 @@ table[data-async-table] tbody tr:hover,
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.15s ease !important;
 }
+
 .dt-buttons .dt-button:hover {
     background: #7c3aed !important;
     color: #ffffff !important;
@@ -558,6 +562,7 @@ table[data-async-table] tbody tr:hover,
     font-weight: 600 !important;
     transition: all 0.15s ease !important;
 }
+
 .app-main-shell header nav a.bg-purple-600,
 .app-main-shell header nav a[aria-current="page"] {
     background: #7c3aed !important;
@@ -570,78 +575,78 @@ table[data-async-table] tbody tr:hover,
    8. Overriding Bubbly Rounded Classes System-Wide
    -------------------------------------------------------------------------- */
 button:is(.rounded-xl, .rounded-2xl, .rounded-lg):not(#sidebar-toggle),
-a:is(.rounded-xl, .rounded-2xl, .rounded-lg):is([class*="bg-purple"], [class*="btn"], [id^="add"]) {
-    border-radius: 4px !important;
-}
+    a:is(.rounded-xl, .rounded-2xl, .rounded-lg):is([class*="bg-purple"], [class*="bg-emerald"], [class*="bg-indigo"], [class*="btn"], [id^="add"]) {
+        border-radius: 4px !important;
+    }
 
-/* All Card Containers in ERP */
-section:is(.rounded-2xl, .rounded-xl),
-div.bg-white:is(.rounded-2xl, .rounded-xl),
-.services-card,
-.erp-card-container,
-.catalog-card,
-.serial-card {
-    border-radius: 4px !important;
-    border: 1px solid #e2e8f0 !important;
-    border-top: 3px solid #7c3aed !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-}
+    /* All Card Containers in ERP */
+    section:is(.rounded-2xl, .rounded-xl),
+    div.bg-white:is(.rounded-2xl, .rounded-xl),
+    .services-card,
+    .erp-card-container,
+    .catalog-card,
+    .serial-card {
+        border-radius: 4px !important;
+        border: 1px solid #e2e8f0 !important;
+        border-top: 3px solid #7c3aed !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
 
-/* Modal Dialogs System Wide */
-dialog,
-.modal-card,
-.service-modal-card,
-#addUserModal > div,
-#fullUserModal > div,
-#editUserModal > div,
-#viewUserModal > div,
-#addRoleModal > div,
-#editRoleModal > div,
-#confirm-dialog {
-    border-radius: 4px !important;
-}
+    /* Modal Dialogs System Wide */
+    dialog,
+    .modal-card,
+    .service-modal-card,
+    #addUserModal>div,
+    #fullUserModal>div,
+    #editUserModal>div,
+    #viewUserModal>div,
+    #addRoleModal>div,
+    #editRoleModal>div,
+    #confirm-dialog {
+        border-radius: 4px !important;
+    }
 
-/* System Wide Inputs in forms & dialogs */
-input:is(.rounded-xl, .rounded-2xl, .rounded-lg):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-select:is(.rounded-xl, .rounded-2xl, .rounded-lg),
-textarea:is(.rounded-xl, .rounded-2xl, .rounded-lg) {
-    border-radius: 4px !important;
-    font-size: 12px !important;
-}
+    /* System Wide Inputs in forms & dialogs */
+    input:is(.rounded-xl, .rounded-2xl, .rounded-lg):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    select:is(.rounded-xl, .rounded-2xl, .rounded-lg),
+    textarea:is(.rounded-xl, .rounded-2xl, .rounded-lg) {
+        border-radius: 4px !important;
+        font-size: 12px !important;
+    }
 
-input:is(.rounded-xl, .rounded-2xl, .rounded-lg):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([rows]),
-select:is(.rounded-xl, .rounded-2xl, .rounded-lg) {
-    height: 32px !important;
-    min-height: 32px !important;
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
-}
+    input:is(.rounded-xl, .rounded-2xl, .rounded-lg):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([rows]),
+    select:is(.rounded-xl, .rounded-2xl, .rounded-lg) {
+        height: 32px !important;
+        min-height: 32px !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
 
-/* Row Action Buttons in Tables */
-table button:is(.rounded-lg, .rounded-xl),
-table a:is(.rounded-lg, .rounded-xl) {
-    border-radius: 4px !important;
-    font-size: 11px !important;
-    padding: 3px 8px !important;
-}
+    /* Row Action Buttons in Tables */
+    table button:is(.rounded-lg, .rounded-xl),
+    table a:is(.rounded-lg, .rounded-xl) {
+        border-radius: 4px !important;
+        font-size: 11px !important;
+        padding: 3px 8px !important;
+    }
 
-/* Table Wrappers */
-.sticky-table-host,
-.services-table-wrap {
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 2px !important;
-}
+    /* Table Wrappers */
+    .sticky-table-host,
+    .services-table-wrap {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 2px !important;
+    }
 
-/* Status Badges */
-.badge-service-status,
-[class*="badge-"]:not(.notification-badge),
-span.rounded-full[class*="bg-emerald"],
-span.rounded-full[class*="bg-rose"],
-span.rounded-full[class*="bg-amber"],
-span.rounded-full[class*="bg-purple"],
-span.rounded-full[class*="bg-blue"],
-span.rounded-full[class*="bg-slate"] {
-    border-radius: 4px !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-}
+    /* Status Badges */
+    .badge-service-status,
+    [class*="badge-"]:not(.notification-badge),
+    span.rounded-full[class*="bg-emerald"],
+    span.rounded-full[class*="bg-rose"],
+    span.rounded-full[class*="bg-amber"],
+    span.rounded-full[class*="bg-purple"],
+    span.rounded-full[class*="bg-blue"],
+    span.rounded-full[class*="bg-slate"] {
+        border-radius: 4px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+    }
