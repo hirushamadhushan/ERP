@@ -87,7 +87,13 @@
             padding: 4px 8px;
             outline: none;
         }
-        .sticky-table-region { position: relative; width: 100%; overflow: visible; }
+        .dataTables_wrapper > .dataTables_length,
+        .dataTables_wrapper > .dataTables_filter {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 0.75rem;
+        }
+        .sticky-table-region { position: relative; clear: both; width: 100%; overflow: visible; }
         .sticky-table-host-ready { overflow-x: visible !important; }
         .sticky-table-viewport { width: 100%; overflow-x: auto; scrollbar-color: #8b8b8b #eef2f7; scrollbar-width: auto; }
         .sticky-table-viewport::-webkit-scrollbar { height: 13px; }

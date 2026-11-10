@@ -123,7 +123,7 @@
 <div id="fullUserModal" class="fixed inset-0 z-50 hidden bg-slate-950/55 p-3 backdrop-blur-sm sm:p-5" role="dialog" aria-modal="true" aria-labelledby="full-user-title">
     <div class="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded bg-slate-50 shadow-2xl" style="border-radius: 4px;">
         <div class="flex shrink-0 items-center justify-between border-b border-purple-100 bg-white px-5 py-3.5">
-            <div><h2 id="full-user-title" class="text-base font-bold text-slate-900"><i class="bi bi-person-plus-fill mr-2 text-purple-600"></i>Add user</h2><p class="mt-0.5 text-[11px] text-slate-400">Create the account, role and access rules</p></div>
+            <div><h2 id="full-user-title" class="text-base font-bold text-slate-900"><i class="bi bi-person-plus-fill mr-2 text-purple-600"></i>Add user</h2><p id="full-user-subtitle" class="mt-0.5 text-[11px] text-slate-400">Create the account, role and access rules</p></div>
             <button id="closeFullUserModal" type="button" class="grid h-8 w-8 place-items-center rounded bg-slate-100 text-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600" style="border-radius: 4px;" aria-label="Close add user form">&times;</button>
         </div>
         <div id="fullUserModalBody" class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
@@ -371,11 +371,7 @@ AppPage.ready(function() {
         // Inside the AJAX shell, Cancel must return to the page behind the modal.
         [...form.querySelectorAll('a')].find(link => link.textContent.trim() === 'Cancel')?.addEventListener('click', event => {
             event.preventDefault();
-            if (fullUserModal.dataset.editOrigin === 'view' && fullUserModal._viewTrigger) {
-                fullUserModal._viewTrigger.click();
-            } else {
-                closeFullUserModal();
-            }
+            returnFromFullUserEdit();
         });
         form.addEventListener('submit', async event => {
             event.preventDefault();
@@ -384,11 +380,7 @@ AppPage.ready(function() {
             errors.hidden = true; save.disabled = true; save.textContent = 'Saving…';
             try {
                 const result = await AppErrors.request(form.action, {method:'POST', body:new FormData(form)});
-                if (fullUserModal.dataset.editOrigin === 'view' && fullUserModal._viewTrigger) {
-                    fullUserModal._viewTrigger.click();
-                } else {
-                    closeFullUserModal();
-                }
+                returnFromFullUserEdit();
                 form.reset(); sync();
                 table.ajax.reload(null, false);
                 showToast(result.message, 'success');
@@ -403,9 +395,136 @@ AppPage.ready(function() {
         });
     }
 
+    function setFullUserHeader(titleHtml, subtitleText) {
+        document.getElementById('full-user-title').innerHTML = titleHtml;
+        const sub = document.getElementById('full-user-subtitle');
+        if (sub) sub.textContent = subtitleText;
+    }
+
+    function returnFromFullUserEdit() {
+        if (fullUserModal.dataset.editOrigin === 'view' && fullUserModal.dataset.viewUrl) {
+            loadFullUserView(fullUserModal.dataset.viewUrl);
+        } else if (fullUserModal.dataset.editOrigin === 'view' && fullUserModal._viewTrigger) {
+            fullUserModal._viewTrigger.click();
+        } else {
+            closeFullUserModal();
+        }
+    }
+
+    async function loadFullUserEdit(url, origin = 'list') {
+        fullUserModal.dataset.editOrigin = origin;
+        if (origin === 'list') {
+            fullUserModal._viewTrigger = null;
+            fullUserModal.dataset.viewUrl = '';
+        }
+        fullUserModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        fullUserFormLoaded = false;
+        setFullUserHeader('<i class="bi bi-pencil-square mr-2 text-purple-600"></i>Edit user', 'Update the account, role and access rules');
+        fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>';
+        try {
+            const response = await fetch(url + '?form=1');
+            if (!response.ok) throw new Error(AppErrors.message(response.status));
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const form = page.getElementById('create-user-form');
+            if (!form) throw new Error('The Edit User form could not be loaded.');
+            form.classList.remove('mx-auto');
+            fullUserBody.replaceChildren(document.importNode(form, true));
+            initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
+            fullUserBody.querySelector('#first_name')?.focus();
+        } catch (error) {
+            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
+            fullUserBody.firstElementChild.textContent = error.message;
+        }
+    }
+
+    async function loadFullUserView(url, { activeTab = 'information', viewTrigger = undefined } = {}) {
+        if (viewTrigger !== undefined) fullUserModal._viewTrigger = viewTrigger;
+        fullUserModal.dataset.viewUrl = url;
+        fullUserModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        fullUserFormLoaded = false;
+        setFullUserHeader('<i class="bi bi-person-badge-fill mr-2 text-purple-600"></i>View User', 'Profile, documents and activity history');
+        fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><div class="text-center"><span class="mx-auto block h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span><p class="mt-3 text-xs font-semibold text-slate-500">Loading user profile...</p></div></div>';
+        try {
+            const response = await fetch(url, {headers:{Accept:'text/html'}});
+            if (!response.ok) throw new Error(AppErrors.message(response.status));
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const profile = page.querySelector('main > div.mx-auto');
+            const noteModal = page.querySelector('#note-modal');
+            if (!profile) throw new Error('The user profile could not be loaded.');
+            profile.classList.remove('max-w-7xl');
+            profile.classList.add('max-w-none');
+            const importedProfile = document.importNode(profile, true);
+            const importedNoteModal = noteModal ? document.importNode(noteModal, true) : null;
+            fullUserBody.replaceChildren(importedProfile, ...(importedNoteModal ? [importedNoteModal] : []));
+
+            const activateTab = (tabName) => {
+                fullUserBody.querySelectorAll('.user-tab').forEach(item => {
+                    const isActive = item.dataset.userTab === tabName;
+                    item.className = 'user-tab border-t-4 px-3 py-4 text-sm font-bold sm:text-base ' + (isActive
+                        ? 'border-purple-600 bg-purple-50 text-purple-700'
+                        : 'border-transparent text-slate-600 hover:bg-slate-50');
+                });
+                fullUserBody.querySelectorAll('[data-user-panel]').forEach(panel => {
+                    panel.classList.toggle('hidden', panel.dataset.userPanel !== tabName);
+                });
+            };
+            fullUserBody.querySelectorAll('.user-tab').forEach(tab => {
+                tab.addEventListener('click', () => activateTab(tab.dataset.userTab));
+            });
+            activateTab(activeTab);
+
+            fullUserBody.querySelector('#open-user-editor')?.addEventListener('click', (event) => {
+                loadFullUserEdit(event.currentTarget.dataset.url, 'view');
+            });
+
+            const addNoteModal = fullUserBody.querySelector('#note-modal');
+            const toggleNoteModal = (open) => {
+                if (!addNoteModal) return;
+                addNoteModal.classList.toggle('hidden', !open);
+                addNoteModal.classList.toggle('flex', open);
+                if (open) addNoteModal.querySelector('[name="heading"]')?.focus();
+            };
+            fullUserBody.querySelector('#open-note-modal')?.addEventListener('click', () => toggleNoteModal(true));
+            addNoteModal?.querySelectorAll('[data-close-note]').forEach(button => button.addEventListener('click', () => toggleNoteModal(false)));
+            addNoteModal?.addEventListener('click', event => { if (event.target === addNoteModal) toggleNoteModal(false); });
+            addNoteModal?.querySelector('#note-documents')?.addEventListener('change', event => {
+                const selected = addNoteModal.querySelector('#selected-files');
+                if (selected) selected.textContent = [...event.target.files].map(file => file.name).join(', ');
+            });
+            addNoteModal?.querySelector('#user-note-form')?.addEventListener('submit', async event => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const save = form.querySelector('button:not([type="button"])');
+                save.disabled = true;
+                save.textContent = 'Saving...';
+                try {
+                    const result = await AppErrors.request(form.action, {method:'POST', body:new FormData(form)});
+                    showToast(result.message, 'success');
+                    loadFullUserView(url, { activeTab: 'documents' });
+                } catch (error) {
+                    showToast(error.message, 'danger');
+                    save.disabled = false;
+                    save.textContent = 'Save';
+                }
+            });
+
+            fullUserBody.querySelector('#user-switcher')?.addEventListener('change', event => {
+                const option = event.currentTarget.options[event.currentTarget.selectedIndex];
+                if (option?.value) loadFullUserView(option.value);
+            });
+        } catch (error) {
+            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
+            fullUserBody.firstElementChild.textContent = error.message;
+        }
+    }
+
     $('#openFullUserBtn').on('click', async function() {
         fullUserModal.dataset.editOrigin = 'list';
         fullUserModal._viewTrigger = null;
+        fullUserModal.dataset.viewUrl = '';
+        setFullUserHeader('<i class="bi bi-person-plus-fill mr-2 text-purple-600"></i>Add user', 'Create the account, role and access rules');
         fullUserModal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
         if (fullUserFormLoaded) {
@@ -428,118 +547,11 @@ AppPage.ready(function() {
             fullUserBody.firstElementChild.textContent = error.message;
         }
     });
-    $(document).on('click.usersPage', '.edit-full-user-btn', async function() {
-        fullUserModal.dataset.editOrigin = 'list';
-        fullUserModal._viewTrigger = null;
-        fullUserModal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-        fullUserFormLoaded = false;
-        document.getElementById('full-user-title').innerHTML = '<i class="bi bi-pencil-square mr-2 text-purple-600"></i>Edit user';
-        fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>';
-        try {
-            const response = await fetch(this.dataset.url + '?form=1');
-            if (!response.ok) throw new Error(AppErrors.message(response.status));
-            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-            const form = page.getElementById('create-user-form');
-            if (!form) throw new Error('The Edit User form could not be loaded.');
-            form.classList.remove('mx-auto');
-            fullUserBody.replaceChildren(document.importNode(form, true));
-            initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
-            fullUserBody.querySelector('#first_name')?.focus();
-        } catch (error) {
-            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
-            fullUserBody.firstElementChild.textContent = error.message;
-        }
+    $(document).on('click.usersPage', '.edit-full-user-btn', function() {
+        loadFullUserEdit(this.dataset.url, 'list');
     });
-    $(document).on('click.usersPage', '.view-full-user-btn', async function() {
-        const viewTrigger = this;
-        fullUserModal._viewTrigger = viewTrigger;
-        fullUserModal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-        fullUserFormLoaded = false;
-        document.getElementById('full-user-title').innerHTML = '<i class="bi bi-person-badge-fill mr-2 text-purple-600"></i>View User';
-        fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><div class="text-center"><span class="mx-auto block h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span><p class="mt-3 text-xs font-semibold text-slate-500">Loading user profile...</p></div></div>';
-        try {
-            const response = await fetch(this.dataset.url, {headers:{Accept:'text/html'}});
-            if (!response.ok) throw new Error(AppErrors.message(response.status));
-            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-            const profile = page.querySelector('main > div.mx-auto');
-            const noteModal = page.querySelector('#note-modal');
-            if (!profile) throw new Error('The user profile could not be loaded.');
-            profile.classList.remove('max-w-7xl');
-            profile.classList.add('max-w-none');
-            const importedProfile = document.importNode(profile, true);
-            const importedNoteModal = noteModal ? document.importNode(noteModal, true) : null;
-            fullUserBody.replaceChildren(importedProfile, ...(importedNoteModal ? [importedNoteModal] : []));
-            fullUserBody.querySelectorAll('.user-tab').forEach(tab => tab.addEventListener('click', () => {
-                fullUserBody.querySelectorAll('.user-tab').forEach(item => item.className = 'user-tab border-t-4 border-transparent px-3 py-4 text-sm font-bold text-slate-600 hover:bg-slate-50 sm:text-base');
-                tab.className = 'user-tab border-t-4 border-purple-600 bg-purple-50 px-3 py-4 text-sm font-bold text-purple-700 sm:text-base';
-                fullUserBody.querySelectorAll('[data-user-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.userPanel !== tab.dataset.userTab));
-            }));
-            fullUserBody.querySelector('#open-user-editor')?.addEventListener('click', async (event) => {
-                fullUserModal.dataset.editOrigin = 'view';
-                document.getElementById('full-user-title').innerHTML = '<i class="bi bi-pencil-square mr-2 text-purple-600"></i>Edit user';
-                fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>';
-                try {
-                    const response = await fetch(event.currentTarget.dataset.url + '?form=1');
-                    if (!response.ok) throw new Error(AppErrors.message(response.status));
-                    const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-                    const form = page.getElementById('create-user-form');
-                    if (!form) throw new Error('The Edit User form could not be loaded.');
-                    form.classList.remove('mx-auto');
-                    fullUserBody.replaceChildren(document.importNode(form, true));
-                    initializeFullUserForm(fullUserBody.querySelector('#create-user-form'));
-                    fullUserBody.querySelector('#first_name')?.focus();
-                } catch (error) {
-                    fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
-                    fullUserBody.firstElementChild.textContent = error.message;
-                }
-            });
-            const addNoteModal = fullUserBody.querySelector('#note-modal');
-            fullUserBody.querySelector('#open-note-modal')?.addEventListener('click', () => {
-                if (!addNoteModal) return;
-                addNoteModal.classList.remove('hidden');
-                addNoteModal.classList.add('flex');
-                addNoteModal.querySelector('[name="heading"]')?.focus();
-            });
-            addNoteModal?.querySelectorAll('[data-close-note]').forEach(button => button.addEventListener('click', () => {
-                addNoteModal.classList.remove('flex');
-                addNoteModal.classList.add('hidden');
-            }));
-            addNoteModal?.addEventListener('click', event => {
-                if (event.target === addNoteModal) {
-                    addNoteModal.classList.remove('flex');
-                    addNoteModal.classList.add('hidden');
-                }
-            });
-            addNoteModal?.querySelector('#note-documents')?.addEventListener('change', event => {
-                const selected = addNoteModal.querySelector('#selected-files');
-                if (selected) selected.textContent = [...event.target.files].map(file => file.name).join(', ');
-            });
-            addNoteModal?.querySelector('#user-note-form')?.addEventListener('submit', async event => {
-                event.preventDefault();
-                const form = event.currentTarget;
-                const save = form.querySelector('button:not([type="button"])');
-                save.disabled = true;
-                save.textContent = 'Saving...';
-                try {
-                    const result = await AppErrors.request(form.action, {method:'POST', body:new FormData(form)});
-                    showToast(result.message, 'success');
-                    viewTrigger.click();
-                } catch (error) {
-                    showToast(error.message, 'danger');
-                    save.disabled = false;
-                    save.textContent = 'Save';
-                }
-            });
-            fullUserBody.querySelector('#user-switcher')?.addEventListener('change', event => {
-                const option = event.currentTarget.options[event.currentTarget.selectedIndex];
-                if (option?.value) { fullUserBody.innerHTML = '<div class="flex min-h-72 items-center justify-center"><span class="h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"></span></div>'; fetch(option.value).then(r => r.text()).then(html => { const next = new DOMParser().parseFromString(html, 'text/html').querySelector('main > div.mx-auto'); if (next) fullUserBody.replaceChildren(document.importNode(next, true)); }); }
-            });
-        } catch (error) {
-            fullUserBody.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700"></div>';
-            fullUserBody.firstElementChild.textContent = error.message;
-        }
+    $(document).on('click.usersPage', '.view-full-user-btn', function() {
+        loadFullUserView(this.dataset.url, { viewTrigger: this });
     });
     $('#closeFullUserModal').on('click', closeFullUserModal);
     fullUserModal.addEventListener('click', event => { if (event.target === fullUserModal) closeFullUserModal(); });
